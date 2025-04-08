@@ -102,7 +102,7 @@ const TopHeader: React.FC = () => {
                   Settings
                 </button>
                 <button 
-                  onClick={() => handleNavigation('auth/login')}
+                  onClick={() => handleNavigation('/auth/login')}
                   className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-red-200"
                 >
                   Sign out
