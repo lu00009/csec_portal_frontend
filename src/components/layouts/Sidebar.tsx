@@ -44,9 +44,9 @@ export default function Sidebar() {
   // Filter nav items based on user role
   const filteredNavItems = navItems.filter(item => {
     if (item.adminOnly) {
-      return user?.role === 'president'; // Only show admin route to presidents
+      return user?.role === 'president'; 
     }
-    return true; // Show all other routes
+    return true; 
   });
 
   return (
