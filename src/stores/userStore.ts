@@ -88,12 +88,19 @@ const useUserStore = create<UserStore>((set) => ({
   
   // Initialize from localStorage if available
   initialize: () => {
+
     const storedUser = localStorage.getItem('user');
+
     if (storedUser) {
       set({ user: JSON.parse(storedUser) });
     }
   }
 }));
 
-export { useUserStore };
+
+
+export default useUserStore;
 export type { User, UserRole };
+
+
+

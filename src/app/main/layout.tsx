@@ -1,20 +1,52 @@
 // app/(main)/layout.tsx
+'use client';
+
 import Sidebar from '@/components/layouts/Sidebar';
 import TopHeader from '@/components/layouts/TopHeader';
+import useUserStore from '@/stores/userStore';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+
 
 export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="bg-gray-50 min-h-screen flex">
-      <div className="w-[250px] fixed h-full bg-gray-50">
-        <Sidebar />
+  const { user} = useUserStore();
+  const router = useRouter();
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    if ( !user) {
+      router.push('/login');
+    }
+  }, [user, router, isInitialized]);
+
+  if ( !user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Loading...</p>
       </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-screen">
+      {/* Sidebar - Fixed width */}
+      <div className="fixed h-full w-[250px]">
+        <Sidebar role={user.role} />
+      </div>
+      
+      {/* Main content area */}
       <div className="flex-1 ml-[250px]">
-        <TopHeader />
-        <main className="p-6 mx-auto max-w-7xl">
+        {/* Top Header - Sticky positioned */}
+        <div className="sticky top-0 z-10">
+          <TopHeader />
+        </div>
+        
+        {/* Page content */}
+        <main className="p-6">
           {children}
         </main>
       </div>

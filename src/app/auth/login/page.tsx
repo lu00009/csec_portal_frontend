@@ -2,13 +2,17 @@
 'use client';
 
 import LoginForm from '@/components/form/LoginForm';
-import { useUserStore } from '@/stores/userStore';
+
+import useUserStore from '@/stores/userStore';
+
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, login, isLoading, error } = useUserStore();
+
+  const { user, login,  error } = useUserStore();
+
 
   useEffect(() => {
     if (user) {
@@ -42,7 +46,9 @@ export default function LoginPage() {
           </div>
         )}
 
-        <LoginForm onSubmit={handleSubmit} isLoading={isLoading} />
+
+        <LoginForm onSubmit={handleSubmit}  />
+
       </div>
     </div>
   );

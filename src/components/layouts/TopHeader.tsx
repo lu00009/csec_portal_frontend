@@ -90,13 +90,13 @@ const TopHeader: React.FC = () => {
             {isDropdownOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 border border-gray-100 z-10">
                 <button 
-                  onClick={() => handleNavigation('main/profile')}
+                  onClick={() => handleNavigation('profile')}
                   className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
                   Profile
                 </button>
                 <button 
-                  onClick={() => handleNavigation('main/settings')}
+                  onClick={() => handleNavigation('settings')}
                   className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
                   Settings
