@@ -1,6 +1,6 @@
 'use client';
 
-import { useUserStore } from '@/stores/userStore'; // Import your user store
+import useUserStore from '@/stores/userStore'; // Import your user store
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';

@@ -3,31 +3,27 @@
 
 import Sidebar from '@/components/layouts/Sidebar';
 import TopHeader from '@/components/layouts/TopHeader';
-import { useUserStore } from '@/stores/userStore';
+import useUserStore from '@/stores/userStore';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+
 
 export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, initialize } = useUserStore();
+  const { user} = useUserStore();
   const router = useRouter();
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    initialize();
-    setIsInitialized(true);
-  }, [initialize]);
-
-  useEffect(() => {
-    if (isInitialized && !user) {
+    if ( !user) {
       router.push('/login');
     }
   }, [user, router, isInitialized]);
 
-  if (!isInitialized || !user) {
+  if ( !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p>Loading...</p>
@@ -38,12 +34,12 @@ export default function MainLayout({
   return (
     <div className="flex min-h-screen">
       {/* Sidebar - Fixed width */}
-      <div className="fixed h-full">
+      <div className="fixed h-full w-[250px]">
         <Sidebar role={user.role} />
       </div>
       
       {/* Main content area */}
-      <div className="flex-1 ml-[250px]"> {/* Adjust margin to match sidebar width */}
+      <div className="flex-1 ml-[250px]">
         {/* Top Header - Sticky positioned */}
         <div className="sticky top-0 z-10">
           <TopHeader />
