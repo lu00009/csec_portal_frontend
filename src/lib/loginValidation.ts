@@ -12,4 +12,6 @@ export const loginValidation = yup.object().shape({
     .required('Password is required'),
   rememberMe: yup
     .boolean()
+
 });
+

@@ -1,6 +1,9 @@
+
 'use client';
 
+
 import useUserStore from '@/stores/userStore'; // Import your user store
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -43,6 +46,7 @@ export default function Sidebar() {
   // Filter nav items based on user role
   const filteredNavItems = navItems.filter(item => {
     if (item.adminOnly) {
+
       return user?.role === 'president'; // Only show admin route to presidents
     }
     return true; // Show all other routes
@@ -50,6 +54,7 @@ export default function Sidebar() {
 
   return (
     <div className={`w-55 h-full flex flex-col p-4`}>
+
       <div className="flex items-center mb-8">
         <div className="flex">
           <Image className='w-7 h-10' src={logo} alt="Logoipsum" />

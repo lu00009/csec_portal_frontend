@@ -5,13 +5,21 @@ import { loginValidation } from '@/lib/loginValidation';
 import { Field, Form, Formik } from 'formik';
 import { FiLock, FiMail } from 'react-icons/fi';
 
+
 interface LoginFormProps {
+
+export interface LoginFormProps {
+  onSubmit: (values: { email: string; password: string }) => void;
+  isLoading: boolean;
+
   initialValues?: {
     email: string;
     password: string;
     rememberMe: boolean;
   };
+
   onSubmit: (values: any) => void;
+
 }
 
 export const LoginForm = ({
