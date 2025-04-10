@@ -4,7 +4,7 @@ import MemberForm from '@/components/form/MemberForm';
 import MembersTable from '@/components/members/MembersTable';
 import { divisions, groups } from '@/data/divisionsAndGroups';
 import useMembersStore from '@/stores/membersStore';
-import useUserStore from '@/stores/userStore';
+import { useUserStore } from '@/stores/userStore';
 import { Member } from '@/types/member';
 import { useEffect, useState } from 'react';
 
@@ -61,12 +61,12 @@ export default function MembersPage() {
           }}
           divisions={divisions}
           groups={groups}
-          initialData={editingMember ? {
-            email: editingMember.email,
-            division: editingMember.division,
-            group: editingMember.group,
-            password: ''
-          } : undefined}
+          // initialData={editingMember ? {
+          //   email: editingMember.email,
+          //   division: editingMember.division,
+          //   group: editingMember.group,
+          //   password: ''
+          // } : undefined}
         />
       )}
     </>

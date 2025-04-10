@@ -9,7 +9,7 @@ type User = {
   email: string;
   role: UserRole;
   division?: string;
-  token?: string;
+  token: string;
 };
 
 type UserStore = {
@@ -18,61 +18,41 @@ type UserStore = {
   logout: () => void;
   isLoading: boolean;
   error: string | null;
+  initialize: () => void;
 };
-
-// Mock users database
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'President User',
-    email: 'president@example.com',
-    role: 'president',
-    token: 'mock-president-token'
-  },
-  {
-    id: '2',
-    name: 'Head of Design',
-    email: 'design-head@example.com',
-    role: 'divisionHead',
-    division: 'Design',
-    token: 'mock-head-token'
-  },
-  {
-    id: '3',
-    name: 'Regular Member',
-    email: 'member@example.com',
-    role: 'member',
-    token: 'mock-member-token'
-  },
-];
 
 const useUserStore = create<UserStore>((set) => ({
   user: null,
   isLoading: false,
   error: null,
-  
+
   login: async (email, password) => {
     set({ isLoading: true, error: null });
+
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock validation - in real app, this would be an API call
-      const foundUser = mockUsers.find(user => user.email === email);
-      
-      if (!foundUser) {
-        throw new Error('User not found');
+      const res = await fetch('https://csec-portal-backend-1.onrender.com/api/members/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Login failed');
       }
-      
-      // Mock password validation
-      if (password !== 'password123') {
-        throw new Error('Invalid password');
-      }
-      
-      set({ user: foundUser });
-      
-      // Store user in localStorage to persist across refreshes
-      localStorage.setItem('user', JSON.stringify(foundUser));
+
+      const user: User = {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        role: data.role,
+        division: data.division,
+        token: data.token,
+      };
+
+      set({ user });
+      localStorage.setItem('user', JSON.stringify(user));
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Login failed' });
       throw err;
@@ -80,27 +60,20 @@ const useUserStore = create<UserStore>((set) => ({
       set({ isLoading: false });
     }
   },
-  
+
   logout: () => {
     localStorage.removeItem('user');
     set({ user: null });
   },
-  
-  // Initialize from localStorage if available
+
   initialize: () => {
-
     const storedUser = localStorage.getItem('user');
-
     if (storedUser) {
       set({ user: JSON.parse(storedUser) });
     }
-  }
+  },
 }));
 
-
-
-export default useUserStore;
+export { useUserStore };
 export type { User, UserRole };
-
-
 
