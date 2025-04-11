@@ -11,7 +11,7 @@ interface MembersTableProps {
   error: string | null;
   canEdit: boolean;
   onEdit: (member: Member) => void;
-  onDelete: (id: string) => void;
+  onDelete: (_id: string) => void;
   onAddMember: () => void;
 }
 
@@ -27,7 +27,8 @@ export default function MembersTable({
   const router = useRouter();
 
   const handleProfileClick = (memberId: string) => {
-    router.push(`/members/${memberId}`);
+    router.push(`/main/members/${memberId}`);
+    router.refresh();
   };
 
   if (loading) return <div className="p-4 text-center">Loading members...</div>;
@@ -45,7 +46,7 @@ export default function MembersTable({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member ID</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Division</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendance</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year/Level</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               {canEdit && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>}
             </tr>
@@ -53,7 +54,7 @@ export default function MembersTable({
           <tbody className="bg-white divide-y divide-gray-200">
             {members.map((member) => (
               <MemberRow 
-                key={member.id}
+                key={member._id}
                 member={member}
                 canEdit={canEdit}
                 onProfileClick={handleProfileClick}

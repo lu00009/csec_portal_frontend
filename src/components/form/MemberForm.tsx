@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { FiX } from 'react-icons/fi';
 
 interface MemberFormProps {
-  onSave: (member: Omit<Member, 'id'>) => void;
+  onSave: (member: Omit<Member, '_id' | 'createdAt'>) => Promise<void>;
   onClose: () => void;
   divisions: string[];
   groups: string[];
@@ -15,7 +15,6 @@ interface MemberFormProps {
 
 export default function MemberForm({ onSave, onClose, divisions, groups }: MemberFormProps) {
   const [generatedPassword, setGeneratedPassword] = useState('');
-
 
   const formik = useFormik({
     initialValues: {
@@ -25,24 +24,34 @@ export default function MemberForm({ onSave, onClose, divisions, groups }: Membe
       password: ''
     },
     validationSchema: memberSchema,
-    onSubmit: (values) => {
-      onSave({
-        name: values.email.split('@')[0],
+    onSubmit: async (values) => {
+      // Extract first name from email for basic profile
+      const emailParts = values.email.split('@');
+      const firstName = emailParts[0] || 'New';
+      
+      await onSave({
+        firstName: firstName,
+        lastName: 'Member', // Default last name
         email: values.email,
         division: values.division,
-        group: values.group,
-        memberId: `MEM-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
-        password: values.password,
-        attendance: 'Active',
-        year: '1st',
-        campusStatus: 'On Campus',
-        role:'president'
+        // group: values.group,
+        member_id: `ugr/${Math.floor(10000 + Math.random() * 90000)}/22`,
+        status: 'Active',
+        year: '1st year',
+        clubRole: 'Member',
+        profilePicture: 'Dummy Picture',
+        // password: values.password,
+        // Other fields will be added by members later
+        middleName: '',
+        telegramUsername: '',
+        phoneNumber: '',
+        divisionRole: ''
       });
     },
   });
 
   const generatePassword = () => {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let password = '';
     for (let i = 0; i < 12; i++) {
       password += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -53,7 +62,7 @@ export default function MemberForm({ onSave, onClose, divisions, groups }: Membe
 
   return (
     <div className="fixed inset-0 bg-white/15 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg  w-[383px] h-[592px] max-w-md border border-gray-200">
+      <div className="bg-white rounded-lg w-[383px] max-w-md border border-gray-200">
         <div className="flex justify-between items-center p-4">
           <h2 className="text-xl font-semibold">Add New Member</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
@@ -68,9 +77,10 @@ export default function MemberForm({ onSave, onClose, divisions, groups }: Membe
               name="division"
               value={formik.values.division}
               onChange={formik.handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full border border-gray-300 rounded-md shadow-sm p-2"
+              required
             >
-              <option className='text-gray-300' value=""></option>
+              <option value="">Select Division</option>
               {divisions.map((division) => (
                 <option key={division} value={division}>{division}</option>
               ))}
@@ -83,9 +93,10 @@ export default function MemberForm({ onSave, onClose, divisions, groups }: Membe
               name="group"
               value={formik.values.group}
               onChange={formik.handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full border border-gray-300 rounded-md shadow-sm p-2"
+              required
             >
-              <option className='text-gray-300' value=""></option>
+              <option value="">Select Group</option>
               {groups.map((group) => (
                 <option key={group} value={group}>{group}</option>
               ))}
@@ -99,8 +110,9 @@ export default function MemberForm({ onSave, onClose, divisions, groups }: Membe
               name="email"
               value={formik.values.email}
               onChange={formik.handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full border border-gray-300 rounded-md shadow-sm p-2"
               placeholder="member@example.com"
+              required
             />
           </div>
 
@@ -110,8 +122,9 @@ export default function MemberForm({ onSave, onClose, divisions, groups }: Membe
               <button
                 type="button"
                 onClick={generatePassword}
-                className="text-sm text-white hover:text-blue-800 bg-blue-900 hover:bg-blue-700 rounded-md px-2 py-1"
-              > Generate
+                className="text-sm text-white bg-blue-900 hover:bg-blue-700 rounded-md px-2 py-1"
+              >
+                Generate
               </button>
             </div>
             <input
@@ -119,14 +132,15 @@ export default function MemberForm({ onSave, onClose, divisions, groups }: Membe
               name="password"
               value={formik.values.password}
               onChange={formik.handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Password"
+              className="w-full border border-gray-300 rounded-md shadow-sm p-2"
+              placeholder="Click generate to create password"
               readOnly
+              required
             />
             {generatedPassword && (
-              <div className="mt-2 text-sm text-gray-500">
-                Generated Password: {generatedPassword}
-              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Generated password: {generatedPassword}
+              </p>
             )}
           </div>
 

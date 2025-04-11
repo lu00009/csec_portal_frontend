@@ -1,106 +1,142 @@
 // stores/userStore.ts
+import { Member } from '@/types/member'; // Import your types
 import { create } from 'zustand';
 
-type UserRole = 'president' | 'divisionHead' | 'member';
+ export type UserRole = 'President' | 'Vice President' | 'CPD President' | 'Dev President' | 'CBD President' | 'SEC President' | 'DS President' | 'Member';
 
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  division?: string;
-  token?: string;
-};
-
-type UserStore = {
-  user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+ type UserStore = {
+  user: Member | null;
+  token: string | null;
   isLoading: boolean;
   error: string | null;
+  login: (email: string, password: string) => Promise<boolean>;
+  fetchUserById: (id: string) => Promise<void>;
+  refreshToken: () => Promise<void>;
+  logout: () => void;
+  getRole: () => UserRole | null;
 };
 
-// Mock users database
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'President User',
-    email: 'president@example.com',
-    role: 'president',
-    token: 'mock-president-token'
-  },
-  {
-    id: '2',
-    name: 'Head of Design',
-    email: 'design-head@example.com',
-    role: 'divisionHead',
-    division: 'Design',
-    token: 'mock-head-token'
-  },
-  {
-    id: '3',
-    name: 'Regular Member',
-    email: 'member@example.com',
-    role: 'member',
-    token: 'mock-member-token'
-  },
-];
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE;
 
-const useUserStore = create<UserStore>((set) => ({
+const useUserStore = create<UserStore>((set, get) => ({
   user: null,
+  token: typeof window !== 'undefined' ? localStorage.getItem('token') : null,
   isLoading: false,
   error: null,
-  
+
   login: async (email, password) => {
     set({ isLoading: true, error: null });
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(`${BASE_URL}/members/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+  
+      const data = await response.json();
+      console.log('Login response:', data); // Debug log
+  
+      if (!response.ok) throw new Error(data.message || 'Login failed');
+  
+      // Store the token
+      localStorage.setItem('token', data.token);
       
-      // Mock validation - in real app, this would be an API call
-      const foundUser = mockUsers.find(user => user.email === email);
+      // Decode the token to get user ID
+      const payload = JSON.parse(atob(data.token.split('.')[1]));
+      console.log('Token payload:', payload); // Debug log
       
-      if (!foundUser) {
-        throw new Error('User not found');
-      }
+      // Fetch complete user data using the ID from token
+      const userResponse = await fetch(`${BASE_URL}/members/${payload.id}`, {
+        headers: { Authorization: `Bearer ${data.token}` },
+      });
       
-      // Mock password validation
-      if (password !== 'password123') {
-        throw new Error('Invalid password');
-      }
+      if (!userResponse.ok) throw new Error('Failed to fetch user data');
       
-      set({ user: foundUser });
+      const userData = await userResponse.json();
+      console.log('User data:', userData); // Debug log
       
-      // Store user in localStorage to persist across refreshes
-      localStorage.setItem('user', JSON.stringify(foundUser));
+      // Update Zustand state with both token and user data
+      set({ 
+        token: data.token,
+        user: userData,
+        error: null
+      });
+      
+      return true;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Login failed' });
-      throw err;
+      const message = err instanceof Error ? err.message : 'Login failed';
+      set({ error: message });
+      return false;
     } finally {
       set({ isLoading: false });
     }
   },
-  
-  logout: () => {
-    localStorage.removeItem('user');
-    set({ user: null });
-  },
-  
-  // Initialize from localStorage if available
-  initialize: () => {
 
-    const storedUser = localStorage.getItem('user');
+  fetchUserById: async (id: string) => {
+    const { token } = get();
+    if (!token) return;
 
-    if (storedUser) {
-      set({ user: JSON.parse(storedUser) });
+    set({ isLoading: true });
+    try {
+      const res = await fetch(`${BASE_URL}/members/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to fetch user');
+      }
+
+      const userData: Member = await res.json();
+      set({ user: userData });
+    } catch (err) {
+      console.error('Error fetching user:', err);
+      if (err instanceof Error) {
+        set({ error: err.message });
+      }
+      get().logout();
+    } finally {
+      set({ isLoading: false });
     }
+  },
+
+  refreshToken: async () => {
+    try {
+      const res = await fetch(`${BASE_URL}/members/refresh`, {
+        credentials: 'include',
+      });
+  
+      const data = await res.json();
+  
+      if (!res.ok) throw new Error(data.message || 'Failed to refresh token');
+  
+      localStorage.setItem('token', data.token);
+      set({ token: data.token });
+  
+      // Safely handle user refetch
+      const currentState = get();
+      if (currentState.user && currentState.user._id) {
+        await currentState.fetchUserById(currentState.user._id);
+      }
+    } catch (err) {
+      console.error('Token refresh failed:', err);
+      get().logout();
+    }
+  },
+
+  logout: () => {
+    localStorage.removeItem('token');
+    set({ user: null, token: null });
+  },
+
+  getRole: () => {
+    return get().user?.clubRole || null;
+  },
+
+  getDivision: () => {
+    return get().user?.division || null;
   }
 }));
 
-
-
-export default useUserStore;
-export type { User, UserRole };
-
-
+export { useUserStore };
 

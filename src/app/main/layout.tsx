@@ -3,7 +3,7 @@
 
 import Sidebar from '@/components/layouts/Sidebar';
 import TopHeader from '@/components/layouts/TopHeader';
-import useUserStore from '@/stores/userStore';
+import { useUserStore } from '@/stores/userStore';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -19,7 +19,8 @@ export default function MainLayout({
 
   useEffect(() => {
     if ( !user) {
-      router.push('/login');
+      router.push('/main/dashboard');
+      router.refresh();
     }
   }, [user, router, isInitialized]);
 
@@ -33,9 +34,8 @@ export default function MainLayout({
 
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar - Fixed width */}
       <div className="fixed h-full w-[250px]">
-        <Sidebar role={user.role} />
+        <Sidebar  />
       </div>
       
       {/* Main content area */}
