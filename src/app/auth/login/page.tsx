@@ -21,7 +21,6 @@ export default function LoginPage() {
       await login(values.email, values.password);
     } catch (err) {
       console.error('Login error:', err);
-      // Error is already set in the store
     }
   };
 

@@ -9,90 +9,76 @@ type User = {
   email: string;
   role: UserRole;
   division?: string;
-  token?: string;
 };
 
 type UserStore = {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
+  fetchUser: () => Promise<void>;
   logout: () => void;
   isLoading: boolean;
   error: string | null;
 };
 
-// Mock users database
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'President User',
-    email: 'president@example.com',
-    role: 'president',
-    token: 'mock-president-token'
-  },
-  {
-    id: '2',
-    name: 'Head of Design',
-    email: 'design-head@example.com',
-    role: 'divisionHead',
-    division: 'Design',
-    token: 'mock-head-token'
-  },
-  {
-    id: '3',
-    name: 'Regular Member',
-    email: 'member@example.com',
-    role: 'member',
-    token: 'mock-member-token'
-  },
-];
+const API_BASE = 'https://csec-portal-backend-1.onrender.com/api';
 
 const useUserStore = create<UserStore>((set) => ({
   user: null,
   isLoading: false,
   error: null,
-  
+
   login: async (email, password) => {
     set({ isLoading: true, error: null });
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock validation - in real app, this would be an API call
-      const foundUser = mockUsers.find(user => user.email === email);
-      
-      if (!foundUser) {
-        throw new Error('User not found');
+      const response = await fetch(`${API_BASE}/members/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.message || 'Login failed');
+
+      const { token } = data;
+      localStorage.setItem('token', token);
+      await useUserStore.getState().fetchUser();
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        set({ error: err.message || 'Login error' });
+        throw err;
       }
-      
-      // Mock password validation
-      if (password !== 'password123') {
-        throw new Error('Invalid password');
-      }
-      
-      set({ user: foundUser });
-      
-      // Store user in localStorage to persist across refreshes
-      localStorage.setItem('user', JSON.stringify(foundUser));
-    } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Login failed' });
+      set({ error: 'An unknown error occurred' });
+      throw new Error('An unknown error occurred');
+      set({ error: err.message || 'Login error' });
       throw err;
     } finally {
       set({ isLoading: false });
     }
   },
-  
+
+  fetchUser: async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/members/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const user = await res.json();
+      if (!res.ok) throw new Error(user.message || 'Failed to fetch user');
+
+      set({ user });
+    } catch (err) {
+      console.error('Error fetching user:', err);
+    }
+  },
+
   logout: () => {
-    localStorage.removeItem('user');
+    localStorage.removeItem('token');
     set({ user: null });
   },
-  
-  // Initialize from localStorage if available
-  initialize: () => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      set({ user: JSON.parse(storedUser) });
-    }
-  }
 }));
 
 export { useUserStore };

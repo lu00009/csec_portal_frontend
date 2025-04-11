@@ -1,7 +1,28 @@
 import { FaExternalLinkAlt } from "react-icons/fa";
-import member1Data from "@/app/data/memberdata";
-const Resources = () => {
 
+const Resources = () => {
+  const resources = [
+    {
+      name: "Data science & AI challenges",
+      link: "https://googlecodejam.com/challenges"
+    },
+    {
+      name: "Math-based programming problems",
+      link: "https://googlecodejam.com/challenges"
+    },
+    {
+      name: "Cybersecurity & hacking challenges",
+      link: "https://googlecodejam.com/challenges"
+    },
+    {
+      name: "Smart contract security challenges",
+      link: "https://googlecodejam.com/challenges"
+    },
+    {
+      name: "CP contests for beginners & intermediates",
+      link: "https://googlecodejam.com/challenges"
+    }
+  ];
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
@@ -20,7 +41,7 @@ const Resources = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {member1Data.resources.map((resource, index) => (
+            {resources.map((resource, index) => (
               <tr key={index}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {resource.name}

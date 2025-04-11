@@ -4,9 +4,9 @@ const Attendance = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Present':
-        return 'bg-green-100 text-green-800';
+        return 'bg-[#3FC28A1A] text-[#3FC28A]';
       case 'Absent':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-600';
       case 'Excused':
         return 'bg-yellow-100 text-yellow-800';
       default:
@@ -15,10 +15,7 @@ const Attendance = () => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
-      <h2 className="text-xl font-bold text-gray-800 mb-6">Attendance Records</h2>
-      
-      <div className="overflow-x-auto">
+    <div className="bg-white rounded-lg shadow-sm p-6 mt-3 overflow-x-auto gap-4">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -45,21 +42,6 @@ const Attendance = () => {
             ))}
           </tbody>
         </table>
-      </div>
-
-      <div className="mt-6 flex justify-between items-center">
-        <div className="text-sm text-gray-500">
-          Showing <span className="font-medium">1</span> to <span className="font-medium">9</span> of <span className="font-medium">9</span> records
-        </div>
-        <div className="flex space-x-2">
-          <button className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-            Previous
-          </button>
-          <button className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-            Next
-          </button>
-        </div>
-      </div>
     </div>
   );
 };

@@ -2,27 +2,23 @@ import { Progress, Card, Row, Col, Typography } from 'antd';
 import member1Data from '@/app/data/memberdata';
 const { Title, Text } = Typography;
 
-export default function AttendanceProgress() {
+export default function AttendanceProgress({}) {
 
 
   return (
-    <div style={{ 
-      backgroundColor: '#f0f2f5', 
-      minHeight: '100vh',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 24
-    }}>
+   
       <Card style={{ 
-        width: '100%',
+        backgroundColor: 'white',
+        width: 700,
         maxWidth: 1000,
         borderRadius: 12,
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-        padding: 24
       }}>
         {/* Main Progress Section */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+        <div style={{ textAlign: 'center', marginBottom: 32, backgroundColor: 'white', width: 300, height: 300,boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+
+         }}>
+          <h1 className='font-bold'>Overall Attendance Progress</h1>
+          <br />
           <Progress
             type="circle"
             percent={75}
@@ -33,10 +29,9 @@ export default function AttendanceProgress() {
               <Title level={3} style={{ color: 'black', margin: 0 }}>75%</Title>
             )}
           />
-        </div>
-
-        {/* Percentage Row */}
-        <Row justify="space-around" style={{ marginBottom: 32 }}>
+          
+                  {/* Percentage Row */}
+        <Row justify="space-around" style={{ marginBottom: 32, marginTop: 25 }}>
           <Col style={{ textAlign: 'center' }}>
             <Title level={3} style={{ color: 'black', margin: 0 }}>28%</Title>
             <Text type="secondary" style={{ fontSize: 14 }}>Last week</Text>
@@ -46,11 +41,14 @@ export default function AttendanceProgress() {
             <Text type="secondary" style={{ fontSize: 14 }}>Last month</Text>
           </Col>
         </Row>
+        </div>
+
+
 
         {/* Stats Cards */}
-        <Row gutter={[16, 16]} justify="center">
+        <Row gutter={[10, 16]} justify="center">
           {member1Data.progressData.map((item, index) => (
-            <Col key={index} xs={24} sm={12} md={8}>
+            <Col key={index} xs={24} sm={16} md={8}>
               <Card 
                 bordered={false}
                 style={{ 
@@ -58,27 +56,33 @@ export default function AttendanceProgress() {
                   textAlign: 'center',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16 }}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 30}}>
+                  <div>
                   <Progress
                     type="circle"
                     percent={item.percent}
                     strokeColor={item.color}
                     strokeWidth={10}
-                    width={50}
+                    width={60}
                     format={() => (
                       <Text strong style={{ color: 'black' }}>
                         {item.percent}%
                       </Text>
                     )}
                   />
-                  <Title level={3} style={{ color: 'black', margin: 0 }}>{item.label}</Title>
+                  </div>
+                  <div>                
+                <Title level={3} style={{ color: 'black', margin: 0 }}>{item.label}</Title>
+                <Text type="secondary" style={{ fontSize: 9, marginTop: 3,  marginLeft: 0, }}>{item.par}</Text>
                 </div>
-                <Text type="secondary" style={{ fontSize: 14, marginTop: 8,  marginLeft: 46, }}>{item.par}</Text>
+                </div>
+               
+
               </Card>
             </Col>
           ))}
         </Row>
       </Card>
-    </div>
+    
   );
 }

@@ -1,6 +1,7 @@
 import CalendarSidebar from "@/components/home/CalendarSidebar";
-import StatsPage, { StatsCard } from "@/components/home/statsCard";
+import StatsPage from "@/components/home/statsCard";
 import UpcomingEvent from "@/components/home/UpcomingEvent";
+import AttendanceOverview from "@/components/home/attendanceOverview";
 
 export default function Dashboard() {
   return (
@@ -12,6 +13,7 @@ export default function Dashboard() {
      
       <UpcomingEvent />
       <StatsPage />
+      <AttendanceOverview />
       <div className="absolute right-0 top-20 h-full w-[300px] bg-white  shadow-sm border-l border-gray-200  overflow-y-auto ">
       <CalendarSidebar />
     </div>

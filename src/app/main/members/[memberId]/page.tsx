@@ -1,4 +1,6 @@
+// app/members/[memberId]/page.tsx
 'use client';
+
 import { useState, useEffect } from 'react';
 import RequiredInfo from '@/components/profile/requiredinfo';
 import OptionalInfo from '@/components/profile/optionalinfo';
@@ -17,18 +19,148 @@ import {
   FiBook as FiResources
 } from 'react-icons/fi';
 
-const MemberProfile = () => {
+interface Member {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string;
+  division: string;
+  year: string;
+  telegramUsername: string;
+  createdAt: string;
+  universityId?: string;
+  linkedin?: string;
+  codeforces?: string;
+  leetcode?: string;
+  instagram?: string;
+  birthDate?: string;
+  cvUrl?: string;
+  bio?: string;
+  gender?: string;
+}
+
+const MemberProfilePage = ({ params }: { params: { memberId: string } }) => {
   const [activeView, setActiveView] = useState<'profile' | 'attendance' | 'progress' | 'headsup'>('profile');
   const [activeTab, setActiveTab] = useState<'required' | 'optional' | 'resources'>('required');
+  const [member, setMember] = useState<Member | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { user, fetchUser } = useUserStore();
 
   useEffect(() => {
     fetchUser();
-  }, [fetchUser]);
+    fetchMemberData();
+  }, [params.memberId]);
+
+  const fetchMemberData = async () => {
+    try {
+      if (!params.memberId || params.memberId === 'undefined') {
+        throw new Error('Invalid member ID');
+      }
+
+      setLoading(true);
+      const res = await fetch(
+        `https://csec-portal-backend-1.onrender.com/api/members/${params.memberId}`,
+        {
+          cache: 'no-store',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
+      }
+
+      const memberData = await res.json();
+      setMember(memberData);
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load member data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex">
+        <div className="w-50 bg-white p-4"></div>
+        <div className="flex-1 p-4">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
+            <div className="space-y-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-4 bg-gray-200 rounded w-full"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex">
+        <div className="w-50 bg-white p-4"></div>
+        <div className="flex-1 p-4">
+          <div className="p-6 bg-white rounded-lg shadow">
+            <h2 className="text-xl font-semibold text-red-600">Error Loading Profile</h2>
+            <p className="mt-2 text-gray-600">{error}</p>
+            <div className="mt-4 p-3 bg-gray-100 rounded text-sm">
+              <p>Member ID attempted: {params.memberId}</p>
+              <p>Endpoint: https://csec-portal-backend-1.onrender.com/api/members/{params.memberId}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!member) {
+    return (
+      <div className="bg-gray-50 min-h-screen flex">
+        <div className="w-50 bg-white p-4"></div>
+        <div className="flex-1 p-4">
+          <div className="p-6 bg-white rounded-lg shadow">
+            <h2 className="text-xl font-semibold text-red-600">Member Not Found</h2>
+            <p className="mt-2 text-gray-600">The requested member does not exist.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const requiredData = {
+    firstName: member.firstName || 'Not provided',
+    lastName: member.lastName || 'Not provided',
+    phoneNumber: member.phoneNumber || 'Not provided',
+    email: member.email || 'Not provided',
+    department: member.division || 'Not provided',
+    graduation: member.year || 'Not provided',
+    birth: member.birthDate || 'Not provided',
+    gender: member.gender || 'Not provided',
+    telegramUsername: member.telegramUsername || 'Not provided',
+    joinedDate: member.createdAt || 'Not provided',
+  };
+
+  const optionalData = {
+    uniId: member.universityId || 'Not provided',
+    linkedin: member.linkedin || 'Not provided',
+    codeforces: member.codeforces || 'Not provided',
+    leetcode: member.leetcode || 'Not provided',
+    insta: member.instagram || 'Not provided',
+    birthdate: member.birthDate || 'Not provided',
+    cv: member.cvUrl || 'Not provided',
+    joinedDate: member.createdAt || 'Not provided',
+    shortbio: member.bio || 'Not provided',
+  };
 
   return (
     <div className="bg-gray-50 min-h-screen flex">
-      {/* Sidebar Navigation */}
       <div className="w-50">
         <div className="bg-white rounded-lg p-4">
           <div className="space-y-2">
@@ -47,7 +179,7 @@ const MemberProfile = () => {
               onClick={() => setActiveView('attendance')}
               className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${
                 activeView === 'attendance'
-                   ? 'text-white bg-[#003087]'
+                  ? 'text-white bg-[#003087]'
                   : 'text-gray-500 hover:bg-gray-50'
               }`}
             >
@@ -58,7 +190,7 @@ const MemberProfile = () => {
               onClick={() => setActiveView('progress')}
               className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${
                 activeView === 'progress'
-                ? 'text-white bg-[#003087]'
+                  ? 'text-white bg-[#003087]'
                   : 'text-gray-500 hover:bg-gray-50'
               }`}
             >
@@ -80,29 +212,28 @@ const MemberProfile = () => {
         </div>
       </div>
 
-      {/* Main Content Area */}
       <div className="flex-1">
         {activeView === 'profile' ? (
           <>
-            {/* Profile Header */}
-            <div className="bg-white p-6 shadow-sm">
+            {/* <div className="bg-white p-6 shadow-sm">
               <div className="flex items-center">
                 <div className="bg-gray-200 rounded-full h-16 w-16 flex items-center justify-center">
                   <span className="text-2xl text-gray-600">
-                    {user?.name?.charAt(0).toUpperCase() || 'U'}
+                    {member.firstName?.charAt(0).toUpperCase() || 'M'}
                   </span>
                 </div>
                 <div className="ml-4">
-                  <h2 className="text-xl font-bold text-gray-800">{user?.name || 'User'}</h2>
+                  <h2 className="text-xl font-bold text-gray-800">
+                    {member.firstName} {member.lastName}
+                  </h2>
                   <p className="text-sm text-gray-600">
-                    {user?.role ? `${user.role.charAt(0).toUpperCase()}${user.role.slice(1)}` : 'Member'}
-                    {user?.division && ` • ${user.division}`}
+                    {member.division && `${member.division} • `}
+                    {member.year || 'Member'}
                   </p>
                 </div>
               </div>
-            </div>
+            </div> */}
 
-            {/* Profile Tabs */}
             <div className="flex border-b border-gray-200 justify-around">
               <button
                 onClick={() => setActiveTab('required')}
@@ -139,23 +270,22 @@ const MemberProfile = () => {
               </button>
             </div>
 
-            {/* Profile Tab Content */}
             <div className="mt-6">
-              {activeTab === 'required' && <RequiredInfo user={user} />}
-              {activeTab === 'optional' && <OptionalInfo user={user} />}
-              {activeTab === 'resources' && <Resources user={user} />}
+              {activeTab === 'required' && <RequiredInfo member={requiredData} />}
+              {activeTab === 'optional' && <OptionalInfo member={optionalData} />}
+              {activeTab === 'resources' && <Resources />}
             </div>
           </>
         ) : activeView === 'attendance' ? (
-          <Attendance user={user} />
+          <Attendance />
         ) : activeView === 'progress' ? (
-          <Progress user={user} />
+          <Progress />
         ) : (
-          <HeadsUp user={user} />
+          <HeadsUp />
         )}
       </div>
     </div>
   );
 };
 
-export default MemberProfile;
+export default MemberProfilePage;
