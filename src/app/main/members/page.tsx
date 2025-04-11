@@ -20,10 +20,10 @@ export default function MembersPage() {
     fetchMembers();
   }, [fetchMembers]);
 
-  const handleSave = async (newMember: Omit<Member, 'id'>) => {
+  const handleSave = async (newMember: Omit<Member, '_id' | 'createdAt'>) => {
     try {
       if (editingMember) {
-        await updateMember({ ...newMember, id: editingMember.id });
+        await updateMember({ ...newMember, id: editingMember.id }, editingMember.id);
       } else {
         await addMember(newMember);
       }
