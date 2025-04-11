@@ -2,17 +2,13 @@
 'use client';
 
 import LoginForm from '@/components/form/LoginForm';
-
-import useUserStore from '@/stores/userStore';
-
+import { useUserStore } from '@/stores/userStore';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function LoginPage() {
   const router = useRouter();
-
-  const { user, login,  error } = useUserStore();
-
+  const { user, login, isLoading, error } = useUserStore();
 
   useEffect(() => {
     if (user) {
@@ -25,7 +21,6 @@ export default function LoginPage() {
       await login(values.email, values.password);
     } catch (err) {
       console.error('Login error:', err);
-      // Error is already set in the store
     }
   };
 
@@ -46,9 +41,7 @@ export default function LoginPage() {
           </div>
         )}
 
-
-        <LoginForm onSubmit={handleSubmit}  />
-
+        <LoginForm onSubmit={handleSubmit} isLoading={isLoading} />
       </div>
     </div>
   );

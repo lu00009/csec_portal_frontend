@@ -1,111 +1,36 @@
 // stores/membersStore.ts
 import { Member } from '@/types/member';
 import { create } from 'zustand';
-import useUserStore from './userStore';
+import { useUserStore } from './userStore';
 
-// Complete mock data with all required fields
-const mockMembers: Member[] = [
-  {
-    id: '1',
-    name: 'Darlene Robertson',
-    memberId: 'UGR/25605/14',
-    division: 'Design',
-    attendance: 'Needs Attention',
-    campusStatus: 'On Campus',
-    group: 'CPD',
-    email: 'darlene@example.com',
-    profilePicture: null,
-    year: '3rd',
-    role:'divisionHead'
-  },
-  {
-    id: '2',
-    name: 'Floyd Miles',
-    memberId: 'UGR/25605/15',
-    division: 'Development',
-    attendance: 'Inactive',
-    campusStatus: 'Off Campus',
-    group: 'Development Team',
-    email: 'floyd@example.com',
-    profilePicture: null,
-    year: '2nd',
-    role:'member'
-  },
-  {
-    id: '3',
-    name: 'Cody Fisher',
-    memberId: 'UGR/25605/16',
-    division: 'CPD',
-    attendance: 'Active',
-    campusStatus: 'Withdrawn',
-    group: 'CPD Team',
-    email: 'cody@example.com',
-    profilePicture: null,   
-    year: '4th',
-    role:'president'
-  },
-  {
-    id: '3',
-    name: 'Cody Fisher',
-    memberId: 'UGR/25605/16',
-    division: 'CPD',
-    attendance: 'Active',
-    campusStatus: 'Withdrawn',
-    group: 'CPD Team',
-    email: 'cody@example.com',
-    profilePicture: null,   
-    year: '4th',
-    role:'president'
-  },
-  {
-    id: '3',
-    name: 'Cody Fisher',
-    memberId: 'UGR/25605/16',
-    division: 'CPD',
-    attendance: 'Active',
-    campusStatus: 'Withdrawn',
-    group: 'CPD Team',
-    email: 'cody@example.com',
-    profilePicture: null,   
-    year: '4th',
-    role:'president'
-  },
-  {
-    id: '3',
-    name: 'Cody Fisher',
-    memberId: 'UGR/25605/16',
-    division: 'CPD',
-    attendance: 'Active',
-    campusStatus: 'Withdrawn',
-    group: 'CPD Team',
-    email: 'cody@example.com',
-    profilePicture: null,   
-    year: '4th',
-    role:'president'
-  }
-];
+const API_BASE_URL = 'https://csec-portal-backend-1.onrender.com/api';
 
 type MembersStore = {
   members: Member[];
   loading: boolean;
   error: string | null;
   fetchMembers: () => Promise<void>;
-  addMember: (member: Omit<Member, 'id'>) => Promise<Member>; // Updated return type
+  addMember: (member: Omit<Member, '_id' | 'createdAt'>) => Promise<void>;
   updateMember: (id: string, updates: Partial<Member>) => Promise<void>;
   deleteMember: (id: string) => Promise<void>;
-  getMemberById: (id: string) => Member | undefined;
 };
 
-const useMembersStore = create<MembersStore>((set, get) => ({
+const useMembersStore = create<MembersStore>((set) => ({
   members: [],
   loading: false,
   error: null,
-  
+
   fetchMembers: async () => {
     set({ loading: true, error: null });
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      set({ members: mockMembers });
+      const response = await fetch(`${API_BASE_URL}/members`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch members: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      set({ members: data });
     } catch (err) {
       set({ 
         error: err instanceof Error ? err.message : 'Failed to load members',
@@ -115,7 +40,7 @@ const useMembersStore = create<MembersStore>((set, get) => ({
       set({ loading: false });
     }
   },
-  
+
   addMember: async (newMember) => {
     const { user } = useUserStore.getState();
     
@@ -125,30 +50,31 @@ const useMembersStore = create<MembersStore>((set, get) => ({
 
     set({ loading: true });
     try {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      const addedMember: Member = {
-        ...newMember,
-        id: Math.random().toString(36).substring(2, 9),
-        memberId: `MEM-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
-        attendance: newMember.attendance || 'Active',
-        campusStatus: newMember.campusStatus || 'On Campus'
-      };
-      
-      set((state) => ({
-        members: [...state.members, addedMember],
-      }));
-      
-      return addedMember;
+      const response = await fetch(`${API_BASE_URL}/members`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify(newMember)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add member');
+      }
+
+      const addedMember = await response.json();
+      set((state) => ({ members: [...state.members, addedMember] }));
     } catch (err) {
       const error = err instanceof Error ? err.message : 'Failed to add member';
       set({ error });
-      throw new Error(error);
+      throw error;
     } finally {
       set({ loading: false });
     }
   },
-  
+
   updateMember: async (id, updates) => {
     const { user } = useUserStore.getState();
     
@@ -158,22 +84,35 @@ const useMembersStore = create<MembersStore>((set, get) => ({
 
     set({ loading: true });
     try {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
+      const response = await fetch(`${API_BASE_URL}/members/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify(updates)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update member');
+      }
+
+      const updatedMember = await response.json();
       set((state) => ({
         members: state.members.map(member => 
-          member.id === id ? { ...member, ...updates } : member
+          member._id === id ? { ...member, ...updatedMember } : member
         )
       }));
     } catch (err) {
       const error = err instanceof Error ? err.message : 'Failed to update member';
       set({ error });
-      throw new Error(error);
+      throw error;
     } finally {
       set({ loading: false });
     }
   },
-  
+
   deleteMember: async (id) => {
     const { user } = useUserStore.getState();
     
@@ -183,22 +122,28 @@ const useMembersStore = create<MembersStore>((set, get) => ({
 
     set({ loading: true });
     try {
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
+      const response = await fetch(`${API_BASE_URL}/members/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete member');
+      }
+
       set((state) => ({
-        members: state.members.filter(member => member.id !== id)
+        members: state.members.filter(member => member._id !== id)
       }));
     } catch (err) {
       const error = err instanceof Error ? err.message : 'Failed to delete member';
       set({ error });
-      throw new Error(error);
+      throw error;
     } finally {
       set({ loading: false });
     }
-  },
-  
-  getMemberById: (id) => {
-    return get().members.find(member => member.id === id);
   }
 }));
 

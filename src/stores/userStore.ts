@@ -14,93 +14,99 @@ type User = {
 
 type UserStore = {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  token: string | null;
   isLoading: boolean;
   error: string | null;
+  login: (email: string, password: string) => Promise<void>;
+  fetchUser: () => Promise<void>;
+  refreshToken: () => Promise<void>;
+  logout: () => void;
 };
 
-// Mock users database
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'President User',
-    email: 'president@example.com',
-    role: 'president',
-    token: 'mock-president-token'
-  },
-  {
-    id: '2',
-    name: 'Head of Design',
-    email: 'design-head@example.com',
-    role: 'divisionHead',
-    division: 'Design',
-    token: 'mock-head-token'
-  },
-  {
-    id: '3',
-    name: 'Regular Member',
-    email: 'member@example.com',
-    role: 'member',
-    token: 'mock-member-token'
-  },
-];
+const LOGIN_URL = process.env.NEXT_PUBLIC_LOGIN_API;
+const REFRESH_URL = process.env.NEXT_PUBLIC_REFRESH_API;
+const MEMBERS_URL = process.env.NEXT_PUBLIC_MEMBERS_API;
+
 
 const useUserStore = create<UserStore>((set) => ({
   user: null,
+  token: typeof window !== 'undefined' ? localStorage.getItem('token') : null,
   isLoading: false,
   error: null,
-  
+
   login: async (email, password) => {
     set({ isLoading: true, error: null });
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock validation - in real app, this would be an API call
-      const foundUser = mockUsers.find(user => user.email === email);
-      
-      if (!foundUser) {
-        throw new Error('User not found');
-      }
-      
-      // Mock password validation
-      if (password !== 'password123') {
-        throw new Error('Invalid password');
-      }
-      
-      set({ user: foundUser });
-      
-      // Store user in localStorage to persist across refreshes
-      localStorage.setItem('user', JSON.stringify(foundUser));
-    } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Login failed' });
-      throw err;
+      const response = await fetch(`${LOGIN_URL}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.message || 'Login failed');
+
+      const { token } = data;
+      localStorage.setItem('token', token);
+      set({ token });
+
+      await useUserStore.getState().fetchUser();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An unknown error occurred';
+      set({ error: message });
+      throw new Error(message);
     } finally {
       set({ isLoading: false });
     }
   },
-  
-  logout: () => {
-    localStorage.removeItem('user');
-    set({ user: null });
-  },
-  
-  // Initialize from localStorage if available
-  initialize: () => {
 
-    const storedUser = localStorage.getItem('user');
+  fetchUser: async () => {
+    const { token } = useUserStore.getState();
+    if (!token) return;
 
-    if (storedUser) {
-      set({ user: JSON.parse(storedUser) });
+    try {
+      console.log(token);
+      const res = await fetch(`${MEMBERS_URL}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const user = await res.json();
+
+      if (!res.ok) {
+        throw new Error(`${user.message} Failed to fetch user`);
+      }
+
+      set({ user });
+    } catch (err) {
+      console.error('Error fetching user:', err);
     }
-  }
+  },
+
+  refreshToken: async () => {
+    try {
+      const res = await fetch(`${REFRESH_URL}`, {
+        credentials: 'include', // include refresh token from cookies
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || 'Failed to refresh token');
+
+      localStorage.setItem('token', data.token);
+      set({ token: data.token });
+    } catch (err) {
+      console.error('Token refresh failed:', err);
+      useUserStore.getState().logout(); // logout on failure
+    }
+  },
+
+  logout: () => {
+    localStorage.removeItem('token');
+    set({ user: null, token: null });
+  },
 }));
 
-
-
-export default useUserStore;
+export { useUserStore };
 export type { User, UserRole };
-
-
 
