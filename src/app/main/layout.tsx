@@ -20,6 +20,7 @@ export default function MainLayout({
   useEffect(() => {
     if ( !user) {
       router.push('/main/dashboard');
+      router.refresh();
     }
   }, [user, router, isInitialized]);
 

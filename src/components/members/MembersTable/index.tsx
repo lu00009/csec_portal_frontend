@@ -11,7 +11,7 @@ interface MembersTableProps {
   error: string | null;
   canEdit: boolean;
   onEdit: (member: Member) => void;
-  onDelete: (id: string) => void;
+  onDelete: (_id: string) => void;
   onAddMember: () => void;
 }
 
@@ -27,7 +27,8 @@ export default function MembersTable({
   const router = useRouter();
 
   const handleProfileClick = (memberId: string) => {
-    router.push(`/members/${memberId}`);
+    router.push(`/main/members/${memberId}`);
+    router.refresh();
   };
 
   if (loading) return <div className="p-4 text-center">Loading members...</div>;
