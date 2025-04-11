@@ -33,7 +33,6 @@ export default function MainLayout({
 
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar - Fixed width */}
       <div className="fixed h-full w-[250px]">
         <Sidebar  />
       </div>

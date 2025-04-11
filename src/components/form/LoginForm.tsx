@@ -1,16 +1,15 @@
-// components/form/LoginForm.tsx
-'use client';
-
 import { useState } from 'react';
 
-type Props = {
+export default function LoginForm({
+  onSubmit,
+  isLoading,
+}: {
   onSubmit: (values: { email: string; password: string }) => void;
   isLoading: boolean;
-};
-
-export default function LoginForm({ onSubmit, isLoading }: Props) {
+}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,46 +19,44 @@ export default function LoginForm({ onSubmit, isLoading }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          Email
-        </label>
+        <label className="text-xs text-gray-600">Email Address</label>
         <input
-          id="email"
-          name="email"
           type="email"
-          autoComplete="email"
-          required
+          placeholder="robertallen@example.com"
+          className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none"
         />
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-          Password
-        </label>
+        <label className="text-xs text-gray-600">Password</label>
         <input
-          id="password"
-          name="password"
           type="password"
-          autoComplete="current-password"
-          required
+          placeholder="••••••••"
+          className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none"
         />
       </div>
 
-      <div>
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
-        >
-          {isLoading ? 'Logging in...' : 'Login'}
-        </button>
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          checked={rememberMe}
+          onChange={() => setRememberMe(!rememberMe)}
+          className="h-4 w-4 text-blue-600"
+        />
+        <label className="text-sm text-gray-700">Remember Me</label>
       </div>
+
+      <button
+        type="submit"
+        className="w-full bg-blue-900 text-white py-2 rounded-md hover:bg-blue-800 transition duration-300"
+        disabled={isLoading}
+      >
+        {isLoading ? 'Logging in...' : 'Login'}
+      </button>
     </form>
   );
 }

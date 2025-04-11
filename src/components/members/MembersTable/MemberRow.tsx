@@ -1,11 +1,12 @@
-'use client';
 
 import { Member } from '@/types/member';
+import { CiEdit } from 'react-icons/ci';
+import { RiDeleteBin6Line } from "react-icons/ri";
 
 interface MemberRowProps {
   member: Member;
   canEdit: boolean;
-  onProfileClick: (memberId: string) => void;
+  onProfileClick: (id: string) => void;
   onEdit: (member: Member) => void;
   onDelete: (id: string) => void;
 }
@@ -17,72 +18,76 @@ export default function MemberRow({
   onEdit,
   onDelete
 }: MemberRowProps) {
-  const fullName = `${member.firstName} ${member.middleName || ''} ${member.lastName}`.trim();
-
   return (
-    <tr className="hover:bg-gray-50">
+    <tr>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center">
-          <div className="flex-shrink-0 h-10 w-10">
-            {member.profilePicture ? (
-              <img 
-                className="h-10 w-10 rounded-full" 
-                src={member.profilePicture} 
-                alt={fullName} 
-              />
-            ) : (
-              <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                <span className="text-gray-500">
-                  {member.firstName.charAt(0).toUpperCase()}
-                </span>
-              </div>
-            )}
-          </div>
+        <button 
+  onClick={() => onProfileClick(member._id)}
+  className="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center"
+>
+  {member.profilePicture ? (
+    <img
+      src={`/uploads/${member.profilePicture}`}
+      alt={`${member.firstName ?? ''} ${member.lastName ?? ''}`}
+      width={40}
+      height={40}
+      className="object-cover rounded-full"
+    />
+  ) : (
+    <span className="text-gray-600 font-medium">
+      {member.firstName?.charAt(0) ?? '?'}
+    </span>
+  )}
+</button>
           <div className="ml-4">
             <div 
-              className="text-sm font-medium text-blue-600 hover:text-blue-800 cursor-pointer"
+              className="text-sm font-medium text-gray-900 hover:text-blue-600 cursor-pointer"
               onClick={() => onProfileClick(member._id)}
             >
-              {fullName}
+              {member.firstName} {member.lastName}
             </div>
-            <div className="text-sm text-gray-500">{member.email}</div>
           </div>
         </div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-        {member.member_id}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-        {member.division}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-          member.status === 'Active' ? 'bg-green-100 text-green-800' :
-          member.status === 'Inactive' ? 'bg-red-100 text-red-800' :
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{member.member_id}</td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{member.division}</td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-sm ${
+          member.Attendance === 'Active' ? 'bg-green-100 text-green-700' :
+          member.Attendance === 'Inactive' ? 'bg-yellow-100 text-yellow-400' :
+          member.Attendance === 'Needs Attention' ? 'bg-red-200 text-red-500' :
           'bg-yellow-100 text-yellow-800'
         }`}>
-          {member.status}
+          {member.Attendance}
         </span>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-        {member.year}
+        {member.year }
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-        {member.clubRole}
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-sm ${
+          member.status === 'Active' ? 'bg-green-100 text-green-700' :
+          member.status === 'Alumini' ? 'bg-yellow-100 text-yellow-400' :
+          member.status === 'Banned' ? 'bg-red-200 text-red-500' :
+          'bg-yellow-100 text-yellow-800'
+        }`}>
+          {member.campusStatus}
+        </span>
       </td>
       {canEdit && (
-        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+        <td className="px-6 py-4 whitespace-nowrap text-2xl font-medium">
           <button
             onClick={() => onEdit(member)}
-            className="text-indigo-600 hover:text-indigo-900 mr-4"
+            className="text-blue-600 hover:text-blue-900 mr-4"
           >
-            Edit
+            <CiEdit />
           </button>
           <button
             onClick={() => onDelete(member._id)}
             className="text-red-600 hover:text-red-900"
           >
-            Delete
+          <RiDeleteBin6Line />
           </button>
         </td>
       )}

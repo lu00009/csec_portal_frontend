@@ -1,9 +1,7 @@
-
 'use client';
 
-
-import { useUserStore } from '@/stores/userStore'; // Import your user store
-
+import { useUserStore } from '@/stores/userStore';
+import { isPresident } from '@/utils/roles'; // Import role checker
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -29,32 +27,38 @@ const navItems = [
   { name: 'Seasons & Events', href: 'events', icon: <LuClock10 className="mr-3" /> },
   { name: 'Resources', href: 'resources', icon: <IoFolderOutline className="mr-3" /> },
   { name: 'Profile', href: 'profile', icon: <HiOutlineUsers className="mr-3" /> },
-  { name: 'Administration', href: 'admin', icon: <LuSettings2 className="mr-3" />, adminOnly: true }, // Mark as admin only
+  { 
+    name: 'Administration', 
+    href: 'admin', 
+    icon: <LuSettings2 className="mr-3" />, 
+    adminOnly: true,
+    requiredRole: 'President' // Explicitly specify required role
+  },
   { name: 'Settings', href: 'settings', icon: <FiSettings className="mr-3" /> },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const [darkMode, setDarkMode] = useState(false);
-  const { user } = useUserStore(); // Get current user from store
+  const { user } = useUserStore();
 
   const toggleTheme = () => {
     setDarkMode(!darkMode);
     document.documentElement.classList.toggle('dark');
   };
 
-  // Filter nav items based on user role
+  // Filter nav items based on user role and permissions
   const filteredNavItems = navItems.filter(item => {
-    if (item.adminOnly) {
-
-      return user?.role === 'president'; // Only show admin route to presidents
+    // Handle admin-only items
+    if (item.adminOnly || item.requiredRole) {
+      // Check if user exists and has the required role
+      return user && isPresident(user.clubRole);
     }
     return true; // Show all other routes
   });
 
   return (
     <div className={`w-55 h-full flex flex-col p-4`}>
-
       <div className="flex items-center mb-8">
         <div className="flex">
           <Image className='w-7 h-10' src={logo} alt="Logoipsum" />

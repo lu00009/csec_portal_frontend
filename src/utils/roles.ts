@@ -1,10 +1,9 @@
 // utils/roles.ts
 import { UserRole } from '@/stores/userStore';
 
-// Role check utilities
-export const isPresident = (role: UserRole) => role === 'president';
-export const isDivisionHead = (role: UserRole) => role === 'divisionHead';
-export const isMember = (role: UserRole) => role === 'member';
+export const isPresident = (role: UserRole) => role === 'President' || role === 'Vice President';
+export const isDivisionHead = (role: UserRole) => role === 'CPD President' || role === 'Dev President' || role === 'CBD President' || role === 'SEC President' || role === 'DS President';
+export const isMember = (role: UserRole) => role === 'Member';
 
 // Permission utilities
 export const canViewAdminPanel = (role: UserRole) => 
@@ -25,6 +24,6 @@ export const canViewMembers = (role: UserRole) =>
 // Specific division permissions
 export const canManageDivision = (userRole: UserRole, userDivision: string, targetDivision?: string) => {
   if (isPresident(userRole)) return true;
-  if (isDivisionHead(userRole) && userDivision === targetDivision) return true;
+  if (isDivisionHead(userRole) && targetDivision && userDivision === targetDivision) return true;
   return false;
 };

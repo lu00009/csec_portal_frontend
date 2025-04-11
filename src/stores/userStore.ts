@@ -1,34 +1,24 @@
 // stores/userStore.ts
+import { Member } from '@/types/member'; // Import your types
 import { create } from 'zustand';
 
-type UserRole = 'president' | 'divisionHead' | 'member';
+ export type UserRole = 'President' | 'Vice President' | 'CPD President' | 'Dev President' | 'CBD President' | 'SEC President' | 'DS President' | 'Member';
 
-type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  division?: string;
-  token?: string;
-};
-
-type UserStore = {
-  user: User | null;
+ type UserStore = {
+  user: Member | null;
   token: string | null;
   isLoading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  fetchUser: () => Promise<void>;
+  login: (email: string, password: string) => Promise<boolean>;
+  fetchUserById: (id: string) => Promise<void>;
   refreshToken: () => Promise<void>;
   logout: () => void;
+  getRole: () => UserRole | null;
 };
 
-const LOGIN_URL = process.env.NEXT_PUBLIC_LOGIN_API;
-const REFRESH_URL = process.env.NEXT_PUBLIC_REFRESH_API;
-const MEMBERS_URL = process.env.NEXT_PUBLIC_MEMBERS_API;
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE;
 
-
-const useUserStore = create<UserStore>((set) => ({
+const useUserStore = create<UserStore>((set, get) => ({
   user: null,
   token: typeof window !== 'undefined' ? localStorage.getItem('token') : null,
   isLoading: false,
@@ -37,67 +27,100 @@ const useUserStore = create<UserStore>((set) => ({
   login: async (email, password) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch(`${LOGIN_URL}`, {
+      const response = await fetch(`${BASE_URL}/members/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-
+  
       const data = await response.json();
-
+      console.log('Login response:', data); // Debug log
+  
       if (!response.ok) throw new Error(data.message || 'Login failed');
-
-      const { token } = data;
-      localStorage.setItem('token', token);
-      set({ token });
-
-      await useUserStore.getState().fetchUser();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'An unknown error occurred';
+  
+      // Store the token
+      localStorage.setItem('token', data.token);
+      
+      // Decode the token to get user ID
+      const payload = JSON.parse(atob(data.token.split('.')[1]));
+      console.log('Token payload:', payload); // Debug log
+      
+      // Fetch complete user data using the ID from token
+      const userResponse = await fetch(`${BASE_URL}/members/${payload.id}`, {
+        headers: { Authorization: `Bearer ${data.token}` },
+      });
+      
+      if (!userResponse.ok) throw new Error('Failed to fetch user data');
+      
+      const userData = await userResponse.json();
+      console.log('User data:', userData); // Debug log
+      
+      // Update Zustand state with both token and user data
+      set({ 
+        token: data.token,
+        user: userData,
+        error: null
+      });
+      
+      return true;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Login failed';
       set({ error: message });
-      throw new Error(message);
+      return false;
     } finally {
       set({ isLoading: false });
     }
   },
 
-  fetchUser: async () => {
-    const { token } = useUserStore.getState();
+  fetchUserById: async (id: string) => {
+    const { token } = get();
     if (!token) return;
 
+    set({ isLoading: true });
     try {
-      console.log(token);
-      const res = await fetch(`${MEMBERS_URL}`, {
+      const res = await fetch(`${BASE_URL}/members/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const user = await res.json();
-
       if (!res.ok) {
-        throw new Error(`${user.message} Failed to fetch user`);
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to fetch user');
       }
 
-      set({ user });
+      const userData: Member = await res.json();
+      set({ user: userData });
     } catch (err) {
       console.error('Error fetching user:', err);
+      if (err instanceof Error) {
+        set({ error: err.message });
+      }
+      get().logout();
+    } finally {
+      set({ isLoading: false });
     }
   },
 
   refreshToken: async () => {
     try {
-      const res = await fetch(`${REFRESH_URL}`, {
-        credentials: 'include', // include refresh token from cookies
+      const res = await fetch(`${BASE_URL}/members/refresh`, {
+        credentials: 'include',
       });
-
+  
       const data = await res.json();
-
+  
       if (!res.ok) throw new Error(data.message || 'Failed to refresh token');
-
+  
       localStorage.setItem('token', data.token);
       set({ token: data.token });
+  
+      // Safely handle user refetch
+      const currentState = get();
+      if (currentState.user && currentState.user._id) {
+        await currentState.fetchUserById(currentState.user._id);
+      }
     } catch (err) {
       console.error('Token refresh failed:', err);
-      useUserStore.getState().logout(); // logout on failure
+      get().logout();
     }
   },
 
@@ -105,8 +128,15 @@ const useUserStore = create<UserStore>((set) => ({
     localStorage.removeItem('token');
     set({ user: null, token: null });
   },
+
+  getRole: () => {
+    return get().user?.clubRole || null;
+  },
+
+  getDivision: () => {
+    return get().user?.division || null;
+  }
 }));
 
 export { useUserStore };
-export type { User, UserRole };
 
