@@ -1,55 +1,69 @@
 // app/(main)/layout.tsx
 'use client';
-
+import LoadingSpinner from '@/components/LoadingSpinner';
 import Sidebar from '@/components/layouts/Sidebar';
 import TopHeader from '@/components/layouts/TopHeader';
-import useUserStore from '@/stores/userStore';
+import { useUserStore } from '@/stores/userStore';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-
 
 export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user} = useUserStore();
   const router = useRouter();
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const {
+    user,
+    isInitialized,
+    isAuthenticated,
+    isLoading,
+    initialize
+  } = useUserStore();
 
   useEffect(() => {
-    if ( !user) {
-      router.push('/login');
+    if (!isInitialized) {
+      initialize().finally(() => setIsCheckingAuth(false));
+    } else {
+      setIsCheckingAuth(false);
     }
-  }, [user, router, isInitialized]);
+  }, [isInitialized, initialize]);
 
-  if ( !user) {
+  useEffect(() => {
+    if (!isCheckingAuth && !isLoading && !isAuthenticated()) {
+      router.push('/auth/login');
+    }
+  }, [isCheckingAuth, isLoading, isAuthenticated, router]);
+
+  if (isCheckingAuth || (!isInitialized && isLoading)) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p>Loading...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <LoadingSpinner />
+        <p className="mt-4 text-gray-500">Initializing application...</p>
       </div>
     );
   }
 
-  return (
-    <div className="flex min-h-screen">
-      {/* Sidebar - Fixed width */}
-      <div className="fixed h-full w-[250px]">
-        <Sidebar role={user.role} />
-      </div>
-      
-      {/* Main content area */}
-      <div className="flex-1 ml-[250px]">
-        {/* Top Header - Sticky positioned */}
-        <div className="sticky top-0 z-10">
-          <TopHeader />
+  if (isAuthenticated() && user) {
+    return (
+      <div className="flex min-h-screen">
+        <div className="fixed h-full w-[250px]">
+          <Sidebar user={user} />
         </div>
         
-        {/* Page content */}
-        <main className="p-6">
-          {children}
-        </main>
+        <div className="flex-1 ml-[250px]">
+          <div className="sticky top-0 z-10">
+            <TopHeader user={user} />
+          </div>
+          
+          <main className="p-6">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return null;
 }

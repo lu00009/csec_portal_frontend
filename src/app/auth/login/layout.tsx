@@ -1,12 +1,13 @@
-// app/(auth)/layout.tsx
-export default function AuthLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+// app/layout.tsx
+import { Toaster } from 'react-hot-toast';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {children}
-    </div>
+    <html lang="en">
+      <body>
+        <Toaster position="top-center" />
+        {children}
+      </body>
+    </html>
   );
 }

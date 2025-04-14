@@ -1,74 +1,70 @@
 'use client';
 
+import EditMemberForm from '@/components/form/EditForm';
 import MemberForm from '@/components/form/MemberForm';
-import MembersTable from '@/components/members/MembersTable';
-import { divisions, groups } from '@/data/divisionsAndGroups';
+import MembersTable from '@/components/members/MembersTable'; // adjust import path if needed
 import useMembersStore from '@/stores/membersStore';
-import useUserStore from '@/stores/userStore';
 import { Member } from '@/types/member';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 export default function MembersPage() {
-  const { members, loading, error, fetchMembers, addMember, updateMember, deleteMember } = useMembersStore();
-  const { user } = useUserStore();
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const members = useMembersStore((state) => state.members);
+  const loading = useMembersStore((state) => state.loading);
+  const error = useMembersStore((state) => state.error);
+  const fetchMembers = useMembersStore((state) => state.fetchMembers);
+  const canAddMember = useMembersStore((state) => state.canAddMember);
 
-  const canEdit = ['president', 'divisionHead'].includes(user?.role || '');
-
-  useEffect(() => {
-    fetchMembers();
-  }, [fetchMembers]);
-
-  const handleSave = async (newMember: Omit<Member, 'id'>) => {
-    try {
-      if (editingMember) {
-        await updateMember({ ...newMember, id: editingMember.id });
-      } else {
-        await addMember(newMember);
-      }
-      setIsFormOpen(false);
-      setEditingMember(null);
-    } catch (err) {
-      console.error('Failed to save member:', err);
-    }
+  // Edit/Delete/Add actions
+  const onEdit = (member: Member) => {
+    console.log('Edit:', member);
+    <EditMemberForm
+      member={member}
+      onSave={async (updatedMember) => {
+        console.log('Save:', updatedMember);
+        return Promise.resolve();
+      }}
+      onClose={() => console.log('Close form')}
+      divisions={[]} 
+      groups={[]} 
+    />;
+   
+    
   };
 
-  return (
-    <>
-      <MembersTable
-        members={members}
-        loading={loading}
-        error={error}
-        canEdit={canEdit}
-        onEdit={(member) => {
-          setEditingMember(member);
-          setIsFormOpen(true);
-        }}
-        onDelete={deleteMember}
-        onAddMember={() => {
-          setEditingMember(null);
-          setIsFormOpen(true);
-        }}
-      />
+  const onDelete = (id: string) => {
+    console.log('Delete:', id);
+    // TODO: Implement delete logic
+  };
 
-      {isFormOpen && (
-        <MemberForm
-          onSave={handleSave}
-          onClose={() => {
-            setIsFormOpen(false);
-            setEditingMember(null);
-          }}
-          divisions={divisions}
-          groups={groups}
-          initialData={editingMember ? {
-            email: editingMember.email,
-            division: editingMember.division,
-            group: editingMember.group,
-            password: ''
-          } : undefined}
-        />
-      )}
-    </>
+  const onAddMember = () => {
+    console.log('Add member clicked');
+    <MemberForm
+      onSave={async (newMember) => {
+        console.log('Save:', newMember);
+        return Promise.resolve();
+      }}
+      onClose={() => console.log('Close form')}
+      divisions={[]} 
+      groups={[]}
+    />
+  };
+
+  useEffect(() => {
+    if (members.length === 0 && !loading) {
+      fetchMembers();
+    }
+  }, [members, loading, fetchMembers]);
+  
+
+  return (
+    <MembersTable
+      members={members}
+      loading={loading}
+      error={error}
+      canEdit={canAddMember()}
+      onEdit={onEdit}
+      onDelete={onDelete}
+      onAddMember={onAddMember}
+    />
   );
 }

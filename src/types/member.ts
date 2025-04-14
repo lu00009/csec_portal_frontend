@@ -1,23 +1,26 @@
-// types/member.tse
-type AttendanceStatus = 'Active' | 'Inactive' | 'Needs Attention';
-type CampusStatus = 'On Campus' | 'Off Campus' | 'Withdrawn';
-type role = 'president' | 'divisionHead' | 'member';
+import { UserRole } from "@/stores/userStore";
 
+// types/member.ts
 export interface Member {
-  id: string;
-  name: string;
-  memberId: string;
-  division: string;
-  attendance: AttendanceStatus;
-  year?: string;
-  group: string;
-  email: string;
-  password?: string;
-  campusStatus: CampusStatus;
-  profilePicture?: string | null;
-  role:role;
-
-   
-}
-export type { AttendanceStatus, CampusStatus, role };
-
+    
+    _id: string;
+    member_id: string;
+    firstName: string;
+    middleName?: string;
+    lastName: string;
+    email: string;
+    telegramUsername?: string;
+    phoneNumber?: string;
+    year: string;
+    profilePicture: string;
+    clubRole: UserRole;
+    division: string;
+    divisionRole?: string;
+    status: string; // Adjust based on possible values
+    createdAt?: string;
+    Attendance?: string;
+    campusStatus?: string;
+    token?: string;
+    refreshToken?: string;
+  
+  }
