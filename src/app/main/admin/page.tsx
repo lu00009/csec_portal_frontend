@@ -1,7 +1,9 @@
-export default function Administration() {
-  return (
-   <div className="bg-gray-50 min-h-screen flex">
-     <div className="ml-[0px] w-[250px] fixed h-full bg-gray-200">
-        <h3 className="text-2xl font-bold mb-6">Admin</h3>
-        </div>
-        </div>)}
+// app/admin/page.tsx
+'use client';
+
+import { redirect } from 'next/navigation';
+
+export default function AdminPage() {
+  // By default, redirect to heads management
+  redirect('/main/admin/heads');
+}

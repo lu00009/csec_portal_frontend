@@ -1,42 +1,65 @@
 // utils/authFetch.ts
 import { useUserStore } from '@/stores/userStore';
 
-export const authFetch = async (url: string, options: RequestInit = {}) => {
+export const authFetch = async <T = any>(
+  url: string, 
+  options: AuthFetchOptions = {}
+): Promise<T> => {
   const store = useUserStore.getState();
 
-  let token = store.token;
+  const executeRequest = async (): Promise<Response> => {
+    const { refreshToken } = store;
+    
+    // Validate token exists before using
+    if (!refreshToken) {
+      store.logout();
+      throw new Error('No authentication token available');
+    }
 
-  const fetchWithToken = async (attemptRefresh = true): Promise<Response> => {
     const headers = {
       ...options.headers,
-      Authorization: `Bearer ${token}`,
+      'Authorization': `Bearer ${refreshToken}`,
       'Content-Type': 'application/json',
     };
 
-    const res = await fetch(url, {
-      ...options,
-      headers,
+    const response = await fetch(url, { 
+      ...options, 
+      headers 
     });
 
-    if (res.status === 401 && attemptRefresh) {
+    if (response.status === 401 && options.attemptRefresh !== false) {
       try {
-        await store.refreshToken();
-        token = useUserStore.getState().token;
-        return fetchWithToken(false); // retry once
-      } catch {
+        await store.refreshSession();
+        return executeRequest(); // Retry with new token
+      } catch (refreshError) {
+        store.logout();
         throw new Error('Session expired. Please log in again.');
       }
     }
 
-    return res;
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `Request failed with status ${response.status}`);
+    }
+
+    return response;
   };
 
-  const response = await fetchWithToken();
+  try {
+    // Check authentication first
+    if (!store.isAuthenticated()) {
+      throw new Error('Not authenticated');
+    }
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Fetch failed');
+    // Check roles if specified
+    if (options.requiredRoles && !store.hasAnyRole(options.requiredRoles)) {
+      throw new Error('Unauthorized: Insufficient permissions');
+    }
+
+    const response = await executeRequest();
+    return response.json() as Promise<T>;
+  } catch (error) {
+    console.error('Auth fetch error:', error);
+    throw error;
   }
-
-  return response.json();
 };

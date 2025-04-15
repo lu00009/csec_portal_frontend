@@ -1,4 +1,3 @@
-// stores/membersStore.ts
 import { Member } from '@/types/member';
 import {
   canAddMembers,
@@ -14,23 +13,27 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_BASE;
 
 interface MembersState {
   members: Member[];
+  heads: Member[];
   loading: boolean;
   error: string | null;
   fetchMembers: () => Promise<void>;
+  fetchHeads: () => Promise<void>;
   addMember: (member: Omit<Member, '_id' | 'createdAt'>) => Promise<void>;
   updateMember: (id: string, updates: Partial<Member>) => Promise<void>;
   deleteMember: (id: string) => Promise<void>;
   canAddMember: () => boolean;
   canEditMember: (targetDivision?: string) => boolean;
   canDeleteMember: () => boolean;
+  deleteHead: (id: string) => Promise<void>;
+  resetError: () => void;
 }
 
 const useMembersStore = create<MembersState>((set, get) => ({
   members: [],
+  heads: [],
   loading: false,
   error: null,
 
-  // Permission checkers
   canAddMember: () => {
     const { user } = useUserStore.getState();
     return user ? canAddMembers(user.clubRole) : false;
@@ -52,29 +55,93 @@ const useMembersStore = create<MembersState>((set, get) => ({
   fetchMembers: async () => {
     set({ loading: true, error: null });
     try {
-      const { user } = useUserStore.getState();
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
+      const store = useUserStore.getState();
+      if (!store.refreshToken) throw new Error('Not authenticated');
+
+      const makeRequest = async (attemptRefresh = true): Promise<Response> => {
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${store.refreshToken}`
+        };
+
+        const response = await fetch(`${BASE_URL}/members`, { headers });
+
+        if (response.status === 401 && attemptRefresh) {
+          try {
+            await store.refreshToken();
+            return makeRequest(false); // Retry once with new token
+          } catch (refreshError) {
+            throw new Error('Session expired. Please log in again.');
+          }
+        }
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `Failed with status ${response.status}`);
+        }
+
+        return response;
       };
 
-      if (user?.token) {
-        headers['Authorization'] = `Bearer ${user.token}`;
-      }
-
-      const response = await fetch(`${BASE_URL}/members`, { headers });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch members: ${response.statusText}`);
-      }
-
+      const response = await makeRequest();
       const data = await response.json();
       set({ members: data, loading: false });
     } catch (err) {
       set({ 
         error: err instanceof Error ? err.message : 'Failed to load members',
-        members: [],
         loading: false
       });
+      throw err;
+    }
+  },
+  fetchHeads: async () => {
+    set({ loading: true, error: null });
+    try {
+      const store = useUserStore.getState();
+      if (!store.refreshToken) throw new Error('Not authenticated');
+
+      const makeRequest = async (attemptRefresh = true): Promise<Response> => {
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${store.refreshToken}`
+        };
+
+        const response = await fetch(`${BASE_URL}/members`, { headers });
+
+        if (response.status === 401 && attemptRefresh) {
+          try {
+            await store.refreshToken();
+            return makeRequest(false); // Retry once with new token
+          } catch (refreshError) {
+            throw new Error('Session expired. Please log in again.');
+          }
+        }
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `Failed with status ${response.status}`);
+        }
+
+        return response;
+      };
+
+      const response = await makeRequest();
+      const data = await response.json();
+      
+      // Filter heads client-side if no dedicated endpoint
+      const heads = data.filter((member: Member) => 
+        ['Vice President', 'CPD President', 'Dev President', 
+         'CBD President', 'SEC President', 'DS President']
+        .includes(member.clubRole)
+      );
+      
+      set({ heads, loading: false });
+    } catch (err) {
+      set({ 
+        error: err instanceof Error ? err.message : 'Failed to load heads',
+        loading: false
+      });
+      throw err;
     }
   },
 
@@ -91,19 +158,23 @@ const useMembersStore = create<MembersState>((set, get) => ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.token}`
+          'Authorization': `Bearer ${user.refreshToken}`
         },
         body: JSON.stringify(newMember)
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || 'Failed to add member');
       }
 
       const addedMember = await response.json();
       set((state) => ({ 
         members: [...state.members, addedMember],
+        heads: isPresident(addedMember.clubRole) || 
+               addedMember.clubRole.includes('President') 
+          ? [...state.heads, addedMember] 
+          : state.heads,
         loading: false 
       }));
     } catch (err) {
@@ -127,13 +198,13 @@ const useMembersStore = create<MembersState>((set, get) => ({
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.token}`
+          'Authorization': `Bearer ${user.refreshToken}`
         },
         body: JSON.stringify(updates)
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || 'Failed to update member');
       }
 
@@ -141,6 +212,9 @@ const useMembersStore = create<MembersState>((set, get) => ({
       set((state) => ({
         members: state.members.map(member => 
           member._id === id ? { ...member, ...updatedMember } : member
+        ),
+        heads: state.heads.map(head => 
+          head._id === id ? { ...head, ...updatedMember } : head
         ),
         loading: false
       }));
@@ -163,17 +237,18 @@ const useMembersStore = create<MembersState>((set, get) => ({
       const response = await fetch(`${BASE_URL}/members/${id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${user.token}`
+          'Authorization': `Bearer ${user.refreshToken}`
         }
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || 'Failed to delete member');
       }
 
       set((state) => ({
         members: state.members.filter(member => member._id !== id),
+        heads: state.heads.filter(head => head._id !== id),
         loading: false
       }));
     } catch (err) {
@@ -181,7 +256,38 @@ const useMembersStore = create<MembersState>((set, get) => ({
       set({ error, loading: false });
       throw error;
     }
-  }
+  },
+
+  deleteHead: async (id) => {
+    const { user } = useUserStore.getState();
+    if (!user) throw new Error('Not authenticated');
+    
+    set({ loading: true });
+    try {
+      const response = await fetch(`${BASE_URL}/members/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${user.refreshToken}`
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to delete head');
+      }
+      
+      set((state) => ({
+        heads: state.heads.filter(head => head._id !== id),
+        members: state.members.filter(member => member._id !== id),
+        loading: false
+      }));
+    } catch (err) {
+      const error = err instanceof Error ? err.message : 'Failed to delete head';
+      set({ error, loading: false });
+      throw error;
+    }
+  },
+  resetError: () => set({ error: null })
 }));
 
 export default useMembersStore;

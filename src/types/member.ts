@@ -2,6 +2,7 @@ import { UserRole } from "@/stores/userStore";
 
 // types/member.ts
 export interface Member {
+    
     _id: string;
     member_id: string;
     firstName: string;
@@ -20,4 +21,6 @@ export interface Member {
     Attendance?: string;
     campusStatus?: string;
     token?: string;
+    refreshToken?: string;
+  
   }

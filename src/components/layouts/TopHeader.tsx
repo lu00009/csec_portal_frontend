@@ -1,5 +1,6 @@
 'use client';
 
+import { useUserStore } from '@/stores/userStore'; // 👈 import the user store
 import { usePathname, useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { FaUserCircle } from 'react-icons/fa';
@@ -9,18 +10,23 @@ const TopHeader: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const router = useRouter();
   const pathname = usePathname();
+  const { user, logout } = useUserStore(); // 👈 use user from store
 
   const handleNavigation = (path: string) => {
     setIsDropdownOpen(false);
     router.push(path);
   };
 
-  // Get the current page title based on the path
+  const handleLogout = () => {
+    logout();
+    router.push('/auth/login');
+  };
+
   const getPageTitle = () => {
     const pathSegments = pathname.split('/');
     const lastSegment = pathSegments[pathSegments.length - 1];
-    
-    switch(lastSegment) {
+
+    switch (lastSegment) {
       case 'members':
         return 'All Members';
       case 'divisions':
@@ -38,7 +44,7 @@ const TopHeader: React.FC = () => {
       case 'settings':
         return 'Settings';
       default:
-        return 'Henok'; // Default name
+        return user?.firstName || 'Dashboard';
     }
   };
 
@@ -68,10 +74,10 @@ const TopHeader: React.FC = () => {
               <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500"></span>
             </button>
           </div>
-          
+
           {/* Right - Profile with Dropdown */}
-          <div className="relative flex">
-            <button 
+          <div className="relative flex ml-4">
+            <button
               className="flex items-center gap-2"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             >
@@ -79,8 +85,8 @@ const TopHeader: React.FC = () => {
               <div className="text-left">
                 <div className="flex items-center">
                   <div>
-                    <p className="text-sm font-semibold text-gray-800">Henok Assefa</p>
-                    <p className="text-xs text-gray-500">WAYON RESERVER</p>
+                    <p className="text-sm font-semibold text-gray-800">{user?.firstName || 'User'}</p>
+                    <p className="text-xs text-gray-500">{user?.clubRole?.toUpperCase() || 'MEMBER'}</p>
                   </div>
                   <FiChevronDown className={`h-4 w-4 ml-1 text-gray-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                 </div>
@@ -89,20 +95,20 @@ const TopHeader: React.FC = () => {
 
             {isDropdownOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 border border-gray-100 z-10">
-                <button 
-                  onClick={() => handleNavigation('profile')}
+                <button
+                  onClick={() => handleNavigation('/main/profile')}
                   className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
                   Profile
                 </button>
-                <button 
-                  onClick={() => handleNavigation('settings')}
+                <button
+                  onClick={() => handleNavigation('/main/settings')}
                   className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
                   Settings
                 </button>
-                <button 
-                  onClick={() => handleNavigation('/auth/login')}
+                <button
+                  onClick={handleLogout}
                   className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-red-200"
                 >
                   Sign out
