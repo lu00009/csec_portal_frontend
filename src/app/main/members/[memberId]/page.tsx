@@ -121,7 +121,7 @@ const MemberProfilePage = ({ params }: { params: { memberId: string } }) => {
         </div>
       </div>
     );
-  }
+  } 
 
   const requiredData = {
     firstName: member.firstName || 'Not provided',
