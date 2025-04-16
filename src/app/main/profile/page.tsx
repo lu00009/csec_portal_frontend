@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 'use client';
 import Attendance from '@/components/profile/attendance';
 import HeadsUp from '@/components/profile/headsup';
@@ -8,6 +7,7 @@ import RequiredInfo from '@/components/profile/requiredinfo';
 import Resources from '@/components/profile/resources';
 import { useUserStore } from '@/stores/userStore';
 import { useEffect, useState } from 'react';
+import ProfileHeader from '@/components/profile/header';
 import {
   FiUser as FiProfile,
   FiInfo as FiRequired,
@@ -31,7 +31,14 @@ const UserProfile = () => {
 
 
   return (
-    <div className="bg-gray-50 min-h-screen flex">
+    <>
+  <ProfileHeader
+  fullName={`${user?.firstName ?? ''} ${user?.lastName ?? ''}`}
+  role={user?.division ?? 'User'}
+  lastSeen="Online"
+/>
+
+     <div className="bg-gray-50 min-h-screen flex">
       {/* Sidebar Navigation */}
       <div className="w-50">
         <div className="bg-white rounded-lg p-4">
@@ -158,17 +165,9 @@ const UserProfile = () => {
           <HeadsUp user={user} />
         )} 
       </div>
-    </div>
+    </div></>
+   
   );
 };
 
 export default UserProfile;
-=======
-export default function Settings() {
-  return (
-   <div className="bg-gray-50 min-h-screen flex">
-     <div className="ml-[0px] w-[250px] fixed h-full bg-gray-200">
-        <h3 className="text-2xl font-bold mb-6">Profile</h3>
-        </div>
-        </div>)}
->>>>>>> 361c3ea4a88d8dd1efa421609c49c0968798c9da

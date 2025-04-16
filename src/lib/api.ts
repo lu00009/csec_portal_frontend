@@ -3,8 +3,8 @@ export async function fetchMemberById(id: string) {
   if (!id || id === 'undefined') {
     throw new Error('Invalid member ID');
   }
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE;
-  const res = await fetch(`${API_BASE_URL}/members/${id}`, {
+
+  const res = await fetch(`https://csec-portal-backend-1.onrender.com/api/members/${id}`, {
     cache: 'no-store',
     headers: {
       'Content-Type': 'application/json'

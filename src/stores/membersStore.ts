@@ -26,6 +26,7 @@ interface MembersState {
   canDeleteMember: () => boolean;
   deleteHead: (id: string) => Promise<void>;
   resetError: () => void;
+  
 }
 
 const useMembersStore = create<MembersState>((set, get) => ({
@@ -66,9 +67,10 @@ const useMembersStore = create<MembersState>((set, get) => ({
 
         const response = await fetch(`${BASE_URL}/members`, { headers });
 
+
         if (response.status === 401 && attemptRefresh) {
           try {
-            await store.refreshToken();
+            await store.refreshSession();
             return makeRequest(false); // Retry once with new token
           } catch (refreshError) {
             throw new Error('Session expired. Please log in again.');
@@ -85,7 +87,7 @@ const useMembersStore = create<MembersState>((set, get) => ({
 
       const response = await makeRequest();
       const data = await response.json();
-      set({ members: data, loading: false });
+      set({ members: data.members, loading: false });
     } catch (err) {
       set({ 
         error: err instanceof Error ? err.message : 'Failed to load members',
@@ -110,7 +112,7 @@ const useMembersStore = create<MembersState>((set, get) => ({
 
         if (response.status === 401 && attemptRefresh) {
           try {
-            await store.refreshToken();
+            await store.refreshSession();
             return makeRequest(false); // Retry once with new token
           } catch (refreshError) {
             throw new Error('Session expired. Please log in again.');
@@ -127,6 +129,7 @@ const useMembersStore = create<MembersState>((set, get) => ({
 
       const response = await makeRequest();
       const data = await response.json();
+      console.log('Heads data:', data); // Debugging line
       
       // Filter heads client-side if no dedicated endpoint
       const heads = data.filter((member: Member) => 
