@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 'use client';
 import Attendance from '@/components/profile/attendance';
 import HeadsUp from '@/components/profile/headsup';
@@ -162,3 +163,12 @@ const UserProfile = () => {
 };
 
 export default UserProfile;
+=======
+export default function Settings() {
+  return (
+   <div className="bg-gray-50 min-h-screen flex">
+     <div className="ml-[0px] w-[250px] fixed h-full bg-gray-200">
+        <h3 className="text-2xl font-bold mb-6">Profile</h3>
+        </div>
+        </div>)}
+>>>>>>> 361c3ea4a88d8dd1efa421609c49c0968798c9da
