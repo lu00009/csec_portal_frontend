@@ -18,7 +18,7 @@ export default function DivisionsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE;
   useEffect(() => {
     const fetchDivisions = async () => {
       try {
