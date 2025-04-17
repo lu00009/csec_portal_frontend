@@ -111,7 +111,8 @@ const useUserStore = create<UserStore>((set, get) => ({
     try {
       const response = await fetch(`${BASE_URL}/members/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json'
+         },
         body: JSON.stringify({ email, password }),
       });
 
@@ -155,25 +156,37 @@ const useUserStore = create<UserStore>((set, get) => ({
   refreshSession: async () => {
     const { refreshToken } = get();
     if (!refreshToken) throw new Error('No refresh token available');
-
+  
     try {
       const response = await fetch(`${BASE_URL}/members/refresh`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${refreshToken}`
-        }
+          'Authorization': `Bearer ${refreshToken}`,
+        },
       });
-
+  
       if (!response.ok) {
         throw new Error('Failed to refresh session');
       }
-
+  
       const { refreshToken: newRefreshToken } = await response.json();
       localStorage.setItem('refreshToken', newRefreshToken);
       set({ refreshToken: newRefreshToken });
-      
-      // Fetch user data with the new token
+  
+      console.log('new refresh token:', newRefreshToken);
+  
+      // Check if the token is Base64 encoded and valid
+      const isBase64 = (str: string) => {
+        const base64Pattern = /^[A-Za-z0-9+/=]+$/;
+        return base64Pattern.test(str) && str.length % 4 === 0;
+      };
+  
+      if (!newRefreshToken || !isBase64(newRefreshToken)) {
+        console.error('Invalid refresh token format or token is empty:', newRefreshToken);
+        return;
+      }
+  
       const payload = JSON.parse(atob(newRefreshToken));
       const userId = payload.id;
       const user = await get().fetchUserById(userId);
@@ -185,6 +198,7 @@ const useUserStore = create<UserStore>((set, get) => ({
       throw error;
     }
   },
+  
 
   // Fetch user by ID
   fetchUserById: async (id) => {

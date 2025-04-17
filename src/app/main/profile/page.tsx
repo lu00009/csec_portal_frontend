@@ -7,6 +7,7 @@ import RequiredInfo from '@/components/profile/requiredinfo';
 import Resources from '@/components/profile/resources';
 import { useUserStore } from '@/stores/userStore';
 import { useEffect, useState } from 'react';
+import ProfileHeader from '@/components/profile/header';
 import {
   FiUser as FiProfile,
   FiInfo as FiRequired,
@@ -30,7 +31,14 @@ const UserProfile = () => {
 
 
   return (
-    <div className="bg-gray-50 min-h-screen flex">
+    <>
+  <ProfileHeader
+  fullName={`${user?.firstName ?? ''} ${user?.lastName ?? ''}`}
+  role={user?.division ?? 'User'}
+  lastSeen="Online"
+/>
+
+     <div className="bg-gray-50 min-h-screen flex">
       {/* Sidebar Navigation */}
       <div className="w-50">
         <div className="bg-white rounded-lg p-4">
@@ -157,7 +165,8 @@ const UserProfile = () => {
           <HeadsUp user={user} />
         )} 
       </div>
-    </div>
+    </div></>
+   
   );
 };
 

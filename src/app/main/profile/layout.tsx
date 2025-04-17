@@ -1,5 +1,4 @@
 // app/(auth)/layout.tsx
-import ProfileHeader from '@/components/profile/header';
 export default function ProfileLayout({
   children,
 }: {
@@ -7,7 +6,7 @@ export default function ProfileLayout({
 }) {
   return (
     <div className="min-h-screen bg-gray-50">
-  <ProfileHeader/>
+  
 <div className='flex gap-2'>
   <div>      {children}
   </div></div> 

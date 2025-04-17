@@ -1,15 +1,16 @@
 // app/members/[memberId]/page.tsx
 'use client';
-
+import React from 'react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Attendance from '@/components/profile/attendance';
+import ProfileHeader from '@/components/profile/header';
 import HeadsUp from '@/components/profile/headsup';
 import OptionalInfo from '@/components/profile/optionalinfo';
 import Progress from '@/components/profile/progress';
 import RequiredInfo from '@/components/profile/requiredinfo';
 import Resources from '@/components/profile/resources';
 import { useUserStore } from '@/stores/userStore';
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import {
   FiUser as FiProfile,
   FiInfo as FiRequired,
@@ -40,7 +41,14 @@ interface Member {
   gender?: string;
 }
 
-const MemberProfilePage = ({ params }: { params: { memberId: string } }) => {
+
+type PageParams = {
+  memberId: string;
+};
+
+const MemberProfilePage = ({ params }: { params: PageParams }) => {
+  const { memberId } = React.use(params);
+  
   const [activeView, setActiveView] = useState<'profile' | 'attendance' | 'progress' | 'headsup'>('profile');
   const [activeTab, setActiveTab] = useState<'required' | 'optional' | 'resources'>('required');
   const [member, setMember] = useState<Member | null>(null);
@@ -48,17 +56,17 @@ const MemberProfilePage = ({ params }: { params: { memberId: string } }) => {
   const [error, setError] = useState<string | null>(null);
   const { user } = useUserStore();
 
-  const API_BASE_URL = 'https://csec-portal-backend-1.onrender.com/api';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE;
 
   useEffect(() => {
     const fetchMemberData = async () => {
       try {
-        if (!params.memberId || params.memberId === 'undefined') {
+        if (!memberId || memberId === 'undefined') {
           throw new Error('Invalid member ID');
         }
 
         setLoading(true);
-        const res = await fetch(`${API_BASE_URL}/members/${params.memberId}`, {
+        const res = await fetch(`${API_BASE_URL}/members/${memberId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -81,14 +89,12 @@ const MemberProfilePage = ({ params }: { params: { memberId: string } }) => {
     };
 
     fetchMemberData();
-  }, [params.memberId, user?.refreshToken]);
+  }, [memberId, user?.refreshToken]);
 
-  console.log('refreshh token:', user?.refreshToken);
+  console.log('refresh token:', user?.refreshToken);
 
   if (loading) {
-    return (
-<LoadingSpinner/>
-    );
+    return <LoadingSpinner />;
   }
 
   if (error) {
@@ -100,8 +106,8 @@ const MemberProfilePage = ({ params }: { params: { memberId: string } }) => {
             <h2 className="text-xl font-semibold text-red-600">Error Loading Profile</h2>
             <p className="mt-2 text-gray-600">{error}</p>
             <div className="mt-4 p-3 bg-gray-100 rounded text-sm">
-              <p>Member ID attempted: {params.memberId}</p>
-              <p>Endpoint: {`${API_BASE_URL}/members/${params.memberId}`}</p>
+              <p>Member ID attempted: {memberId}</p>
+              <p>Endpoint: {`${API_BASE_URL}/members/${memberId}`}</p>
             </div>
           </div>
         </div>
@@ -149,112 +155,119 @@ const MemberProfilePage = ({ params }: { params: { memberId: string } }) => {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen flex">
-      <div className="w-50">
-        <div className="bg-white rounded-lg p-4">
-          <div className="space-y-2">
-            <button
-              onClick={() => setActiveView('profile')}
-              className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${
-                activeView === 'profile'
-                  ? 'text-white bg-[#003087]'
-                  : 'text-gray-500 hover:bg-gray-50'
-              }`}
-            >
-              <FiProfile className="mr-2" />
-              Profile
-            </button>
-            <button
-              onClick={() => setActiveView('attendance')}
-              className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${
-                activeView === 'attendance'
-                  ? 'text-white bg-[#003087]'
-                  : 'text-gray-500 hover:bg-gray-50'
-              }`}
-            >
-              <MdEventAvailable className="mr-2" />
-              Attendance
-            </button>
-            <button
-              onClick={() => setActiveView('progress')}
-              className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${
-                activeView === 'progress'
-                  ? 'text-white bg-[#003087]'
-                  : 'text-gray-500 hover:bg-gray-50'
-              }`}
-            >
-              <HiOutlineDocumentText className="mr-2" />
-              Progress
-            </button>
-            <button
-              onClick={() => setActiveView('headsup')}
-              className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${
-                activeView === 'headsup'
-                  ? 'text-white bg-[#003087] font-bold'
-                  : 'text-gray-500 hover:bg-gray-50'
-              }`}
-            >
-              <LuClipboardList className="mr-2" />
-              Heads Up
-            </button>
+    <> 
+      <ProfileHeader
+        fullName={`${member.firstName} ${member.lastName}`}
+        role={member.division || 'Member'}
+        lastSeen="Last seen 2h 30m ago"
+      />
+      <div className="bg-gray-50 min-h-screen flex">
+        <div className="w-50">
+          <div className="bg-white rounded-lg p-4">
+            <div className="space-y-2">
+              <button
+                onClick={() => setActiveView('profile')}
+                className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${
+                  activeView === 'profile'
+                    ? 'text-white bg-[#003087]'
+                    : 'text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                <FiProfile className="mr-2" />
+                Profile
+              </button>
+              <button
+                onClick={() => setActiveView('attendance')}
+                className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${
+                  activeView === 'attendance'
+                    ? 'text-white bg-[#003087]'
+                    : 'text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                <MdEventAvailable className="mr-2" />
+                Attendance
+              </button>
+              <button
+                onClick={() => setActiveView('progress')}
+                className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${
+                  activeView === 'progress'
+                    ? 'text-white bg-[#003087]'
+                    : 'text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                <HiOutlineDocumentText className="mr-2" />
+                Progress
+              </button>
+              <button
+                onClick={() => setActiveView('headsup')}
+                className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${
+                  activeView === 'headsup'
+                    ? 'text-white bg-[#003087] font-bold'
+                    : 'text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                <LuClipboardList className="mr-2" />
+                Heads Up
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="flex-1">
-        {activeView === 'profile' ? (
-          <>
-            <div className="flex border-b border-gray-200 justify-around">
-              <button
-                onClick={() => setActiveTab('required')}
-                className={`px-4 py-2 font-medium ${
-                  activeTab === 'required'
-                    ? 'text-blue-600 border-b-2 border-blue-600'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <FiRequired className="inline mr-2" />
-                Required Info
-              </button>
-              <button
-                onClick={() => setActiveTab('optional')}
-                className={`px-4 py-2 font-medium ${
-                  activeTab === 'optional'
-                    ? 'text-blue-600 border-b-2 border-blue-600'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <MdWorkOutline className="inline mr-2" />
-                Optional Info
-              </button>
-              <button
-                onClick={() => setActiveTab('resources')}
-                className={`px-4 py-2 font-medium ${
-                  activeTab === 'resources'
-                    ? 'text-blue-600 border-b-2 border-blue-600'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <FiResources className="inline mr-2" />
-                Resources
-              </button>
-            </div>
+        <div className="flex-1">
+          {activeView === 'profile' ? (
+            <>
+              <div className="flex border-b border-gray-200 justify-around">
+                <button
+                  onClick={() => setActiveTab('required')}
+                  className={`px-4 py-2 font-medium ${
+                    activeTab === 'required'
+                      ? 'text-blue-600 border-b-2 border-blue-600'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <FiRequired className="inline mr-2" />
+                  Required Info
+                </button>
+                <button
+                  onClick={() => setActiveTab('optional')}
+                  className={`px-4 py-2 font-medium ${
+                    activeTab === 'optional'
+                      ? 'text-blue-600 border-b-2 border-blue-600'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <MdWorkOutline className="inline mr-2" />
+                  Optional Info
+                </button>
+                <button
+                  onClick={() => setActiveTab('resources')}
+                  className={`px-4 py-2 font-medium ${
+                    activeTab === 'resources'
+                      ? 'text-blue-600 border-b-2 border-blue-600'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  <FiResources className="inline mr-2" />
+                  Resources
+                </button>
+              </div>
 
-            <div className="mt-6">
-              {activeTab === 'required' && <RequiredInfo member={requiredData} />}
-              {activeTab === 'optional' && <OptionalInfo member={optionalData} />}
-              {activeTab === 'resources' && <Resources />}
-            </div>
-          </>
-        ) : activeView === 'attendance' ? (
-          <Attendance />
-        ) : activeView === 'progress' ? (
-          <Progress />
-        ) : (
-          <HeadsUp />
-        )}
+              <div className="mt-6">
+                {activeTab === 'required' && <RequiredInfo member={requiredData} />}
+                {activeTab === 'optional' && <OptionalInfo member={optionalData} />}
+                {activeTab === 'resources' && <Resources />}
+              </div>
+            </>
+          ) : activeView === 'attendance' ? (
+            <Attendance />
+          ) : activeView === 'progress' ? (
+            <Progress />
+          ) : (
+            <HeadsUp />
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

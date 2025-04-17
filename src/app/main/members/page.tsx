@@ -1,70 +1,103 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import EditMemberForm from '@/components/form/EditForm';
 import MemberForm from '@/components/form/MemberForm';
-import MembersTable from '@/components/members/MembersTable'; // adjust import path if needed
+import MembersTable from '@/components/members/MembersTable';
 import useMembersStore from '@/stores/membersStore';
 import { Member } from '@/types/member';
-import { useEffect } from 'react';
 
 export default function MembersPage() {
-  const members = useMembersStore((state) => state.members);
-  const loading = useMembersStore((state) => state.loading);
-  const error = useMembersStore((state) => state.error);
-  const fetchMembers = useMembersStore((state) => state.fetchMembers);
-  const canAddMember = useMembersStore((state) => state.canAddMember);
+  const {
+    members = [],
+    loading,
+    error,
+    fetchMembers,
+    canAddMember
+  } = useMembersStore();
 
-  // Edit/Delete/Add actions
-  const onEdit = (member: Member) => {
-    console.log('Edit:', member);
-    <EditMemberForm
-      member={member}
-      onSave={async (updatedMember) => {
-        console.log('Save:', updatedMember);
-        return Promise.resolve();
-      }}
-      onClose={() => console.log('Close form')}
-      divisions={[]} 
-      groups={[]} 
-    />;
-   
-    
-  };
-
-  const onDelete = (id: string) => {
-    console.log('Delete:', id);
-    // TODO: Implement delete logic
-  };
-
-  const onAddMember = () => {
-    console.log('Add member clicked');
-    <MemberForm
-      onSave={async (newMember) => {
-        console.log('Save:', newMember);
-        return Promise.resolve();
-      }}
-      onClose={() => console.log('Close form')}
-      divisions={[]} 
-      groups={[]}
-    />
-  };
+  const [isAddFormOpen, setIsAddFormOpen] = useState(false);
+  const [isEditFormOpen, setIsEditFormOpen] = useState(false);
+  const [currentMember, setCurrentMember] = useState<Member | null>(null);
 
   useEffect(() => {
     if (members.length === 0 && !loading) {
       fetchMembers();
     }
-  }, [members, loading, fetchMembers]);
-  
+  }, [members.length, loading, fetchMembers]);
+
+  const handleEdit = (member: Member) => {
+    setCurrentMember(member);
+    setIsEditFormOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    console.log('Delete member with id:', id);
+    // Implement actual delete logic here
+  };
+
+  const handleAddMember = () => {
+    setIsAddFormOpen(true);
+  };
+
+  const closeForms = () => {
+    setIsAddFormOpen(false);
+    setIsEditFormOpen(false);
+    setCurrentMember(null);
+  };
+
+  const handleSaveMember = async (newMember: Omit<Member, '_id' | 'createdAt'>) => {
+      console.log('Saving new member:', newMember);
+      closeForms();
+      // Implement actual save logic here
+    };
+
+  const handleUpdateMember = async (updatedMember: Partial<Member>) => {
+    console.log('Updating member:', updatedMember);
+    closeForms();
+    // Implement actual update logic here
+  };
 
   return (
-    <MembersTable
-      members={members}
-      loading={loading}
-      error={error}
-      canEdit={canAddMember()}
-      onEdit={onEdit}
-      onDelete={onDelete}
-      onAddMember={onAddMember}
-    />
+    <div className="space-y-6">
+      <MembersTable
+        members={members}
+        loading={loading}
+        error={error}
+        canEdit={canAddMember()}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onAddMember={handleAddMember}
+      />
+
+      {/* Add Member Modal */}
+      {isAddFormOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <MemberForm
+              onSave={handleSaveMember}
+              onClose={closeForms}
+              divisions={[]}
+              groups={[]}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Edit Member Modal */}
+      {isEditFormOpen && currentMember && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <EditMemberForm
+              member={currentMember}
+              onSave={handleUpdateMember}
+              onClose={closeForms}
+              divisions={[]}
+              groups={[]}
+            />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
