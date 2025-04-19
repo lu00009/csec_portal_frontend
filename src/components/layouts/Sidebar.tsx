@@ -31,7 +31,7 @@ const navItems = [
   { name: 'Profile', href: '/main/profile', icon: <HiOutlineUsers className="mr-3" /> },
   { 
     name: 'Administration', 
-    href: '/main/admin/heads', // Changed to point directly to heads
+    href: '/main/admin', // Changed to point directly to heads
     icon: <LuSettings2 className="mr-3" />, 
     adminOnly: true,
     requiredRole: 'President'
@@ -75,7 +75,7 @@ export default function Sidebar() {
         <div className="flex">
           <Image className='w-6 md:w-7 h-8 md:h-10' src={logo} alt="Logoipsum" />
         </div>
-        <h1 className="text-xl md:text-2xl font-bold ml-3 md:ml-4">Logoipsum</h1>
+        <h1 className="text-xl md:text-2xl font-bold ml-3 md:ml-4">CSEC ASTU</h1>
       </div>
       
       {/* Navigation Items */}
