@@ -45,7 +45,7 @@ const useMembersStore = create<MembersState>((set, get) => ({
     if (!user) return false;
     return canEditMembers(user.clubRole) && 
            (isPresident(user.clubRole) || 
-            canManageDivision(user.clubRole, user.division ?? '', targetDivision));
+            canManageDivision(user.clubRole, user.member.division ?? '', targetDivision));
   },
 
   canDeleteMember: () => {
@@ -135,7 +135,7 @@ const useMembersStore = create<MembersState>((set, get) => ({
       const heads = data.filter((member: Member) => 
         ['Vice President', 'CPD President', 'Dev President', 
          'CBD President', 'SEC President', 'DS President']
-        .includes(member.clubRole)
+        .includes(member.member.clubRole)
       );
       
       set({ heads, loading: false });
@@ -148,50 +148,44 @@ const useMembersStore = create<MembersState>((set, get) => ({
     }
   },
 
-  addMember: async (newMember) => {
-    const { user } = useUserStore.getState();
-    
-    if (!user || !get().canAddMember()) {
-      throw new Error('Unauthorized: You do not have permission to add members');
-    }
-
-    set({ loading: true });
+  addMember: async (memberData) => {
+    set({ loading: true, error: null });
     try {
-      const response = await fetch(`${BASE_URL}/members`, {
+      const response = await fetch('https://csec-portal-backend-1.onrender.com/api/members/createMember', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.refreshToken}`
+          'Authorization': `Bearer ${useUserStore.getState().refreshToken}`
         },
-        body: JSON.stringify(newMember)
+        body: JSON.stringify({
+          email: memberData.member.email,
+          division: memberData.member.division,
+          group: memberData.member.group || 'Group 1', // Default group if not provided
+          generatedPassword: memberData.member.generatedPassword
+        })
       });
-
+  
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to add member');
       }
-
-      const addedMember = await response.json();
-      set((state) => ({ 
-        members: [...state.members, addedMember],
-        heads: isPresident(addedMember.clubRole) || 
-               addedMember.clubRole.includes('President') 
-          ? [...state.heads, addedMember] 
-          : state.heads,
-        loading: false 
+  
+      const result = await response.json();
+      set(state => ({
+        members: [...state.members, result.newmember],
+        loading: false
       }));
-    } catch (err) {
-      const error = err instanceof Error ? err.message : 'Failed to add member';
-      set({ error, loading: false });
+      return result.newmember;
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to add member', loading: false });
       throw error;
     }
   },
-
   updateMember: async (id, updates) => {
     const { user } = useUserStore.getState();
-    const memberToUpdate = get().members.find(m => m._id === id);
+    const memberToUpdate = get().members.find(m => m.member._id === id);
     
-    if (!user || !memberToUpdate || !get().canEditMember(memberToUpdate.division)) {
+    if (!user || !memberToUpdate || !get().canEditMember(memberToUpdate.member.division)) {
       throw new Error('Unauthorized: You do not have permission to edit this member');
     }
 
@@ -201,7 +195,7 @@ const useMembersStore = create<MembersState>((set, get) => ({
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.refreshToken}`
+          'Authorization': `Bearer ${user.member.refreshToken}`
         },
         body: JSON.stringify(updates)
       });
@@ -214,10 +208,10 @@ const useMembersStore = create<MembersState>((set, get) => ({
       const updatedMember = await response.json();
       set((state) => ({
         members: state.members.map(member => 
-          member._id === id ? { ...member, ...updatedMember } : member
+          member.member._id === id ? { ...member, ...updatedMember } : member
         ),
         heads: state.heads.map(head => 
-          head._id === id ? { ...head, ...updatedMember } : head
+          head.member._id === id ? { ...head, ...updatedMember } : head
         ),
         loading: false
       }));
@@ -240,7 +234,7 @@ const useMembersStore = create<MembersState>((set, get) => ({
       const response = await fetch(`${BASE_URL}/members/${id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${user.refreshToken}`
+          'Authorization': `Bearer ${user.member.refreshToken}`
         }
       });
 
@@ -250,8 +244,8 @@ const useMembersStore = create<MembersState>((set, get) => ({
       }
 
       set((state) => ({
-        members: state.members.filter(member => member._id !== id),
-        heads: state.heads.filter(head => head._id !== id),
+        members: state.members.filter(member => member.member._id !== id),
+        heads: state.heads.filter(head => head.member._id !== id),
         loading: false
       }));
     } catch (err) {
@@ -270,7 +264,7 @@ const useMembersStore = create<MembersState>((set, get) => ({
       const response = await fetch(`${BASE_URL}/members/${id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${user.refreshToken}`
+          'Authorization': `Bearer ${user.member.refreshToken}`
         }
       });
 
@@ -280,8 +274,8 @@ const useMembersStore = create<MembersState>((set, get) => ({
       }
       
       set((state) => ({
-        heads: state.heads.filter(head => head._id !== id),
-        members: state.members.filter(member => member._id !== id),
+        heads: state.heads.filter(head => head.member._id !== id),
+        members: state.members.filter(member => member.member._id !== id),
         loading: false
       }));
     } catch (err) {

@@ -11,12 +11,13 @@ export default function LoginPage() {
   const { user, login, isLoading, error } = useUserStore();
 
   useEffect(() => {
-    if (user) {
-      console.log('User state:', user); // Debug log
+    if (user?.clubRole) {
+      const role = user.clubRole || user.member.clubRole;
+      console.log('User role:', role);
       toast.success('Login successful! Redirecting...');
-      setTimeout(() => {
-        router.push('/main/dashboard');
-      }, 1500);
+      setTimeout(() => router.push('/main/dashboard'), 1500);
+    } else if (user) {
+      console.error('User exists but role structure is unexpected:', user);
     }
   }, [user, router]);
 

@@ -1,6 +1,6 @@
 // app/members/[memberId]/page.tsx
+// app/members/[memberId]/page.tsx
 'use client';
-import React from 'react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Attendance from '@/components/profile/attendance';
 import ProfileHeader from '@/components/profile/header';
@@ -10,7 +10,9 @@ import Progress from '@/components/profile/progress';
 import RequiredInfo from '@/components/profile/requiredinfo';
 import Resources from '@/components/profile/resources';
 import { useUserStore } from '@/stores/userStore';
-import { use, useEffect, useState } from 'react';
+import { Member } from '@/types/member';
+import { normalizeMember } from '@/utils/normalizeMember';
+import { useEffect, useState } from 'react';
 import {
   FiUser as FiProfile,
   FiInfo as FiRequired,
@@ -20,35 +22,12 @@ import { HiOutlineDocumentText } from 'react-icons/hi';
 import { LuClipboardList } from 'react-icons/lu';
 import { MdEventAvailable, MdWorkOutline } from 'react-icons/md';
 
-interface Member {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  email: string;
-  division: string;
-  year: string;
-  telegramUsername: string;
-  createdAt: string;
-  universityId?: string;
-  linkedin?: string;
-  codeforces?: string;
-  leetcode?: string;
-  instagram?: string;
-  birthDate?: string;
-  cvUrl?: string;
-  bio?: string;
-  gender?: string;
-}
-
-
 type PageParams = {
   memberId: string;
 };
 
 const MemberProfilePage = ({ params }: { params: PageParams }) => {
-  const { memberId } = React.use(params);
-  
+  const { memberId } = params;
   const [activeView, setActiveView] = useState<'profile' | 'attendance' | 'progress' | 'headsup'>('profile');
   const [activeTab, setActiveTab] = useState<'required' | 'optional' | 'resources'>('required');
   const [member, setMember] = useState<Member | null>(null);
@@ -70,16 +49,17 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${useUserStore.getState().refreshToken}`,
+            'Authorization': `Bearer ${user?.refreshToken || ''}`,
           },
         });
 
         if (!res.ok) {
-          throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
+          throw new Error(`Failed to fetch member: ${res.status}`);
         }
 
-        const memberData = await res.json();
-        setMember(memberData);
+        const data = await res.json();
+        const normalizedMember = normalizeMember(data);
+        setMember(normalizedMember);
       } catch (err) {
         console.error('Fetch error:', err);
         setError(err instanceof Error ? err.message : 'Failed to load member data');
@@ -88,10 +68,10 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
       }
     };
 
-    fetchMemberData();
+    if (user?.refreshToken) {
+      fetchMemberData();
+    }
   }, [memberId, user?.refreshToken]);
-
-  console.log('refresh token:', user?.refreshToken);
 
   if (loading) {
     return <LoadingSpinner />;
@@ -127,39 +107,41 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
         </div>
       </div>
     );
-  } 
+  }
 
+  // Prepare data for components
   const requiredData = {
-    firstName: member.firstName || 'Not provided',
-    lastName: member.lastName || 'Not provided',
-    phoneNumber: member.phoneNumber || 'Not provided',
-    email: member.email || 'Not provided',
-    department: member.division || 'Not provided',
-    graduation: member.year || 'Not provided',
-    birth: member.birthDate || 'Not provided',
-    gender: member.gender || 'Not provided',
-    telegramUsername: member.telegramUsername || 'Not provided',
-    joinedDate: member.createdAt || 'Not provided',
+    firstName: member.firstName,
+    lastName: member.lastName,
+    phoneNumber: member.phoneNumber,
+    email: member.email,
+    department: member.division,
+    graduation: member.year,
+    birth: member.birthDate,
+    gender: member.gender,
+    telegramUsername: member.telegramUsername,
+    joinedDate: member.createdAt,
   };
 
   const optionalData = {
-    uniId: member.universityId || 'Not provided',
-    linkedin: member.linkedin || 'Not provided',
-    codeforces: member.codeforces || 'Not provided',
-    leetcode: member.leetcode || 'Not provided',
-    insta: member.instagram || 'Not provided',
-    birthdate: member.birthDate || 'Not provided',
-    cv: member.cvUrl || 'Not provided',
-    joinedDate: member.createdAt || 'Not provided',
-    shortbio: member.bio || 'Not provided',
+    uniId: member.universityId,
+    linkedin: member.linkedin,
+    codeforces: member.codeforces,
+    leetcode: member.leetcode,
+    insta: member.instagram,
+    birthdate: member.birthDate,
+    cv: member.cvUrl,
+    joinedDate: member.createdAt,
+    shortbio: member.bio,
   };
 
   return (
-    <> 
+    <>
       <ProfileHeader
         fullName={`${member.firstName} ${member.lastName}`}
         role={member.division || 'Member'}
-        lastSeen="Last seen 2h 30m ago"
+        lastSeen="Last seen recently"
+        profilePicture={member.profilePicture}
       />
       <div className="bg-gray-50 min-h-screen flex">
         <div className="w-50">

@@ -5,10 +5,10 @@ import { useState } from 'react';
 import { FiFilter, FiX } from 'react-icons/fi';
 
 interface MembersFilterProps {
-  divisions: string[];
-  groups: string[];
-  statuses: string[];
-  campusStatuses: string[];
+  divisions?: string[];
+  groups?: string[];
+  statuses?: string[];
+  campusStatuses?: string[];
   onFilter: (filters: {
     search: string;
     division: string;
@@ -20,10 +20,10 @@ interface MembersFilterProps {
 }
 
 export default function MembersFilter({
-  divisions,
-  groups,
-  statuses,
-  campusStatuses,
+  divisions = [],
+  groups = [],
+  statuses = [],
+  campusStatuses = [],
   onFilter,
   onReset
 }: MembersFilterProps) {
