@@ -1,10 +1,10 @@
 'use client';
 
+import useMembersStore from '@/stores/membersStore'; // Adjust the import path as needed
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import MemberRow from './MemberRow';
 import MembersHeader from './MembersHeader';
-import useMembersStore from '@/stores/membersStore'; // Adjust the import path as needed
-import { useEffect } from 'react';
 
 export default function MembersTable() {
   const router = useRouter();
@@ -35,10 +35,10 @@ export default function MembersTable() {
     // For now, I'll assume you have a function in your store to handle this
     addMember({
       // Default member data
-      name: '',
+      firstName: '',
       email: '',
       division: '',
-      attendance: 0,
+      attendance: '',
       year: '',
       status: 'active',
       clubRole: 'Member'
@@ -94,9 +94,9 @@ export default function MembersTable() {
                 key={member._id}
                 member={member}
                 canEdit={canEditMember(member.division)}
-                canDelete={canDeleteMember()}
+                // canDelete={canDeleteMember()}
                 onProfileClick={handleProfileClick}
-                onEdit={updateMember}
+                onEdit={(member) => updateMember(member._id, member)}
                 onDelete={deleteMember}
               />
             ))}

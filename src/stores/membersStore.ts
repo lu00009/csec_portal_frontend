@@ -108,7 +108,7 @@ const useMembersStore = create<MembersState>((set, get) => ({
           'Authorization': `Bearer ${store.refreshToken}`
         };
 
-        const response = await fetch(`${BASE_URL}/members`, { headers });
+        const response = await fetch(`${BASE_URL}/members/heads`, { headers });
 
         if (response.status === 401 && attemptRefresh) {
           try {
