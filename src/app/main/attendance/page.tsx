@@ -1,33 +1,52 @@
 "use client"
 
 import SessionCard from "@/components/attendance/session-card"
+import LoadingSpinner from "@/components/LoadingSpinner"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Button from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import Input from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectItem } from "@/components/ui/select"
 import { useAttendanceStore } from "@/stores/attendanceStore"
-import { ChevronLeft, ChevronRight, Filter, Search } from "lucide-react"
+import { AlertCircle, ChevronLeft, ChevronRight, Filter, Search } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 export default function AttendancePage() {
-  const { sessions, divisions } = useAttendanceStore()
+  const router = useRouter()
+  // const { sessions, isLoading, error, fetchSessions, clearError } = useAttendanceStore()
   const [searchQuery, setSearchQuery] = useState("")
-  const [itemsPerPage, setItemsPerPage] = useState("4")
-  const [currentPage, setCurrentPage] = useState(1)
+  // const [itemsPerPage, setItemsPerPage] = useState("4")
+  // const [currentPage, setCurrentPage] = useState(1)
   const [filterStatus, setFilterStatus] = useState<string[]>([])
   const [filterDivisions, setFilterDivisions] = useState<string[]>([])
+  const {
+    sessions,
+    isLoading,
+    error,
+    fetchSessions,
+    clearError,
+    currentPage,
+    itemsPerPage,
+    totalSessions,
+    setPagination,
+  } = useAttendanceStore()
+  
 
-  // Reset to page 1 when search or filters change
+  // Get unique divisions
+  const divisions = [...new Set(sessions.map((session) => session.division))]
+
+  // Fetch sessions on mount
   useEffect(() => {
-    setCurrentPage(1)
-  }, [searchQuery, filterStatus, filterDivisions])
+    fetchSessions(currentPage, itemsPerPage)
+  }, [currentPage, itemsPerPage])
 
   // Filter sessions based on search query and filters
   const filteredSessions = sessions.filter((session) => {
     const matchesSearch =
-      session.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      session.sessionTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
       session.division.toLowerCase().includes(searchQuery.toLowerCase())
 
     const matchesStatus = filterStatus.length === 0 || filterStatus.includes(session.status)
@@ -37,12 +56,8 @@ export default function AttendancePage() {
     return matchesSearch && matchesStatus && matchesDivision
   })
 
-  // Pagination
-  const totalSessions = filteredSessions.length
+  const currentSessions = sessions
   const totalPages = Math.ceil(totalSessions / Number(itemsPerPage))
-  const startIndex = (currentPage - 1) * Number(itemsPerPage)
-  const endIndex = Math.min(startIndex + Number(itemsPerPage), totalSessions)
-  const currentSessions = filteredSessions.slice(startIndex, endIndex)
 
   // Handle filter status change
   const handleStatusChange = (status: string) => {
@@ -53,9 +68,25 @@ export default function AttendancePage() {
   const handleDivisionChange = (division: string) => {
     setFilterDivisions((prev) => (prev.includes(division) ? prev.filter((d) => d !== division) : [...prev, division]))
   }
-
+  {isLoading && (
+    <div className="flex justify-center items-center py-12">
+      <LoadingSpinner  />
+    </div>
+  )}
   return (
-    <div className="p-6">
+    
+    <div className="p-4 md:p-6">
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+          <Button variant="outline" size="sm" onClick={clearError} className="mt-2">
+            Dismiss
+          </Button>
+        </Alert>
+      )}
+
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-semibold">Attendance</h1>
@@ -65,8 +96,8 @@ export default function AttendancePage() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between mb-6">
-        <div className="relative w-full max-w-md">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
+        <div className="relative w-full md:max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search"
@@ -77,7 +108,7 @@ export default function AttendancePage() {
         </div>
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2 w-full md:w-auto">
               <Filter className="h-4 w-4" />
               Filter
             </Button>
@@ -90,16 +121,16 @@ export default function AttendancePage() {
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="filter-ended"
-                      checked={filterStatus.includes("ended")}
-                      onCheckedChange={() => handleStatusChange("ended")}
+                      checked={filterStatus.includes("Ended")}
+                      onCheckedChange={() => handleStatusChange("Ended")}
                     />
                     <Label htmlFor="filter-ended">Ended</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox
                       id="filter-planned"
-                      checked={filterStatus.includes("planned")}
-                      onCheckedChange={() => handleStatusChange("planned")}
+                      checked={filterStatus.includes("Planned")}
+                      onCheckedChange={() => handleStatusChange("Planned")}
                     />
                     <Label htmlFor="filter-planned">Planned</Label>
                   </div>
@@ -137,24 +168,36 @@ export default function AttendancePage() {
         </Popover>
       </div>
 
-      <div className="space-y-4">
-        {currentSessions.length > 0 ? (
-          currentSessions.map((session) => <SessionCard key={session.id} session={session} />)
-        ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            No sessions found. Try adjusting your search or filters.
+      {isLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <LoadingSpinner />
           </div>
-        )}
-      </div>
+      ) : (
+        <div className="space-y-4">
+          {currentSessions.length > 0 ? (
+            currentSessions.map((session) => (
+              <SessionCard
+                key={session._id}
+                session={session}
+                onClick={() => router.push(`/main/attendance/${session._id}`)}
+              />
+            ))
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              No sessions found. Try adjusting your search or filters.
+            </div>
+          )}
+        </div>
+      )}
 
       {totalSessions > 0 && (
-        <div className="flex items-center justify-between mt-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mt-6 gap-4">
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Showing</span>
-            <Select value={itemsPerPage} onValueChange={setItemsPerPage}>
-              <SelectTrigger className="w-16" onClick={() => {}}>
-                <SelectValue>{itemsPerPage}</SelectValue>
-              </SelectTrigger>
+            <Select value={String(itemsPerPage)} onValueChange={(val) => setPagination(1, Number(val))}>
+              {/* <SelectTrigger className="w-16">
+                <SelectValue placeholder="4" />
+              </SelectTrigger> */}
               <SelectContent>
                 <SelectItem value="2">2</SelectItem>
                 <SelectItem value="4">4</SelectItem>
@@ -163,16 +206,18 @@ export default function AttendancePage() {
               </SelectContent>
             </Select>
             <span className="text-sm text-muted-foreground">
-              Showing {startIndex + 1} to {endIndex} out of {totalSessions} records
-            </span>
+  Showing {currentPage * itemsPerPage - itemsPerPage + 1} to{" "}
+  {Math.min(currentPage * itemsPerPage, totalSessions)} out of {totalSessions} records
+</span>
+
           </div>
 
           <div className="flex items-center gap-1">
             <Button
               variant="outline"
               size="icon"
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
+             onClick={() => setPagination(currentPage - 1, itemsPerPage)}
+            disabled={currentPage === 1}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -184,8 +229,8 @@ export default function AttendancePage() {
                   key={pageNumber}
                   variant={currentPage === pageNumber ? "default" : "outline"}
                   size="icon"
-                  onClick={() => setCurrentPage(pageNumber)}
-                >
+                  onClick={() => setPagination(currentPage - 1, itemsPerPage)}
+                  disabled={currentPage === 1}>
                   {pageNumber}
                 </Button>
               )
@@ -194,9 +239,8 @@ export default function AttendancePage() {
             <Button
               variant="outline"
               size="icon"
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-            >
+              onClick={() => setPagination(currentPage + 1, itemsPerPage)} 
+              disabled={currentPage * itemsPerPage >= totalSessions}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>

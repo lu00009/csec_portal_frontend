@@ -1,8 +1,11 @@
 // next.config.ts
-import type { NextConfig } from 'next';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  images: {
+    domains: ["robohash.org", "csec-portal-backend-1.onrender.com"]
+  },
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.plugins.push(

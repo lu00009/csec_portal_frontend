@@ -253,10 +253,12 @@ export default function DivisionPage({ params }: DivisionPageProps) {
                       >
                         <div className="flex items-center gap-3">
                           <Avatar className="h-10 w-10 border border-gray-200">
-                            <AvatarImage
-                              src={`/placeholder.svg?height=40&width=40&text=${member.name.charAt(0).toUpperCase()}`}
-                              alt={member.name}
-                            />
+                          <AvatarImage
+                           src={`https://robohash.org/${member.id}?set=set3&&size=40x40`}
+                           alt={member.name}
+                           identifier={member.id} // Use member ID for unique avatar generation
+                          />
+
                             <AvatarFallback>{member.name.split("@")[0].charAt(0).toUpperCase()}</AvatarFallback>
                           </Avatar>
                           <div>

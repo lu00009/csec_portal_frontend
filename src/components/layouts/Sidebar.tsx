@@ -36,7 +36,7 @@ const navItems = [
     adminOnly: true,
     requiredRole: 'President'
   },
-  { name: 'Settings', href: '/settings', icon: <FiSettings className="mr-3" /> },
+  { name: 'Settings', href: '/main/settings', icon: <FiSettings className="mr-3" /> },
 ];
 interface SidebarProps {
   user?: Member; // Make it optional
