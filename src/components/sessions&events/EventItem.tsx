@@ -1,8 +1,17 @@
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 
 type EventItemProps = {
-  item: any;
-  onEdit: (item: any) => void;
+  item: {
+    status: 'planned' | 'ongoing' | 'ended';
+    category: string;
+    title: string;
+    date: string;
+    visibility: 'public' | 'members';
+    timeRemaining: string;
+    venue: string;
+    id: string;
+  };
+  onEdit: (item: EventItemProps['item']) => void;
   onDelete: (id: string) => void;
 };
 
@@ -20,7 +29,7 @@ const EventItem = ({ item, onEdit, onDelete }: EventItemProps) => {
           <div className="flex flex-col md:flex-row md:items-center gap-3">
             <div>
               <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[item.status]}`}>
-                {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+              {item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : 'Unknown'}
               </span>
             </div>
             <div>

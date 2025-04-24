@@ -338,7 +338,7 @@ const useUserStore = create<UserStore>((set, get) => ({
     if (!user || !refreshToken) throw new Error('Not authenticated');
 
     try {
-      const response = await fetch(`${BASE_URL}/members/${user._id}`, {
+      const response = await fetch(`${BASE_URL}/members/${user.id}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${refreshToken}`,
@@ -383,7 +383,7 @@ const useUserStore = create<UserStore>((set, get) => ({
 
   isPresident: () => {
     const { user } = get();
-    return !!user && isPresidentRole(user.clubRole);
+    return !!user?.member && isPresidentRole(user.member.clubRole);
   },
 
   isDivisionHead: () => {

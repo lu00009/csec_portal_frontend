@@ -86,7 +86,10 @@ export async function fetchMemberById(id: string) {
   const res = await fetch(`https://csec-portal-backend-1.onrender.com/api/members/${id}`, {
     cache: 'no-store',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${useUserStore.getState().refreshToken}`,
+
+
     }
   });
 

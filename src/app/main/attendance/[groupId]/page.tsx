@@ -55,7 +55,7 @@ export default function GroupAttendancePage() {
   )
 
   const handleMemberClick = (memberId: string) => {
-    router.push(`/main/attendance/${groupId}/members/${memberId}`)
+    router.push(`/main/members/${memberId}`)
   }
 
   // Handle group filter change

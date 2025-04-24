@@ -26,7 +26,7 @@ const navItems = [
   { name: 'All Members', href: '/main/members', icon: <FiUsers className="mr-3" /> },
   { name: 'All Divisions', href: '/main/divisions', icon: <FiLayers className="mr-3" /> },
   { name: 'Attendances', href: '/main/attendance', icon: <LuCalendarCheck className="mr-3" /> },
-  { name: 'Seasons & Events', href: '/main/events', icon: <LuClock10 className="mr-3" /> },
+  { name: 'Sessions & Events', href: '/main/events', icon: <LuClock10 className="mr-3" /> },
   { name: 'Resources', href: '/main/resources', icon: <IoFolderOutline className="mr-3" /> },
   { name: 'Profile', href: '/main/profile', icon: <HiOutlineUsers className="mr-3" /> },
   { 

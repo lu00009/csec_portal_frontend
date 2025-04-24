@@ -1,4 +1,5 @@
 
+import { Avatar } from "@/components/ui/avatar";
 import { Member } from '@/types/member';
 import { CiEdit } from 'react-icons/ci';
 import { RiDeleteBin6Line } from "react-icons/ri";
@@ -24,21 +25,23 @@ export default function MemberRow({
         <div className="flex items-center">
         <button 
   onClick={() => onProfileClick(member._id)}
-  className="flex-shrink-0 h-10 w-10 rounded-full overflow-hidden bg-gray-300 flex items-center justify-center"
+  className="flex-shrink-0"
 >
-  {member.profilePicture ? (
-    <img
-      src={`/uploads/${member.profilePicture}`}
-      alt={`${member.firstName ?? ''} ${member.lastName ?? ''}`}
-      width={40}
-      height={40}
-      className="object-cover rounded-full"
-    />
-  ) : (
-    <span className="text-gray-600 font-medium">
-      {member.firstName?.charAt(0) ?? '?'}
-    </span>
-  )}
+  <Avatar size="md">
+    {member.profilePicture ? (
+      <Avatar.Image
+        alt={`${member.firstName ?? ""} ${member.lastName ?? ""}`}
+        src={`http://csec-portal-backend-1.onrender.com/uploads/${member.profilePicture}`}
+      />
+    ) : (
+      // RoboHash will kick in because no `src` is provided, only identifier
+      <Avatar.Image
+        src={`https://robohash.org/${member._id}?set=set3&size=100x100`}
+        alt={`${member.firstName ?? ""} ${member.lastName ?? ""}`}
+        identifier={member._id} // or use member.firstName, etc.
+      />
+    )}
+  </Avatar>
 </button>
           <div className="ml-4">
             <div 

@@ -1,12 +1,27 @@
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
-
+import { getTimeLeft, formatDateInput } from '../../utils/date';
+import { date } from 'yup';
 type SessionItemProps = {
-  item: any;
-  onEdit: (item: any) => void;
+  item: {
+    status: 'planned' | 'ongoing' | 'ended';
+    division: string;
+    sessionTitle: string;
+    startDate: string;
+    endDate: string;
+    visibility: 'public' | 'members';
+    venue: string;
+    groups?: string[];
+    id: string;
+    date: string;
+  };
+  onEdit: (item: SessionItemProps['item']) => void;
   onDelete: (id: string) => void;
 };
 
+
+
 const SessionItem = ({ item, onEdit, onDelete }: SessionItemProps) => {
+ const timeRemaining = getTimeLeft(item.endDate);
   const statusColors = {
     planned: 'bg-yellow-50 text-yellow-400',
     ongoing: 'bg-blue-50 text-blue-400',
@@ -27,7 +42,7 @@ const SessionItem = ({ item, onEdit, onDelete }: SessionItemProps) => {
               <h2 className="text-lg md:text-xl font-bold">{item.division}</h2>
             </div>
           </div>
-          <p className="font-medium mt-2 text-gray-800">{item.title}</p>
+          <p className="font-medium mt-2 text-gray-800">{item.sessionTitle}</p>
           <p className="text-gray-500 text-sm mt-1">{item.date}</p>
           <div className="mt-2">
             <span className={`text-xs px-2 py-1 rounded ${item.visibility === 'public' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'}`}>
@@ -36,7 +51,7 @@ const SessionItem = ({ item, onEdit, onDelete }: SessionItemProps) => {
           </div>
         </div>
         <div className="text-right">
-          <p className="font-bold text-sm md:text-base">{item.timeRemaining}</p>
+          <p className="font-bold text-sm md:text-base">{timeRemaining}</p>
           <p className="text-gray-500 text-sm mt-1">Venue: {item.venue}</p>
         </div>
       </div>
