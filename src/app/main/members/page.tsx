@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import EditMemberForm from '@/components/form/EditForm';
 import MemberForm from '@/components/form/MemberForm';
 import MembersTable from '@/components/members/MembersTable';
@@ -8,6 +9,7 @@ import useMembersStore from '@/stores/membersStore';
 import { Member } from '@/types/member';
 
 export default function MembersPage() {
+  const router = useRouter();
   const {
     members = [],
     loading,
@@ -40,6 +42,10 @@ export default function MembersPage() {
     setIsAddFormOpen(true);
   };
 
+  const handleMemberClick = (memberId: string) => {
+    router.push(`/${memberId}`);
+  };
+
   const closeForms = () => {
     setIsAddFormOpen(false);
     setIsEditFormOpen(false);
@@ -47,10 +53,10 @@ export default function MembersPage() {
   };
 
   const handleSaveMember = async (newMember: Omit<Member, '_id' | 'createdAt'>) => {
-      console.log('Saving new member:', newMember);
-      closeForms();
-      // Implement actual save logic here
-    };
+    console.log('Saving new member:', newMember);
+    closeForms();
+    // Implement actual save logic here
+  };
 
   const handleUpdateMember = async (updatedMember: Partial<Member>) => {
     console.log('Updating member:', updatedMember);
@@ -68,6 +74,7 @@ export default function MembersPage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onAddMember={handleAddMember}
+        onMemberClick={handleMemberClick} // Pass the click handler
       />
 
       {/* Add Member Modal */}

@@ -58,16 +58,21 @@ const useMembersStore = create<MembersState>((set, get) => ({
     try {
       const store = useUserStore.getState();
       if (!store.refreshToken) throw new Error('Not authenticated');
-
+  
       const makeRequest = async (attemptRefresh = true): Promise<Response> => {
         const headers = {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${store.refreshToken}`
         };
-
+  
         const response = await fetch(`${BASE_URL}/members`, { headers });
-
-
+  
+        // First check if response is HTML
+        const contentType = response.headers.get('content-type');
+        if (contentType?.includes('text/html')) {
+          throw new Error('Server returned HTML instead of JSON. Check API endpoint.');
+        }
+  
         if (response.status === 401 && attemptRefresh) {
           try {
             await store.refreshSession();
@@ -76,27 +81,30 @@ const useMembersStore = create<MembersState>((set, get) => ({
             throw new Error('Session expired. Please log in again.');
           }
         }
-
+  
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
+          // Try to parse error JSON, fallback to status text
+          let errorData;
+          try {
+            errorData = await response.json();
+          } catch {
+            errorData = { message: response.statusText };
+          }
           throw new Error(errorData.message || `Failed with status ${response.status}`);
         }
-
+  
         return response;
       };
-
+  
       const response = await makeRequest();
       const data = await response.json();
       set({ members: data.members, loading: false });
     } catch (err) {
-      set({ 
-        error: err instanceof Error ? err.message : 'Failed to load members',
-        loading: false
-      });
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load members';
+      set({ error: errorMessage, loading: false });
       throw err;
     }
-  },
-  fetchHeads: async () => {
+  },  fetchHeads: async () => {
     set({ loading: true, error: null });
     try {
       const store = useUserStore.getState();

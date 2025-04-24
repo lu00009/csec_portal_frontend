@@ -1,4 +1,6 @@
 // lib/api.ts
+import { useUserStore } from '@/stores/userStore'; // Adjust the import path as needed
+
 export async function fetchMemberById(id: string) {
   if (!id || id === 'undefined') {
     throw new Error('Invalid member ID');
@@ -7,7 +9,10 @@ export async function fetchMemberById(id: string) {
   const res = await fetch(`https://csec-portal-backend-1.onrender.com/api/members/${id}`, {
     cache: 'no-store',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${useUserStore.getState().refreshToken}`,
+
+
     }
   });
 
@@ -17,3 +22,5 @@ export async function fetchMemberById(id: string) {
 
   return await res.json();
 }
+
+

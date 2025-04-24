@@ -281,7 +281,7 @@ const useUserStore = create<UserStore>((set, get) => ({
 
   isPresident: () => {
     const { user } = get();
-    return !!user && isPresidentRole(user.clubRole);
+    return !!user?.member && isPresidentRole(user.member.clubRole);
   },
 
   isDivisionHead: () => {

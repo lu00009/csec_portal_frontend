@@ -10,7 +10,7 @@ import Progress from '@/components/profile/progress';
 import RequiredInfo from '@/components/profile/requiredinfo';
 import Resources from '@/components/profile/resources';
 import { useUserStore } from '@/stores/userStore';
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   FiUser as FiProfile,
   FiInfo as FiRequired,
@@ -19,27 +19,9 @@ import {
 import { HiOutlineDocumentText } from 'react-icons/hi';
 import { LuClipboardList } from 'react-icons/lu';
 import { MdEventAvailable, MdWorkOutline } from 'react-icons/md';
+import { Member } from '@/types/member';
 
-interface Member {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  email: string;
-  division: string;
-  year: string;
-  telegramUsername: string;
-  createdAt: string;
-  universityId?: string;
-  linkedin?: string;
-  codeforces?: string;
-  leetcode?: string;
-  instagram?: string;
-  birthDate?: string;
-  cvUrl?: string;
-  bio?: string;
-  gender?: string;
-}
+
 
 
 type PageParams = {
@@ -80,6 +62,7 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
 
         const memberData = await res.json();
         setMember(memberData);
+        console.log('Member data:', memberData);
       } catch (err) {
         console.error('Fetch error:', err);
         setError(err instanceof Error ? err.message : 'Failed to load member data');
@@ -89,9 +72,10 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
     };
 
     fetchMemberData();
-  }, [memberId, user?.refreshToken]);
+  }, [memberId, user?.member.refreshToken]);
 
-  console.log('refresh token:', user?.refreshToken);
+  console.log('refresh token:', user?.member.refreshToken);
+  console.log('memberData', member)
 
   if (loading) {
     return <LoadingSpinner />;
@@ -130,36 +114,36 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
   } 
 
   const requiredData = {
-    firstName: member.firstName || 'Not provided',
-    lastName: member.lastName || 'Not provided',
-    phoneNumber: member.phoneNumber || 'Not provided',
-    email: member.email || 'Not provided',
-    department: member.division || 'Not provided',
-    graduation: member.year || 'Not provided',
-    birth: member.birthDate || 'Not provided',
-    gender: member.gender || 'Not provided',
-    telegramUsername: member.telegramUsername || 'Not provided',
-    joinedDate: member.createdAt || 'Not provided',
+    firstName: member.member.firstName || 'Not provided',
+    lastName: member.member.lastName || 'Not provided',
+    phoneNumber: member.member.phoneNumber || 'Not provided',
+    email: member.member.email || 'Not provided',
+    department: member.member.division || 'Not provided',
+    graduation: member.member.graduationYear || 'Not provided',
+    birth: member.member.birthDate || 'Not provided',
+    gender: member.member.gender || 'Not provided',
+    telegramUsername: member.member.telegramHandle|| 'Not provided',
+    joinedDate: member.member.createdAt || 'Not provided',
   };
 
   const optionalData = {
-    uniId: member.universityId || 'Not provided',
-    linkedin: member.linkedin || 'Not provided',
-    codeforces: member.codeforces || 'Not provided',
-    leetcode: member.leetcode || 'Not provided',
-    insta: member.instagram || 'Not provided',
-    birthdate: member.birthDate || 'Not provided',
-    cv: member.cvUrl || 'Not provided',
-    joinedDate: member.createdAt || 'Not provided',
-    shortbio: member.bio || 'Not provided',
+    uniId: member.member.universityId || 'Not provided',
+    linkedin: member.member.linkedinHandle || 'Not provided',
+    codeforces: member.member.codeforcesHandle || 'Not provided',
+    leetcode: member.member.leetcodeHandle || 'Not provided',
+    insta: member.member.instagramHandle || 'Not provided',
+    birthdate: member.member.birthDate || 'Not provided',
+    cv: member.member.cv || 'Not provided',
+    joinedDate: member.member.createdAt || 'Not provided',
+    shortbio: member.member.bio || 'Not provided',
   };
 
   return (
     <> 
       <ProfileHeader
-        fullName={`${member.firstName} ${member.lastName}`}
-        role={member.division || 'Member'}
-        lastSeen="Last seen 2h 30m ago"
+        fullName={`${member?.member.firstName} ${member.member.lastName}`}
+        role={member.member.role || 'Member'}
+        isOwnProfile={false}
       />
       <div className="bg-gray-50 min-h-screen flex">
         <div className="w-50">
