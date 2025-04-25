@@ -55,7 +55,7 @@ export default function Sidebar() {
   // Filter nav items based on user role and permissions
   const filteredNavItems = navItems.filter(item => {
     if (item.adminOnly || item.requiredRole) {
-      return user && isPresident(user.clubRole);
+      return user && isPresident(user.member.clubRole);
     }
     return true;
   });

@@ -4,86 +4,60 @@ import React from 'react';
 import { FiX } from 'react-icons/fi';
 import { useFormik } from 'formik';
 
-function parseDateString(dateStr: string): Date {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  return new Date(year, month - 1, day);
-}
-
-function getTimeLeft(endDateStr: string): string {
-  const endDate = parseDateString(endDateStr);
-  const now = new Date();
-  const diffMs = endDate.getTime() - now.getTime();
-
-  if (isNaN(endDate.getTime()) || diffMs <= 0) return 'Ended';
-
-  const totalMinutes = Math.floor(diffMs / 60000);
-  const days = Math.floor(totalMinutes / (24 * 60));
-  const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
-  const minutes = totalMinutes % 60;
-
-  return `${days}d ${hours}h ${minutes}m left`;
-}
+type Session = {
+  day: string;
+  startTime: string;
+  endTime: string;
+};
 
 type CreateSessionModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (sessionData: {
-    id: string;
-    title: string;
-    type: string;
+    sessionTitle: string;
     division: string;
     startMonth: string;
     endMonth: string;
-    sessions: { day: string; startTime: string; endTime: string }[];
-    visibility: string;
-    venue: string;
-    attendance: string;
-    status: string;
-    timeRemaining: string;
+    sessions: Session[];
     groups: string[];
   }) => void;
   editingItem: {
-    id?: string;
-    title?: string;
-    type?: string;
+    sessionTitle?: string;
+    groups?: string;
     division?: string;
     startMonth?: string;
     endMonth?: string;
-    sessions?: { day: string; startTime: string; endTime: string }[];
-    visibility?: string;
-    venue?: string;
-    attendance?: string;
+    sessions?: Session[];
   } | null;
 };
 
 const CreateSessionModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateSessionModalProps) => {
-  type Session = {
-    day: string;
-    startTime: string;
-    endTime: string;
-  };
-
   const formik = useFormik({
     initialValues: {
-      title: editingItem?.title || 'Contest',
-      type: editingItem?.type || 'CPD',
-      division: editingItem?.division || 'Div 1',
-      startMonth: editingItem?.startMonth || '2024-02-10',
+      sessionTitle: editingItem?.sessionTitle || 'Contest',
+      division: editingItem?.division || 'Competitive Programming Division',
+      groups: editingItem?.groups
+      ? Array.isArray(editingItem.groups)
+        ? editingItem.groups
+        : editingItem.groups.split(/,\s*/)
+      : ['Group 1'],
+          startMonth: editingItem?.startMonth || '2024-02-10',
       endMonth: editingItem?.endMonth || '2024-04-20',
-      sessions: editingItem?.sessions || [] as Session[],
+      sessions: editingItem?.sessions || [],
       newSession: { day: '', startTime: '', endTime: '' },
-      visibility: editingItem?.visibility || 'members',
-      venue: editingItem?.venue || 'Default Venue',
-      attendance: editingItem?.attendance || 'mandatory'
     },
     onSubmit: (values) => {
+      
       const sessionData = {
-        id: editingItem?.id || Date.now().toString(),
-        ...values,
-        status: 'planned',
-        timeRemaining: getTimeLeft(values.endMonth),
-        groups: values.sessions.map((s: Session) => s.day)
+        sessionTitle: values.sessionTitle,
+        division: values.division,
+        groups: values.groups,
+        startDate: values.startMonth,
+        endDate: values.endMonth,
+        sessions: [...values.sessions, values.newSession],
+        status:'Planned'
       };
+      console.log('Session Data:', sessionData);
       onSubmit(sessionData);
       onClose();
     }
@@ -92,13 +66,15 @@ const CreateSessionModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateSe
   const handleAddSession = () => {
     const { day, startTime, endTime } = formik.values.newSession;
     if (day && startTime && endTime) {
-      formik.setFieldValue('sessions', [...formik.values.sessions, { day, startTime, endTime }]);
+      const updatedSessions = [...formik.values.sessions, { day, startTime, endTime }];
+      formik.setFieldValue('sessions', updatedSessions);
       formik.setFieldValue('newSession', { day: '', startTime: '', endTime: '' });
     }
   };
 
   const handleRemoveSession = (index: number) => {
-    formik.setFieldValue('sessions', formik.values.sessions.filter((_, i) => i !== index));
+    const updatedSessions = formik.values.sessions.filter((_, i) => i !== index);
+    formik.setFieldValue('sessions', updatedSessions);
   };
 
   if (!isOpen) return null;
@@ -116,25 +92,49 @@ const CreateSessionModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateSe
 
         <form onSubmit={formik.handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <input className="border rounded px-4 py-2" placeholder="Title" name="title" value={formik.values.title} onChange={formik.handleChange} required />
-            <input className="border rounded px-4 py-2" placeholder="Type" name="type" value={formik.values.type} onChange={formik.handleChange} required />
+            <input className="border rounded px-4 py-2" placeholder="Title" name="sessionTitle" value={formik.values.sessionTitle} onChange={formik.handleChange} required />
+            <select className="border rounded px-4 py-2" name="division" value={formik.values.division} onChange={formik.handleChange} required>
+              <option value="Competative Programming Division">Competitive Programming Division</option>
+              <option value="Development Division">Development Division</option>
+              <option value="CyberSecurity Division">CyberSecurity Division</option>
+              <option value="DataScience Division">DataScience Division</option>
+            </select>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <select name="division" value={formik.values.division} onChange={formik.handleChange} className="border rounded px-4 py-2">
-              <option value="Div 1">Div 1</option>
-              <option value="Div 2">Div 2</option>
+          <select
+              name="groups"
+              value={formik.values.groups}
+              onChange={(e) => {
+                const selected = Array.from(e.target.selectedOptions, (option) => option.value);
+                formik.setFieldValue('groups', selected);
+              }}
+              className="border rounded px-4 py-2"
+              multiple
+            >
+              <option value="Group 1">Group 1</option>
+              <option value="Group 2">Group 2</option>
+              <option value="Group 3">Group 3</option>
+              <option value="Group 4">Group 4</option>
             </select>
+
+
             <input type="date" className="border rounded px-4 py-2" placeholder="Start Month" name="startMonth" value={formik.values.startMonth} onChange={formik.handleChange} />
             <input type="date" className="border rounded px-4 py-2" placeholder="End Month" name="endMonth" value={formik.values.endMonth} onChange={formik.handleChange} />
           </div>
 
-          {formik.values.sessions.map((s: { day: string; startTime: string; endTime: string }, i: number) => (
+          {formik.values.sessions.map((s, i) => (
             <div key={i} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center mb-2">
               <input className="border rounded px-4 py-2" value={s.day} disabled />
               <input className="border rounded px-4 py-2" value={s.startTime} disabled />
               <input className="border rounded px-4 py-2" value={s.endTime} disabled />
-              <button type="button" className="border border-red-500 text-red-500 px-4 py-2 rounded" onClick={() => handleRemoveSession(i)}>Remove</button>
+              <button
+                type="button"
+                className="border border-red-500 text-red-500 px-4 py-2 rounded"
+                onClick={() => handleRemoveSession(i)}
+              >
+                Remove
+              </button>
             </div>
           ))}
 
@@ -149,9 +149,25 @@ const CreateSessionModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateSe
                 <option key={day} value={day}>{day}</option>
               ))}
             </select>
-            <input type="time" className="border rounded px-4 py-2" value={formik.values.newSession.startTime} onChange={(e) => formik.setFieldValue('newSession', { ...formik.values.newSession, startTime: e.target.value })} />
-            <input type="time" className="border rounded px-4 py-2" value={formik.values.newSession.endTime} onChange={(e) => formik.setFieldValue('newSession', { ...formik.values.newSession, endTime: e.target.value })} />
-            <button type="button" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" onClick={handleAddSession}>Add</button>
+            <input
+              type="time"
+              className="border rounded px-4 py-2"
+              value={formik.values.newSession.startTime}
+              onChange={(e) => formik.setFieldValue('newSession', { ...formik.values.newSession, startTime: e.target.value })}
+            />
+            <input
+              type="time"
+              className="border rounded px-4 py-2"
+              value={formik.values.newSession.endTime}
+              onChange={(e) => formik.setFieldValue('newSession', { ...formik.values.newSession, endTime: e.target.value })}
+            />
+            <button
+              type="button"
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              onClick={handleAddSession}
+            >
+              Add
+            </button>
           </div>
 
           <div className="flex justify-end gap-4">

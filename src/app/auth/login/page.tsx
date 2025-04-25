@@ -12,26 +12,25 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (user && isInitialized) {
-      console.log('User state:', user);
       toast.success('Login successful! Redirecting...');
-      setTimeout(() => {
-        router.push('/main/dashboard');
-      }, 1500);
+      setTimeout(() => router.push('/main/dashboard'), 1000);
     }
   }, [user, isInitialized, router]);
 
   const handleSubmit = async (values: { email: string; password: string }) => {
     try {
-      console.log('Attempting login...');
       const success = await login(values.email, values.password);
-      if (!success) {
-        toast.error(error || 'Login failed. Please try again.');
-      }
+      if (!success) toast.error('Invalid credentials or login failed.');
     } catch (err) {
       console.error('Login error:', err);
-      toast.error('Login failed. Please try again.');
+      toast.error('Login error. Please try again.');
     }
   };
+
+  if (typeof window !== 'undefined' && user && isInitialized) {
+    router.replace('/main/dashboard');
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

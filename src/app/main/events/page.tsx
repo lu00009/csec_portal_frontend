@@ -82,31 +82,49 @@ const SessionsPage = () => {
     item.hasOwnProperty('sessionTitle') ? setShowCreateModal(true) : setShowEventModal(true);
   };
 
-  const handleSessionSubmit = async (sessionData) => {
+  interface SessionData {
+    sessionTitle: string;
+    division: string;
+    startDate: string;
+    endDate: string;
+    groups: string[];
+    sessions: {
+      day: string;
+      startTime: string;
+      endTime: string;
+    }[];
+  }
+
+  const handleSessionSubmit = async (sessionData: SessionData): Promise<void> => {
+    console.log('sessionData:', sessionData); // Debugging line
+
     try {
-      const response = await fetch('https://csec-portal-backend-1.onrender.com/api/sessions/createSession', {
+      const response: Response = await fetch('https://csec-portal-backend-1.onrender.com/api/sessions/createSession', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('refreshToken')}`,
         },
         body: JSON.stringify(sessionData)
       });
-  
-      const contentType = response.headers.get('Content-Type');
+
+      const contentType: string | null = response.headers.get('Content-Type');
       if (!response.ok) {
-        const errorText = await response.text();
+        const errorText: string = await response.text();
         throw new Error(`Server Error: ${response.status}\n${errorText}`);
       }
-  
+
       if (contentType && contentType.includes('application/json')) {
-        const data = await response.json();
+        const data: unknown = await response.json();
         console.log('Success:', data);
       } else {
-        const text = await response.text();
+        const text: string = await response.text();
         console.warn('Unexpected response format:', text);
       }
-    } catch (error) {
-      console.error('Error submitting session:', error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Error submitting session:', error.message);
+      }
     }
   };
   
@@ -116,7 +134,10 @@ const SessionsPage = () => {
     try {
       const response = await fetch('https://csec-portal-backend-1.onrender.com/api/events/addEvent', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('refreshToken')}`,
+
+         },
         body: JSON.stringify(eventData)
       });
       if (!response.ok) throw new Error('Failed to submit event');
@@ -188,7 +209,14 @@ const SessionsPage = () => {
           )}
         </div>
       ) : contentType === 'sessions' ? (
-        <SessionsTable items={currentItems} contentType={contentType} onEdit={handleEdit} onDelete={handleDelete} date={formatDisplayDate(item.startDate)}/>
+        <SessionsTable 
+        items={currentItems} 
+        contentType={contentType} 
+        onEdit={handleEdit} 
+        onDelete={handleDelete} 
+        date={currentItems.length > 0 ? formatDisplayDate((currentItems[0] as Session).startDate) : ''}
+      />
+      
       ) : (
         <EventTable items={currentItems} onEdit={handleEdit} onDelete={handleDelete} />
       )}

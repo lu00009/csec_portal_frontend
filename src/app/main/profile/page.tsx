@@ -1,13 +1,11 @@
 'use client';
-import LoadingSpinner from '@/components/LoadingSpinner';
 import Attendance from '@/components/profile/attendance';
-import ProfileHeader from '@/components/profile/header';
 import HeadsUp from '@/components/profile/headsup';
 import OptionalInfo from '@/components/profile/optionalinfo';
 import Progress from '@/components/profile/progress';
 import RequiredInfo from '@/components/profile/requiredinfo';
 import Resources from '@/components/profile/resources';
-import { Avatar } from '@/components/ui/avatar';
+import ProfileHeader from '@/components/profile/header';
 
 import { useUserStore } from '@/stores/userStore';
 import { useState } from 'react';
@@ -27,12 +25,8 @@ const UserProfile = () => {
 
   const { user } = useUserStore();
 
-  if (!user || !user.member) {
-    return <div className="p-6 text-gray-500"><LoadingSpinner/></div>;
-  }
-
   const requiredData = {
-    profilePicture: user.member.profilePicture || '/placeholder.svg',
+    profilePicture: user?.member.profilePicture || '/placeholder.svg',
     firstName: user?.member.firstName || 'Not provided',
     lastName: user?.member.lastName || 'Not provided',
     phoneNumber: user?.member.phoneNumber || 'Not provided',
@@ -59,28 +53,12 @@ const UserProfile = () => {
 
   return (
     <>
-  <div className="flex items-center space-x-4 px-6 pt-6">
-    <Avatar size="sm">
-      {user?.member.profilePicture ? (
-        <Avatar.Image
-          alt={`${user?.member.firstName} ${user?.member.lastName}`}
-          src={`http://csec-portal-backend-1.onrender.com/uploads/${user?.member.profilePicture}`}
-        />
-      ) : (
-        <Avatar.Image
-          alt={`${user?.member.firstName} ${user?.member.lastName}`}
-          src={`https://robohash.org/${user?.member._id}?set=set3&size=100x100`}
-        />
-      )}
-    </Avatar>
-
-    <ProfileHeader
-      fullName={`${user?.member.firstName} ${user?.member.lastName}`}
-      role={user?.member.role || 'Member'}
-      isOwnProfile={true}
-    />
-  </div>
-
+      <ProfileHeader
+        fullName={`${user?.member.firstName} ${user?.member.lastName}`}
+        role={user?.member.role || 'Member'}
+        isOwnProfile={true}
+        profilePicture={user?.member.profilePicture }
+      />
 
       <div className="bg-gray-50 min-h-screen flex">
         {/* Sidebar Navigation */}

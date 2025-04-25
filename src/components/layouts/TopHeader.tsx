@@ -85,18 +85,18 @@ const TopHeader: React.FC = () => {
                 <Avatar.Image
                   src={`https://robohash.org/${user?._id}?set=set3&size=100x100`} // Fallback to a placeholder image if profilePicture is not available
                   alt={"User Avatar"}
-                  identifier={user?._id}
+                  identifier={user?.member._id}
                 />
-                <Avatar.Fallback>{user?.firstName?.[0]}</Avatar.Fallback>
+                <Avatar.Fallback>{user?.member.firstName?.[0]}</Avatar.Fallback>
               </Avatar>
               <div className="text-left">
                 <div className="flex items-center">
                   <div>
                     <p className="text-sm font-semibold text-gray-800">
-                      {user?.firstName || "User"}
+                      {user?.member.firstName || "User"}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {user?.clubRole?.toUpperCase() || "MEMBER"}
+                      {user?.member.clubRole?.toUpperCase() || "MEMBER"}
                     </p>
                   </div>
                   <FiChevronDown

@@ -8,69 +8,58 @@ type CreateEventModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (eventData: { 
-    id: string; 
-    title: string; 
+    eventTitle: string; 
     visibility: string; 
     division: string; 
-    group: string; 
-    date: string; 
+    groups: string[]; 
+    eventDate: string; 
     startTime: string; 
     endTime: string; 
     attendance: string; 
-    tags: string[]; 
-    venue: string; 
-    type: string; 
-    status: string; 
-    timeRemaining: string; 
-    category: string; 
   }) => void;
   editingItem: {
-    id?: string;
-    title?: string;
+    eventTitle?: string;
     visibility?: string;
     division?: string;
-    group?: string;
-    date?: string;
+    groups?: string;
+    eventDate?: string;
     startTime?: string;
     endTime?: string;
     attendance?: string;
-    tags?: string[];
-    venue?: string;
+
   } | null;
 };
 
 const CreateEventModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateEventModalProps) => {
   const formik = useFormik({
     initialValues: {
-      title: editingItem?.title || '',
+      eventTitle: editingItem?.eventTitle || '',
       visibility: editingItem?.visibility || 'public',
       division: editingItem?.division || '',
-      group: editingItem?.group || '',
-      date: editingItem?.date || '',
+      groups: editingItem?.groups
+      ? Array.isArray(editingItem.groups)
+        ? editingItem.groups
+        : editingItem.groups.split(/,\s*/)
+      : ['Group 1'],
+      eventDate: editingItem?.eventDate || '',
       startTime: editingItem?.startTime || '',
       endTime: editingItem?.endTime || '',
       attendance: editingItem?.attendance || 'optional',
-      tags: editingItem?.tags || ['Group 1', 'Group 3', 'Div 1'],
-      venue: editingItem?.venue || 'Lab 1'
+   
     },
     onSubmit: (values) => {
       const eventData = {
         ...values,
-        id: editingItem?.id || Date.now().toString(),
-        type: 'event',
-        status: 'planned',
-        timeRemaining: '1d 12h 31m left',
-        category: values.title
       };
       onSubmit(eventData);
       onClose();
     }
   });
 
-  const handleRemoveTag = (index: number) => {
-    const newTags: string[] = formik.values.tags.filter((_: string, i: number) => i !== index);
-    formik.setFieldValue('tags', newTags);
-  };
+  // const handleRemoveTag = (index: number) => {
+  //   const newTags: string[] = formik.values.tags.filter((_: string, i: number) => i !== index);
+  //   formik.setFieldValue('tags', newTags);
+  // };
 
   if (!isOpen) return null;
 
@@ -91,7 +80,7 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateEven
               className="border rounded px-4 py-2 w-full"
               placeholder="Event Title"
               name="title"
-              value={formik.values.title}
+              value={formik.values.eventTitle}
               onChange={formik.handleChange}
               required
             />
@@ -129,16 +118,20 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateEven
                   <option value="Div 2">Div 2</option>
                 </select>
                 <select
-                  className="border rounded px-4 py-2"
-                  name="group"
-                  value={formik.values.group}
-                  onChange={formik.handleChange}
-                  required
-                >
-                  <option value="">Select Group</option>
-                  <option value="Group 1">Group 1</option>
-                  <option value="Group 3">Group 3</option>
-                </select>
+              name="groups"
+              value={formik.values.groups}
+              onChange={(e) => {
+                const selected = Array.from(e.target.selectedOptions, (option) => option.value);
+                formik.setFieldValue('groups', selected);
+              }}
+              className="border rounded px-4 py-2"
+              multiple
+            >
+              <option value="Group 1">Group 1</option>
+              <option value="Group 2">Group 2</option>
+              <option value="Group 3">Group 3</option>
+              <option value="Group 4">Group 4</option>
+            </select>
               </div>
               <div className="mb-4">
                 <label className="font-semibold mb-1">Attendance</label>
@@ -167,27 +160,13 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateEven
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <input type="date" name="date" value={formik.values.date} onChange={formik.handleChange} className="border rounded px-4 py-2" required />
+            <input type="date" name="date" value={formik.values.eventDate} onChange={formik.handleChange} className="border rounded px-4 py-2" required />
             <input type="time" name="startTime" value={formik.values.startTime} onChange={formik.handleChange} className="border rounded px-4 py-2" required />
             <input type="time" name="endTime" value={formik.values.endTime} onChange={formik.handleChange} className="border rounded px-4 py-2" required />
           </div>
 
-          <input
-            className="border rounded px-4 py-2 mb-4 w-full"
-            placeholder="Venue"
-            name="venue"
-            value={formik.values.venue}
-            onChange={formik.handleChange}
-            required
-          />
+          
 
-          <div className="flex flex-wrap gap-2 mb-4">
-            {formik.values.tags.map((tag: string, index: number) => (
-              <span key={index} className="bg-gray-200 px-3 py-1 rounded-full text-sm">
-              {tag} <button type="button" onClick={() => handleRemoveTag(index)}>×</button>
-              </span>
-            ))}
-          </div>
 
           <div className="flex justify-end gap-4">
             <button type="button" onClick={onClose} className="px-4 py-2 border rounded">
