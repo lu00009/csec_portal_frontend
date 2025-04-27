@@ -1,9 +1,7 @@
 export interface Resource {
-  Resources:{
-    id: string 
-  resourceName: string 
-  resourceLink: string 
-  division: string 
-  }
-  
+  _id: string;
+  __v?: number;
+  resourceName: string;
+  resourceLink: string;
+  division: string;
 }

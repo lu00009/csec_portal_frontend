@@ -51,7 +51,7 @@ export default function ResourcesPage() {
   }, [fetchResources])
 
   // Handle resource submission (add/update)
-  const handleSubmit = async (resourceData: Omit<Resource, '_id' | '__v'>) => {
+  const handleSubmit = async (resourceData: Omit<Resource , '_id' | '__v'>) => {
     try {
 
       if (currentResource) {

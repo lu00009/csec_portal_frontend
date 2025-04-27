@@ -5,12 +5,14 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { FiX } from 'react-icons/fi';
 
+// Define Resource type
 type Resource = {
   resourceName: string;
   resourceLink: string;
   division: string;
 };
 
+// Props for ResourceModal component
 type ResourceModalProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -20,6 +22,7 @@ type ResourceModalProps = {
   divisions: string[];
 };
 
+// Define validation schema (optional, as per your latest request)
 const validationSchema = Yup.object({
   resourceName: Yup.string().required('Resource name is required'),
   resourceLink: Yup.string().url('Enter a valid URL').required('Resource link is required'),
@@ -27,6 +30,7 @@ const validationSchema = Yup.object({
 });
 
 const ResourceModal = ({ isOpen, onClose, onSubmit, resource, division, divisions }: ResourceModalProps) => {
+  // Initialize Formik with validation turned off
   const formik = useFormik({
     initialValues: {
       resourceName: resource?.resourceName || '',
@@ -34,18 +38,20 @@ const ResourceModal = ({ isOpen, onClose, onSubmit, resource, division, division
       division: resource?.division || division || '',
     },
     enableReinitialize: true,
-    validationSchema,
+    validationSchema,  
     onSubmit: (values) => {
+      console.log('Submitting resource:', values); // Log values before submission for debugging
       onSubmit(values);
-      onClose();
+      onClose(); // Close modal after submitting
     },
   });
 
+  // Return null if modal is not open
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0  bg-opacity-30 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="absolute inset-0 bg-opacity-30 backdrop-blur-sm"></div>
       <div className="relative bg-white rounded-lg shadow-lg p-6 w-full max-w-md z-10">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">{resource ? 'Edit Resource' : 'Add Resource'}</h2>

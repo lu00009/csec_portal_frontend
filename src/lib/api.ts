@@ -1,7 +1,8 @@
 
 import type { AttendanceSubmission, MemberAttendanceRecords, Member, Session } from "@/types/attendance";
 
-const API_BASE_URL = "https://csec-portal-backend-1.onrender.com/api"
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE
 
 // Function to fetch sessions and members for a specific session
 export async function fetchSessionData(sessionId: string): Promise<{ session: Session; members: Member[] }> {
@@ -67,7 +68,7 @@ export async function submitAttendance(data: AttendanceSubmission): Promise<any>
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        'Authorization': `Bearer ${localStorage.getItem('refreshToken')}`,
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
       },
       body: JSON.stringify(data),
     })
@@ -113,7 +114,7 @@ export async function fetchMemberById(id: string) {
     cache: 'no-store',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${localStorage.getItem('refreshToken')}`, // ← maybe change this key!
+      'Authorization': `Bearer ${localStorage.getItem('token')}`, // ← maybe change this key!
 
 
     }

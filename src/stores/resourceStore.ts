@@ -1,6 +1,9 @@
-import { create } from 'zustand';
+'use client';
 
-interface Resource {
+import { create } from 'zustand';
+import { getResources, addResourceApi, updateResourceApi, deleteResourceApi } from '@/lib/api/resourceApi';
+
+export interface Resource {
   _id: string;
   resourceName: string;
   resourceLink: string;
@@ -17,86 +20,50 @@ interface ResourceStore {
   deleteResource: (id: string) => Promise<void>;
 }
 
-const API_BASE_URL = 'https://csec-portal-backend-1.onrender.com/api/resources';
-
-export const useResourceStore = create<ResourceStore>((set,get) => ({
+export const useResourceStore = create<ResourceStore>((set, get) => ({
   resources: [],
   divisions: [],
 
   fetchResources: async () => {
     try {
-      const response = await fetch(API_BASE_URL);
-      if (!response.ok) throw new Error('Failed to fetch resources');
-      
-      const data = await response.json();
-      const resourcesArray = data.Resources || [];
-      
-      set({ 
+      const resourcesArray = await getResources();
+      set({
         resources: resourcesArray,
-        divisions: [...new Set(resourcesArray.map(r => r.division))]
+        divisions: [...new Set(resourcesArray.map((r) => r.division))],
       });
     } catch (error) {
-      console.error('Fetch error:', error);
+      console.error('Error fetching resources:', error);
       throw error;
     }
   },
 
   addResource: async (resource) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/addResource`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('refreshToken')}`, // ← maybe change this key!
-        },
-        body: JSON.stringify(resource)
-      });
-  
-      if (!response.ok) {
-        const errorText = await response.text(); // get more insight
-        throw new Error(`Failed to add resource: ${errorText}`);
-      }
-  
+      await addResourceApi(resource);
       await get().fetchResources();
     } catch (error) {
-      console.error('Add error:', error);
-      console.log('Resource:', resource);
+      console.error('Error adding resource:', error);
       throw error;
     }
   },
-  
 
-  updateResource: async (id, updates) => {
+  updateResource: async (id, resource) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
-      });
-      
-      if (!response.ok) throw new Error('Failed to update resource');
-      
-      // Refresh the list after updating
+      await updateResourceApi(id, resource);
       await get().fetchResources();
     } catch (error) {
-      console.error('Update error:', error);
+      console.error('Error updating resource:', error);
       throw error;
     }
   },
 
   deleteResource: async (id) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/${id}`, {
-        method: 'DELETE'
-      });
-      
-      if (!response.ok) throw new Error('Failed to delete resource');
-      
-      // Refresh the list after deleting
+      await deleteResourceApi(id);
       await get().fetchResources();
     } catch (error) {
-      console.error('Delete error:', error);
+      console.error('Error deleting resource:', error);
       throw error;
     }
-  }
+  },
 }));

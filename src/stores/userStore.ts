@@ -19,6 +19,7 @@ interface UserStore {
   isLoading: boolean;
   isInitialized: boolean;
   error: string | null;
+  token: string | null;
 
   initialize: () => Promise<void>;
   login: (email: string, password: string) => Promise<boolean>;
@@ -71,31 +72,7 @@ const useUserStore = create<UserStore>((set, get) => ({
   isLoading: false,
   isInitialized: false,
   error: null,
-
-  initialize: async () => {
-    if (typeof window === 'undefined') {
-      set({ isInitialized: true });
-      return;
-    }
-
-    set({ isLoading: true });
-    try {
-      const refreshToken = localStorage.getItem('refreshToken');
-      console.log('Init refreshToken:', refreshToken);
-      if (refreshToken) {
-        const payload = parseJwt(refreshToken);
-        if (!payload) throw new Error('Invalid token format');
-
-        set({ refreshToken });
-        await get().refreshSession();
-      }
-    } catch (error) {
-      console.error('Initialization error:', error);
-      get().logout();
-    } finally {
-      set({ isInitialized: true, isLoading: false });
-    }
-  },
+  token: null,
 
   login: async (email, password) => {
     set({ isLoading: true, error: null });
@@ -105,24 +82,28 @@ const useUserStore = create<UserStore>((set, get) => ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-
+  
       const data = await response.json();
       console.log('Login response:', data);
-
-      if (!response.ok || !data.refreshToken) {
+  
+      if (!response.ok || !data.token || !data.refreshToken) {
         throw new Error(data.message || 'Login failed');
       }
-
-      const { refreshToken } = data;
-      const payload = parseJwt(refreshToken);
-      if (!payload?.id) throw new Error('Invalid token payload');
-
+  
+      const { token, refreshToken } = data;
+  
+      // Save both tokens in localStorage
+      localStorage.setItem('token', token);
       localStorage.setItem('refreshToken', refreshToken);
-      set({ refreshToken });
-
+  
+      set({ token, refreshToken });
+  
+      const payload = parseJwt(token);
+      if (!payload?.id) throw new Error('Invalid token payload');
+  
       const user = await get().fetchUserById(payload.id);
-      set({ user });
-
+      set({ user, isLoading: false });
+  
       return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Login failed';
@@ -130,20 +111,15 @@ const useUserStore = create<UserStore>((set, get) => ({
       return false;
     }
   },
-
-  logout: () => {
-    localStorage.removeItem('refreshToken');
-    set({
-      user: null,
-      refreshToken: null,
-      error: null,
-    });
-  },
-
+  
   refreshSession: async () => {
     const { refreshToken } = get();
-    if (!refreshToken) throw new Error('No refresh token available');
-
+    if (!refreshToken) {
+      console.error('No refresh token available');
+      get().logout();
+      return;
+    }
+  
     try {
       const response = await fetch(`${BASE_URL}/members/refresh`, {
         method: 'POST',
@@ -152,21 +128,25 @@ const useUserStore = create<UserStore>((set, get) => ({
           'Authorization': `Bearer ${refreshToken}`,
         },
       });
-
+  
       const data = await response.json();
       console.log('Refreshed token data:', data);
-
-      if (!response.ok || !data.refreshToken) {
+  
+      if (!response.ok || !data.token || !data.refreshToken) {
         throw new Error('Failed to refresh session');
       }
-
-      const newRefreshToken = data.refreshToken;
+  
+      const { token: newAccessToken, refreshToken: newRefreshToken } = data;
+  
+      // Update tokens in localStorage
+      localStorage.setItem('token', newAccessToken);
       localStorage.setItem('refreshToken', newRefreshToken);
-      set({ refreshToken: newRefreshToken });
-
-      const payload = parseJwt(newRefreshToken);
+  
+      set({ token: newAccessToken, refreshToken: newRefreshToken });
+  
+      const payload = parseJwt(newAccessToken);
       if (!payload?.id) throw new Error('Invalid token payload');
-
+  
       const user = await get().fetchUserById(payload.id);
       set({ user });
     } catch (error) {
@@ -175,14 +155,47 @@ const useUserStore = create<UserStore>((set, get) => ({
       throw error;
     }
   },
+  
+  logout: () => {
+    // Clear tokens and user
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    set({ user: null, token: null, refreshToken: null, isLoading: false, error: null });
+  },
+  
+  initialize: async () => {
+    if (typeof window === 'undefined') {
+      set({ isInitialized: true });
+      return;
+    }
+  
+    set({ isLoading: true });
+    try {
+      const token = localStorage.getItem('token');
+      console.log('Init Token:', token);
+      if (token) {
+        const payload = parseJwt(token);
+        if (!payload) throw new Error('Invalid token format');
+  
+        set({ token });
+        await get().refreshSession();
+      }
+    } catch (error) {
+      console.error('Initialization error:', error);
+      get().logout();
+    } finally {
+      set({ isInitialized: true, isLoading: false });
+    }
+  },
+  
 
   fetchUserById: async (id) => {
-    const { refreshToken } = get();
-    if (!refreshToken) throw new Error('Not authenticated');
+    const { token } = get();
+    if (!token) throw new Error('Not authenticated');
 
     const response = await fetch(`${BASE_URL}/members/${id}`, {
       headers: {
-        'Authorization': `Bearer ${refreshToken}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
     });
@@ -200,13 +213,13 @@ const useUserStore = create<UserStore>((set, get) => ({
   },
 
   updateUserProfile: async (updates) => {
-    const { user, refreshToken } = get();
-    if (!user || !refreshToken) throw new Error('Not authenticated');
+    const { user, token } = get();
+    if (!user || !token) throw new Error('Not authenticated');
 
     const response = await fetch(`${BASE_URL}/members/${user.member._id}`, {
       method: 'PATCH',
       headers: {
-        'Authorization': `Bearer ${refreshToken}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(updates),
@@ -240,8 +253,8 @@ const useUserStore = create<UserStore>((set, get) => ({
     }
   },
   getAuthHeader: () => {
-    const { refreshToken } = get();
-    return refreshToken ? { Authorization: `Bearer ${refreshToken}` } : null;
+    const { token } = get();
+    return token ? { Authorization: `Bearer ${token}` } : null;
   },
 }));
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Typography, Row, Col } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons'; // Import the blue icon
-import member1Data from '../../app/data/memberdata';
+import member1Data from '../../app/data/members';
 
 const { Title, Text } = Typography;
 

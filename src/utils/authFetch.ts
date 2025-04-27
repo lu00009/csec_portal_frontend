@@ -1,32 +1,38 @@
 // utils/authFetch.ts
 import { useUserStore } from '@/stores/userStore';
 
+interface AuthFetchOptions extends RequestInit {
+  attemptRefresh?: boolean; // Whether to try refreshing on 401
+  requiredRoles?: string[]; // Roles required to access
+}
+
 export const authFetch = async <T = any>(
-  url: string, 
+  url: string,
   options: AuthFetchOptions = {}
 ): Promise<T> => {
   const store = useUserStore.getState();
 
   const executeRequest = async (): Promise<Response> => {
-    const { refreshToken } = store;
-    
-    // Validate token exists before using
-    if (!refreshToken) {
+    const {token } = store;
+
+    // Validate token exists
+    if (token) {
       store.logout();
       throw new Error('No authentication token available');
     }
 
     const headers = {
       ...options.headers,
-      'Authorization': `Bearer ${refreshToken}`,
+      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
     };
 
     const response = await fetch(url, { 
       ...options, 
-      headers 
+      headers,
     });
 
+    // If token expired (401), try refreshing once
     if (response.status === 401 && options.attemptRefresh !== false) {
       try {
         await store.refreshSession();
