@@ -4,12 +4,17 @@ type EventItemProps = {
   item: {
     status: 'planned' | 'ongoing' | 'ended';
     category: string;
-    title: string;
-    date: string;
+    eventTitle: string;
+    eventDate: string;
     visibility: 'public' | 'members';
     timeRemaining: string;
     venue: string;
     id: string;
+    groups: string[];
+    startTime: string;
+    endTime: string;
+    division: string;
+    attendance: string; 
   };
   onEdit: (item: EventItemProps['item']) => void;
   onDelete: (id: string) => void;
@@ -33,11 +38,11 @@ const EventItem = ({ item, onEdit, onDelete }: EventItemProps) => {
               </span>
             </div>
             <div>
-              <h2 className="text-lg md:text-xl font-bold">{item.category}</h2>
+              <h2 className="text-lg md:text-xl font-bold">{item.eventTitle}</h2>
             </div>
           </div>
-          <p className="font-medium mt-2 text-gray-800">{item.title}</p>
-          <p className="text-gray-500 text-sm mt-1">{item.date}</p>
+          <p className="font-medium mt-2 text-gray-800">{item.division}</p>
+          <p className="text-gray-500 text-sm mt-1">{item.eventDate}</p>
           <div className="mt-2">
             <span className={`text-xs px-2 py-1 rounded ${item.visibility === 'public' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'}`}>
               {item.visibility === 'public' ? 'Public' : 'Members Only'}

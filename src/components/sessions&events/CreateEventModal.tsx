@@ -51,6 +51,7 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateEven
       const eventData = {
         ...values,
       };
+      console.log('Event Data:', eventData);
       onSubmit(eventData);
       onClose();
     }
@@ -65,7 +66,7 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateEven
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="absolute inset-0 bg-opacity-30 backdrop-blur-sm" onClick={onClose}></div>
       <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-md z-10 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">{editingItem ? 'Edit Event' : 'Add New Event'}</h2>
@@ -79,7 +80,7 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateEven
             <input
               className="border rounded px-4 py-2 w-full"
               placeholder="Event Title"
-              name="title"
+              name="eventTitle"
               value={formik.values.eventTitle}
               onChange={formik.handleChange}
               required
@@ -160,7 +161,7 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateEven
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <input type="date" name="date" value={formik.values.eventDate} onChange={formik.handleChange} className="border rounded px-4 py-2" required />
+            <input type="date" name="eventDate" value={formik.values.eventDate} onChange={formik.handleChange} className="border rounded px-4 py-2" required />
             <input type="time" name="startTime" value={formik.values.startTime} onChange={formik.handleChange} className="border rounded px-4 py-2" required />
             <input type="time" name="endTime" value={formik.values.endTime} onChange={formik.handleChange} className="border rounded px-4 py-2" required />
           </div>

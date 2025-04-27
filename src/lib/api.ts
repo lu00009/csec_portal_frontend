@@ -1,5 +1,5 @@
 
-import type { AttendanceSubmission, AttendanceSummary, Member, Session } from "@/types/attendance";
+import type { AttendanceSubmission, MemberAttendanceRecords, Member, Session } from "@/types/attendance";
 
 const API_BASE_URL = "https://csec-portal-backend-1.onrender.com/api"
 
@@ -20,20 +20,45 @@ export async function fetchSessionData(sessionId: string): Promise<{ session: Se
 }
 
 // Function to fetch member's attendance summary
-export async function fetchMemberAttendance(memberId: string): Promise<AttendanceSummary> {
+
+export const fetchMemberAttendanceRecords = async (memberId: string): Promise<MemberAttendanceRecords> => {
   try {
-    const response = await fetch(`${API_BASE_URL}/attendance/member/${memberId}`)
+    console.log(`[API] Fetching records for member ${memberId}`);
+    
+    const response = await fetch(`${API_BASE_URL}/attendance/member/${memberId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
     if (!response.ok) {
-      throw new Error(`API error: ${response.status}`)
+      throw new Error(`Failed to fetch records. Status: ${response.status}`);
     }
 
-    return await response.json()
+    const data = await response.json();
+
+    console.log('[API] Raw response:', {
+      status: response.status,
+      data,
+    });
+
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid response format');
+    }
+
+    return {
+      week: data.week || { records: [], percentage: 0, total: 0, present: 0, headsUp: { count: 0, percentage: 0 } },
+      month: data.month || { records: [], percentage: 0, total: 0, present: 0, headsUp: { count: 0, percentage: 0 } },
+      overall: data.overall || { records: [], percentage: 0, total: 0, present: 0, headsUp: { count: 0, percentage: 0 } }
+    };
+    
   } catch (error) {
-    console.error("Error fetching member attendance:", error)
-    throw error
+    console.error('[API] Fetch error:', error);
+    throw error;
   }
-}
+};
+
 
 // Function to submit attendance
 export async function submitAttendance(data: AttendanceSubmission): Promise<any> {
@@ -42,6 +67,7 @@ export async function submitAttendance(data: AttendanceSubmission): Promise<any>
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        'Authorization': `Bearer ${localStorage.getItem('refreshToken')}`,
       },
       body: JSON.stringify(data),
     })
@@ -87,7 +113,7 @@ export async function fetchMemberById(id: string) {
     cache: 'no-store',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${useUserStore.getState().refreshToken}`,
+      'Authorization': `Bearer ${localStorage.getItem('refreshToken')}`, // ← maybe change this key!
 
 
     }

@@ -19,7 +19,7 @@ interface ResourceStore {
 
 const API_BASE_URL = 'https://csec-portal-backend-1.onrender.com/api/resources';
 
-export const useResourceStore = create<ResourceStore>((set) => ({
+export const useResourceStore = create<ResourceStore>((set,get) => ({
   resources: [],
   divisions: [],
 
@@ -45,19 +45,26 @@ export const useResourceStore = create<ResourceStore>((set) => ({
     try {
       const response = await fetch(`${API_BASE_URL}/addResource`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('refreshToken')}`, // ← maybe change this key!
+        },
         body: JSON.stringify(resource)
       });
-      
-      if (!response.ok) throw new Error('Failed to add resource');
-      
-      // Refresh the list after adding
+  
+      if (!response.ok) {
+        const errorText = await response.text(); // get more insight
+        throw new Error(`Failed to add resource: ${errorText}`);
+      }
+  
       await get().fetchResources();
     } catch (error) {
       console.error('Add error:', error);
+      console.log('Resource:', resource);
       throw error;
     }
   },
+  
 
   updateResource: async (id, updates) => {
     try {

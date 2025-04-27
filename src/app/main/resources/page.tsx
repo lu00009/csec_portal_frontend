@@ -53,7 +53,9 @@ export default function ResourcesPage() {
   // Handle resource submission (add/update)
   const handleSubmit = async (resourceData: Omit<Resource, '_id' | '__v'>) => {
     try {
+
       if (currentResource) {
+
         // Update existing resource
         await updateResource(currentResource._id, resourceData)
         toast.success('Resource updated successfully!')
@@ -66,6 +68,8 @@ export default function ResourcesPage() {
     } catch (error) {
       toast.error(`Failed to ${currentResource ? 'update' : 'add'} resource`)
       console.error('Submission error:', error)
+      console.log('Submitting resource:', resourceData)
+
     }
   }
 
