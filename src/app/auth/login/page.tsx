@@ -8,36 +8,41 @@ import toast from 'react-hot-toast';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, login, isLoading, error } = useUserStore();
-
+  const { login, isLoading, error, isAuthenticated, initialize } = useUserStore();
+  
   useEffect(() => {
-    if (user) {
-      console.log('User state:', user); // Debug log
-      toast.success('Login successful! Redirecting...');
-      setTimeout(() => {
-        router.push('/main/dashboard');
-      }, 1500);
+    // Initialize auth state when component mounts
+    initialize();
+    
+    // Redirect if already authenticated
+    if (isAuthenticated()) {
+      router.push('/main/dashboard');
     }
-  }, [user, router]);
+  }, [initialize, isAuthenticated, router]);
 
-  const handleSubmit = async (values: { email: string; password: string }) => {
+  const handleSubmit = async (values: { email: string; password: string; rememberMe: boolean }) => {
     try {
-      console.log('Attempting login...'); // Debug log
-      const success = await login(values.email, values.password);
-      if (!success) {
-        toast.error(error || 'Login failed. Please try again.');
+      const success = await login(values.email, values.password, values.rememberMe);
+      if (success) {
+        toast.success('Login successful! Redirecting...');
+        router.push('/main/dashboard');
+      } else {
+        toast.error('Invalid credentials');
       }
     } catch (err) {
-      console.error('Login error:', err);
-      toast.error('Login failed. Please try again.');
+      toast.error('Login failed');
     }
   };
+
+  if (isAuthenticated()) {
+    return null; // Prevent flash of login page
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Logoipsum</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">CSEC ASTU</h1>
           <h2 className="text-xl font-medium text-gray-600">Welcome 👋</h2>
           <p className="mt-2 text-sm text-gray-600">Please login here</p>
         </div>
@@ -49,13 +54,6 @@ export default function LoginPage() {
         )}
 
         <LoginForm onSubmit={handleSubmit} isLoading={isLoading} />
-        
-        {/* Temporary debug button */}
-        <button 
-          onClick={() => console.log('Current user state:', useUserStore.getState().user)}
-          className="mt-4 text-xs text-gray-500"
-        >
-        </button>
       </div>
     </div>
   );

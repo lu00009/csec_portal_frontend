@@ -1,7 +1,6 @@
 // app/main/members/[memberId]/layout.tsx
 'use client';
 
-import { SessionProvider } from 'next-auth/react';
 import { Inter } from 'next/font/google';
 import '../../../../styles/globals.css';
 
@@ -18,9 +17,11 @@ export default function MemberLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body>
-        <SessionProvider>
-          {children}
-        </SessionProvider>
+      
+        {children}
+    
+          
+        
       </body>
     </html>
   );

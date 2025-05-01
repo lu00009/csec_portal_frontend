@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useUserStore } from '@/stores/userStore'; // 👈 import the user store
-import { usePathname, useRouter } from 'next/navigation';
-import React, { useState } from 'react';
-import { FaUserCircle } from 'react-icons/fa';
-import { FiBell, FiChevronDown, FiSearch } from 'react-icons/fi';
+import { Avatar } from "@/components/ui/avatar"; // Import the Avatar component
+import { useUserStore } from "@/stores/userStore"; // 👈 import the user store
+import { usePathname, useRouter } from "next/navigation";
+import React, { useState } from "react";
+import { FiBell, FiChevronDown, FiSearch } from "react-icons/fi";
 
 const TopHeader: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
@@ -19,32 +19,32 @@ const TopHeader: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    router.push('/auth/login');
+    router.push("/auth/login");
   };
 
   const getPageTitle = () => {
-    const pathSegments = pathname.split('/');
+    const pathSegments = pathname.split("/");
     const lastSegment = pathSegments[pathSegments.length - 1];
 
     switch (lastSegment) {
-      case 'members':
-        return 'All Members';
-      case 'divisions':
-        return 'All Divisions';
-      case 'attendance':
-        return 'Attendances';
-      case 'events':
-        return 'Seasons & Events';
-      case 'resources':
-        return 'Resources';
-      case 'profile':
-        return 'Profile';
-      case 'admin':
-        return 'Administration';
-      case 'settings':
-        return 'Settings';
+      case "members":
+        return "All Members";
+      case "divisions":
+        return "All Divisions";
+      case "attendance":
+        return "Attendances";
+      case "events":
+        return "Seasons & Events";
+      case "resources":
+        return "Resources";
+      case "profile":
+        return "Profile";
+      case "admin":
+        return "Administration";
+      case "settings":
+        return "Settings";
       default:
-        return user?.firstName || 'Dashboard';
+        return user?.firstName || "Dashboard";
     }
   };
 
@@ -58,7 +58,7 @@ const TopHeader: React.FC = () => {
         </div>
 
         {/* Center - Search and Notification */}
-        <div className='flex'>
+        <div className="flex">
           <div className="flex items-center gap-4">
             <div className="relative">
               <FiSearch className="absolute left-3 top-1/2 h-5 w-5 text-gray-400 transform -translate-y-1/2" />
@@ -81,14 +81,29 @@ const TopHeader: React.FC = () => {
               className="flex items-center gap-2"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             >
-              <FaUserCircle className="h-10 w-10 text-gray-400" />
+              <Avatar size="md" robohashSet="set4">
+                <Avatar.Image
+                  src={`https://robohash.org/${user?._id}?set=set3&size=100x100`} // Fallback to a placeholder image if profilePicture is not available
+                  alt={"User Avatar"}
+                  identifier={user?.member._id}
+                />
+                <Avatar.Fallback>{user?.member.firstName?.[0]}</Avatar.Fallback>
+              </Avatar>
               <div className="text-left">
                 <div className="flex items-center">
                   <div>
-                    <p className="text-sm font-semibold text-gray-800">{user?.firstName || 'User'}</p>
-                    <p className="text-xs text-gray-500">{user?.clubRole?.toUpperCase() || 'MEMBER'}</p>
+                    <p className="text-sm font-semibold text-gray-800">
+                      {user?.member.firstName || "User"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {user?.member.clubRole?.toUpperCase() || "MEMBER"}
+                    </p>
                   </div>
-                  <FiChevronDown className={`h-4 w-4 ml-1 text-gray-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                  <FiChevronDown
+                    className={`h-4 w-4 ml-1 text-gray-500 transition-transform ${
+                      isDropdownOpen ? "rotate-180" : ""
+                    }`}
+                  />
                 </div>
               </div>
             </button>
@@ -96,13 +111,13 @@ const TopHeader: React.FC = () => {
             {isDropdownOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 border border-gray-100 z-10">
                 <button
-                  onClick={() => handleNavigation('/main/profile')}
+                  onClick={() => handleNavigation("/main/profile")}
                   className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
                   Profile
                 </button>
                 <button
-                  onClick={() => handleNavigation('/main/settings')}
+                  onClick={() => handleNavigation("/main/settings")}
                   className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
                   Settings

@@ -1,5 +1,5 @@
 import { Progress, Card, Row, Col, Typography } from 'antd';
-import member1Data from '@/app/data/memberdata';
+import member1Data from '@/app/data/members';
 const { Title, Text } = Typography;
 
 export default function AttendanceProgress({}) {

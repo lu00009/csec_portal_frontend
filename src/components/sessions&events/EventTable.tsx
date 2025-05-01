@@ -1,8 +1,8 @@
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 
 type EventTableProps = {
-  items: any[];
-  onEdit: (item: any) => void;
+  items: { id: string; date: string; title: string; category: string; visibility: 'public' | 'members'; status: 'planned' | 'ongoing' | 'ended'; venue: string }[];
+  onEdit: (item: { id: string; date: string; title: string; category: string; visibility: 'public' | 'members'; status: 'planned' | 'ongoing' | 'ended'; venue: string }) => void;
   onDelete: (id: string) => void;
 };
 
@@ -41,7 +41,7 @@ const EventTable = ({ items, onEdit, onDelete }: EventTableProps) => {
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[item.status]}`}>
-                    {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                  {item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : 'Unknown'}
                   </span>
                 </td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm">{item.venue}</td>

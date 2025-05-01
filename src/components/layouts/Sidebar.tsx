@@ -26,17 +26,17 @@ const navItems = [
   { name: 'All Members', href: '/main/members', icon: <FiUsers className="mr-3" /> },
   { name: 'All Divisions', href: '/main/divisions', icon: <FiLayers className="mr-3" /> },
   { name: 'Attendances', href: '/main/attendance', icon: <LuCalendarCheck className="mr-3" /> },
-  { name: 'Seasons & Events', href: '/main/events', icon: <LuClock10 className="mr-3" /> },
+  { name: 'Sessions & Events', href: '/main/events', icon: <LuClock10 className="mr-3" /> },
   { name: 'Resources', href: '/main/resources', icon: <IoFolderOutline className="mr-3" /> },
   { name: 'Profile', href: '/main/profile', icon: <HiOutlineUsers className="mr-3" /> },
   { 
     name: 'Administration', 
-    href: '/main/admin/heads', // Changed to point directly to heads
+    href: '/main/admin', // Changed to point directly to heads
     icon: <LuSettings2 className="mr-3" />, 
     adminOnly: true,
     requiredRole: 'President'
   },
-  { name: 'Settings', href: '/settings', icon: <FiSettings className="mr-3" /> },
+  { name: 'Settings', href: '/main/settings', icon: <FiSettings className="mr-3" /> },
 ];
 interface SidebarProps {
   user?: Member; // Make it optional
@@ -55,7 +55,7 @@ export default function Sidebar() {
   // Filter nav items based on user role and permissions
   const filteredNavItems = navItems.filter(item => {
     if (item.adminOnly || item.requiredRole) {
-      return user && isPresident(user.clubRole);
+      return user && isPresident(user.member.clubRole);
     }
     return true;
   });
@@ -75,7 +75,7 @@ export default function Sidebar() {
         <div className="flex">
           <Image className='w-6 md:w-7 h-8 md:h-10' src={logo} alt="Logoipsum" />
         </div>
-        <h1 className="text-xl md:text-2xl font-bold ml-3 md:ml-4">Logoipsum</h1>
+        <h1 className="text-xl md:text-2xl font-bold ml-3 md:ml-4">CSEC ASTU</h1>
       </div>
       
       {/* Navigation Items */}

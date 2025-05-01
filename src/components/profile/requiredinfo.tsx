@@ -22,7 +22,7 @@ const RequiredInfo = ({ member }: RequiredInfoProps) => {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mt-6 overflow-x-auto min-w-full divide-y ">
       {/* Left Column */}
       <div className="space-y-8 bg-white rounded-lg p-6">
         <div>
