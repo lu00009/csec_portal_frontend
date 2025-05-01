@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FiPlus, FiChevronDown } from 'react-icons/fi';
+import { FiPlus, FiChevronDown, FiArrowLeft } from 'react-icons/fi';
 import SessionItem from '@/components/sessions&events/SessionItem';
 import EventItem from '@/components/sessions&events/EventItem';
 import SessionsTable from '@/components/sessions&events/SessionsTable';
@@ -14,6 +14,11 @@ import { formatDisplayDate } from '@/utils/date';
 import { Session, Event } from '@/types/eventSession';
 import { useSessionEventStore } from '@/stores/sessionEventstore';
 
+type NavigationState = {
+  contentType: 'sessions' | 'events';
+  viewMode: 'list' | 'table';
+};
+
 const SessionsPage = () => {
   const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -21,6 +26,10 @@ const SessionsPage = () => {
   const [contentType, setContentType] = useState<'sessions' | 'events'>('sessions');
   const [editingItem, setEditingItem] = useState<Session | Event | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [navigationStack, setNavigationStack] = useState<NavigationState[]>([]);
+  const [currentStackIndex, setCurrentStackIndex] = useState(-1);
+
+  const itemsPerPage = 8;
 
   const {
     sessions,
@@ -34,37 +43,78 @@ const SessionsPage = () => {
     editEvent,
     deleteSession,
     deleteEvent,
+    sessionsTotalCount,
+    eventsTotalCount,
   } = useSessionEventStore();
 
-  const items = contentType === 'sessions' ? sessions : events;
-  const itemsPerPage = 4;
+  // Initialize navigation stack
+  useEffect(() => {
+    const initialState = { contentType, viewMode };
+    setNavigationStack([initialState]);
+    setCurrentStackIndex(0);
+  }, []);
 
+  // Update navigation stack when state changes
+  useEffect(() => {
+    if (currentStackIndex === -1) return;
+
+    const newState = { contentType, viewMode };
+    const currentState = navigationStack[currentStackIndex];
+
+    // Only add to stack if state actually changed
+    if (currentState.contentType !== newState.contentType || 
+        currentState.viewMode !== newState.viewMode) {
+      
+      // If we're not at the end of the stack, truncate future history
+      const newStack = navigationStack.slice(0, currentStackIndex + 1);
+      newStack.push(newState);
+      
+      setNavigationStack(newStack);
+      setCurrentStackIndex(newStack.length - 1);
+    }
+  }, [contentType, viewMode]);
+
+  // Fetch data when needed
   useEffect(() => {
     if (contentType === 'sessions') {
-      fetchSessions(currentPage);
+      fetchSessions(currentPage, itemsPerPage);
     } else {
-      fetchEvents(currentPage);
+      fetchEvents(currentPage, itemsPerPage);
     }
   }, [contentType, currentPage]);
 
-  const totalPages = Math.ceil(items.length / itemsPerPage);
-  const currentItems = items.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const items: (Session | Event)[] = contentType === 'sessions' ? sessions : events;
+  const totalCount = contentType === 'sessions' ? sessionsTotalCount : eventsTotalCount;
+  const totalPages = Math.ceil((typeof totalCount === 'number' ? totalCount : 0) / itemsPerPage);
+
+  const handleBack = () => {
+    if (currentStackIndex > 0) {
+      const previousState = navigationStack[currentStackIndex - 1];
+      setContentType(previousState.contentType);
+      setViewMode(previousState.viewMode);
+      setCurrentStackIndex(currentStackIndex - 1);
+    }
+  };
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this item?')) {
       if (contentType === 'sessions') {
         await deleteSession(id);
-        fetchSessions(currentPage);
+        await fetchSessions(currentPage, itemsPerPage);
       } else {
         await deleteEvent(id);
-        fetchEvents(currentPage);
+        await fetchEvents(currentPage, itemsPerPage);
       }
     }
   };
 
   const handleEdit = (item: Session | Event) => {
     setEditingItem(item);
-    void ('sessionTitle' in item ? setShowCreateModal(true) : setShowEventModal(true));
+    if ('sessionTitle' in item) {
+      setShowCreateModal(true);
+    } else {
+      setShowEventModal(true);
+    }
   };
 
   const handleSessionSubmit = async (data: Partial<Session>) => {
@@ -74,7 +124,7 @@ const SessionsPage = () => {
       } else {
         await addSession(data);
       }
-      fetchSessions(currentPage);
+      await fetchSessions(currentPage, itemsPerPage);
     } catch (err) {
       console.error(err);
     }
@@ -89,7 +139,7 @@ const SessionsPage = () => {
       } else {
         await addEvent(data);
       }
-      fetchEvents(currentPage);
+      await fetchEvents(currentPage, itemsPerPage);
     } catch (err) {
       console.error(err);
     }
@@ -97,113 +147,134 @@ const SessionsPage = () => {
     setEditingItem(null);
   };
 
+  const canGoBack = currentStackIndex > 0;
+
   return (
-    <div className="p-4 md:p-6">
-    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-      <div className="flex items-center gap-4">
-        <h1 className="text-2xl font-bold">
-          {contentType === 'sessions' ? 'Sessions' : 'Events'}
-        </h1>
-        <div className="relative">
-          <select
-            value={contentType}
-            onChange={(e) => {
-              setContentType(e.target.value as 'sessions' | 'events');
-              setCurrentPage(1);
-            }}
-            className="appearance-none bg-white border rounded-lg pl-3 pr-8 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    <div className="p-4 md:p-6 text-foreground bg-background min-h-screen transition-colors">
+      {/* Header Controls */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={handleBack}
+            className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors
+              ${canGoBack ? 'bg-gray-100 hover:bg-gray-200 text-gray-600' : 'bg-gray-50 text-gray-400 cursor-not-allowed'}`}
+            disabled={!canGoBack}
+            aria-label="Go back"
           >
-            <option value="sessions">Sessions</option>
-            <option value="events">Events</option>
-          </select>
-          <FiChevronDown className="absolute right-3 top-3 text-gray-400" />
+            <FiArrowLeft className="text-lg" />
+          </button>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold">
+              {contentType === 'sessions' ? 'Sessions' : 'Events'}
+            </h1>
+            <div className="relative">
+              <select
+                value={contentType}
+                onChange={(e) => {
+                  setContentType(e.target.value as 'sessions' | 'events');
+                  setCurrentPage(1);
+                }}
+                className="appearance-none bg-background border border-border text-foreground rounded-lg pl-3 pr-8 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="sessions">Sessions</option>
+                <option value="events">Events</option>
+              </select>
+              <FiChevronDown className="absolute right-3 top-3 text-muted-foreground pointer-events-none" />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+          <button
+            onClick={() => {
+              setEditingItem(null);
+              contentType === 'sessions' ? setShowCreateModal(true) : setShowEventModal(true);
+            }}
+            className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <FiPlus className="mr-2" />
+            {contentType === 'sessions' ? 'Create Session' : 'Create Event'}
+          </button>
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-        <button
-          onClick={() => {
-            setEditingItem(null);
-            if (contentType === 'sessions') {
-              setShowCreateModal(true);
-            } else {
-              setShowEventModal(true);
-            }
-          }}
-          className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 whitespace-nowrap"
-        >
-          <FiPlus className="mr-2" />
-          {contentType === 'sessions' ? 'Create Session' : 'Create Event'}
-        </button>
-      </div>
-    </div>
-
-    {loading ? (
-      <div className="text-center text-gray-500">Loading...</div>
-    ) : viewMode === 'list' ? (
-      <div className="space-y-4">
-        {currentItems.length > 0 ? (
-          currentItems.map((item) =>
-            'sessionTitle' in item ? (
-              <SessionItem
-                key={item._id}
-                item={item}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                date={formatDisplayDate(item.startDate)}
-              />
-            ) : (
-              <EventItem
-                key={item._id}
-                item={item}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-              />
+      {/* Main View */}
+      {loading ? (
+        <div className="text-center text-muted-foreground">Loading...</div>
+      ) : viewMode === 'list' ? (
+        <div className="space-y-4">
+          {items.length > 0 ? (
+            items.map((item) =>
+              'sessionTitle' in item ? (
+                <SessionItem
+                  key={item._id}
+                  item={item}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  date={formatDisplayDate(item.startDate)}
+                />
+              ) : (
+                <EventItem
+                  key={item._id}
+                  item={item}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              )
             )
-          )
-        ) : (
-          <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
-            No {contentType} found
-          </div>
-        )}
-      </div>
-    ) : contentType === 'sessions' ? (
-      <SessionsTable
-        items={currentItems}
-        contentType={contentType}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        date={currentItems.length > 0 ? formatDisplayDate((currentItems[0] as Session).startDate) : ''}
+          ) : (
+            <div className="bg-card text-card-foreground rounded-lg shadow p-6 text-center text-muted-foreground">
+              No {contentType} found.
+            </div>
+          )}
+        </div>
+      ) : contentType === 'sessions' ? (
+        <SessionsTable
+          items={items as Session[]}
+          contentType={contentType}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          date={items.length > 0 ? formatDisplayDate((items[0] as Session).startDate) : ''}
+        />
+      ) : (
+        <EventTable
+          items={items as Event[]}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      )}
+
+      {/* Modals */}
+      <CreateSessionModal
+        isOpen={showCreateModal}
+        onClose={() => {
+          setShowCreateModal(false);
+          setEditingItem(null);
+        }}
+        onSubmit={handleSessionSubmit}
+        editingItem={editingItem as Session | null}
       />
-    ) : (
-      <EventTable items={currentItems} onEdit={handleEdit} onDelete={handleDelete} />
-    )}
 
-    {items.length > itemsPerPage && (
-      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
-    )}
-
-    <CreateSessionModal
-      isOpen={showCreateModal}
-      onClose={() => {
-        setShowCreateModal(false);
-        setEditingItem(null);
-      }}
-      onSubmit={handleSessionSubmit}
-      editingItem={editingItem as Session | null}
-    />
-
-    <CreateEventModal
-      isOpen={showEventModal}
-      onClose={() => {
-        setShowEventModal(false);
-        setEditingItem(null);
-      }}
-      onSubmit={handleEventSubmit}
-      editingItem={editingItem as Event | null}
-    />
-  </div>
+      <CreateEventModal
+        isOpen={showEventModal}
+        onClose={() => {
+          setShowEventModal(false);
+          setEditingItem(null);
+        }}
+        onSubmit={handleEventSubmit}
+        editingItem={editingItem as Event | null}
+      />
+    </div>
   );
 };
 

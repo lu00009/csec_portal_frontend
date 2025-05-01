@@ -1,9 +1,22 @@
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { calculateStatus } from '@/utils/date';
+
+type SessionItem = {
+  id?: string;
+  _id?: string;
+  startDate?: string;
+  endDate?: string;
+  sessionTitle?: string;
+  division?: string;
+  category?: string;
+  groups?: string[];
+  status?: string;
+};
 
 type SessionsTableProps = {
-  items: { id?: string; _id?: string; date: string; title: string; division?: string; category?: string; groups?: string[]; status?: string }[];
+  items: SessionItem[];
   contentType: 'sessions' | 'events';
-  onEdit: (item: { id?: string; _id?: string; date: string; title: string; division?: string; category?: string; groups?: string[]; status?: string }) => void;
+  onEdit: (item: SessionItem & { startDate: string; sessionTitle: string }) => void;
   onDelete: (id: string) => void;
 };
 
@@ -36,13 +49,13 @@ const SessionsTable = ({ items, contentType, onEdit, onDelete }: SessionsTablePr
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {items.map((item) => {
-              const key = item.id || item._id; // fallback to _id if id is not present
-              const status = (item.status || '').toLowerCase(); // normalize casing
+              const key = item.id || item._id;
+              const status = (item.status || calculateStatus(item.startDate, item.endDate) || '').toLowerCase();
 
               return (
                 <tr key={key}>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm">{item.date}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">{item.title}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm">{item.startDate}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">{item.sessionTitle}</td>
                   {contentType === 'sessions' ? (
                     <td className="px-4 py-4 whitespace-nowrap text-sm">{item.division}</td>
                   ) : (
@@ -59,18 +72,26 @@ const SessionsTable = ({ items, contentType, onEdit, onDelete }: SessionsTablePr
                     </span>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap flex gap-2">
-                    <button 
-                      onClick={() => onEdit(item)}
-                      className="text-blue-500 hover:text-blue-700"
-                    >
-                      <FiEdit2 size={18} />
-                    </button>
-                    <button 
-                      onClick={() => key && onDelete(key)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <FiTrash2 size={18} />
-                    </button>
+                    {item.startDate && item.sessionTitle && (
+                      <button 
+                        onClick={() => onEdit({ 
+                          ...item, 
+                          startDate: item.startDate as string, 
+                          sessionTitle: item.sessionTitle as string 
+                        })}
+                        className="text-blue-500 hover:text-blue-700"
+                      >
+                        <FiEdit2 size={18} />
+                      </button>
+                    )}
+                    {key && (
+                      <button 
+                        onClick={() => onDelete(key)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <FiTrash2 size={18} />
+                      </button>
+                    )}
                   </td>
                 </tr>
               );

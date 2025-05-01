@@ -243,15 +243,16 @@ const useUserStore = create<UserStore>((set, get) => ({
   isPresident: () => isPresidentRole(get().user?.member.clubRole as UserRole || 'Member'),
   isDivisionHead: () => isDivisionHeadRole(get().user?.member.clubRole || 'Member'),
   isAuthenticated: () => {
-    const { refreshToken, user } = get();
-    if (!refreshToken || !user) return false;
+    const { token } = get();
+    if (!token) return false;
     try {
-      const payload = parseJwt(refreshToken);
+      const payload = parseJwt(token);
       return payload.exp * 1000 > Date.now();
     } catch {
       return false;
     }
   },
+  
   getAuthHeader: () => {
     const { token } = get();
     return token ? { Authorization: `Bearer ${token}` } : null;

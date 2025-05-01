@@ -36,11 +36,13 @@ export const useResourceStore = create<ResourceStore>((set, get) => ({
       throw error;
     }
   },
+  
 
   addResource: async (resource) => {
     try {
       await addResourceApi(resource);
       await get().fetchResources();
+      console.log('Resource added Successfully')
     } catch (error) {
       console.error('Error adding resource:', error);
       throw error;
@@ -51,6 +53,7 @@ export const useResourceStore = create<ResourceStore>((set, get) => ({
     try {
       await updateResourceApi(id, resource);
       await get().fetchResources();
+      console.log('Resource updated')
     } catch (error) {
       console.error('Error updating resource:', error);
       throw error;
@@ -61,6 +64,7 @@ export const useResourceStore = create<ResourceStore>((set, get) => ({
     try {
       await deleteResourceApi(id);
       await get().fetchResources();
+      console.log('Resource deleted')
     } catch (error) {
       console.error('Error deleting resource:', error);
       throw error;

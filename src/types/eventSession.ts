@@ -10,6 +10,8 @@ export type Session = {
     startTime: string;
     endTime: string;
   }[];
+  data: Session[]; 
+  totalCount: number
 };
 
 export type Event = {
@@ -19,4 +21,6 @@ export type Event = {
   startTime: string;
   endTime: string;
   visibility: string;
+  data: Event[]; 
+  totalCount: number
 };

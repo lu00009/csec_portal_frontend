@@ -1,9 +1,9 @@
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
-import { getTimeLeft, formatDateInput } from '../../utils/date';
-import { date } from 'yup';
+import { calculateStatus, getTimeLeft, Status } from '@/utils/date';
+
 type SessionItemProps = {
   item: {
-    status: 'planned' | 'ongoing' | 'ended';
+    status?: Status; // Make it optional since we'll calculate it
     division: string;
     sessionTitle: string;
     startDate: string;
@@ -18,10 +18,11 @@ type SessionItemProps = {
   onDelete: (id: string) => void;
 };
 
-
-
 const SessionItem = ({ item, onEdit, onDelete }: SessionItemProps) => {
- const timeRemaining = getTimeLeft(item.endDate);
+  // Calculate status based on current time
+  const status = calculateStatus(item.startDate, item.endDate) as keyof typeof statusColors;
+  const timeRemaining = getTimeLeft(item.startDate, item.endDate);
+  
   const statusColors = {
     planned: 'bg-yellow-50 text-yellow-400',
     ongoing: 'bg-blue-50 text-blue-400',
@@ -34,8 +35,8 @@ const SessionItem = ({ item, onEdit, onDelete }: SessionItemProps) => {
         <div className="flex-1">
           <div className="flex flex-col md:flex-row md:items-center gap-3">
             <div>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[item.status]}`}>
-                {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+              <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[status]}`}>
+                {status.charAt(0).toUpperCase() + status.slice(1)}
               </span>
             </div>
             <div>

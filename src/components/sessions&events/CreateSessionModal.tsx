@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { FiX } from 'react-icons/fi';
 import { useFormik } from 'formik';
 
@@ -34,20 +34,20 @@ type CreateSessionModalProps = {
 const CreateSessionModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateSessionModalProps) => {
   const formik = useFormik({
     initialValues: {
-      sessionTitle: editingItem?.sessionTitle || 'Contest',
-      division: editingItem?.division || 'Competitive Programming Division',
+      sessionTitle: editingItem?.sessionTitle || '',
+      division: editingItem?.division || '',
       groups: editingItem?.groups
-      ? Array.isArray(editingItem.groups)
-        ? editingItem.groups
-        : editingItem.groups.split(/,\s*/)
-      : ['Group 1'],
-          startMonth: editingItem?.startMonth || '2024-02-10',
-      endMonth: editingItem?.endMonth || '2024-04-20',
+        ? Array.isArray(editingItem.groups)
+          ? editingItem.groups
+          : editingItem.groups.split(/,\s*/)
+        : ['Group 1'],
+      startMonth: editingItem?.startMonth || '',
+      endMonth: editingItem?.endMonth || '',
       sessions: editingItem?.sessions || [],
       newSession: { day: '', startTime: '', endTime: '' },
     },
+    enableReinitialize: true, // This ensures that the form will reinitialize when `editingItem` changes
     onSubmit: (values) => {
-      
       const sessionData = {
         sessionTitle: values.sessionTitle,
         division: values.division,
@@ -55,7 +55,7 @@ const CreateSessionModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateSe
         startDate: values.startMonth,
         endDate: values.endMonth,
         sessions: [...values.sessions, values.newSession],
-        status:'Planned'
+        status: 'Planned',
       };
       console.log('Session Data:', sessionData);
       onSubmit(sessionData);
@@ -77,11 +77,18 @@ const CreateSessionModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateSe
     formik.setFieldValue('sessions', updatedSessions);
   };
 
+  // Reset form when modal is closed or editingItem changes
+  useEffect(() => {
+    if (!isOpen) {
+      formik.resetForm();
+    }
+  }, [isOpen, editingItem]);
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-opacity-30 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="absolute inset-0 bg-opacity-30 backdrop-blur-sm"></div>
       <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-4xl z-10 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">{editingItem ? 'Edit Session' : 'Add New Session'}</h2>
@@ -102,7 +109,7 @@ const CreateSessionModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateSe
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <select
+            <select
               name="groups"
               value={formik.values.groups}
               onChange={(e) => {
@@ -117,7 +124,6 @@ const CreateSessionModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateSe
               <option value="Group 3">Group 3</option>
               <option value="Group 4">Group 4</option>
             </select>
-
 
             <input type="date" className="border rounded px-4 py-2" placeholder="Start Month" name="startMonth" value={formik.values.startMonth} onChange={formik.handleChange} />
             <input type="date" className="border rounded px-4 py-2" placeholder="End Month" name="endMonth" value={formik.values.endMonth} onChange={formik.handleChange} />

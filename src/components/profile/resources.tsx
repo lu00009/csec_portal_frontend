@@ -25,7 +25,7 @@ const Resources = () => {
   ];
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
+    <div className="bg-white rounded-lg shadow-sm p-6 mt-6 w-160">
       <h2 className="text-xl font-bold text-gray-800 mb-6">Resources</h2>
       
       <div className="overflow-x-auto">

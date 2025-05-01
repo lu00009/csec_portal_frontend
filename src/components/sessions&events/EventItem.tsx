@@ -1,15 +1,17 @@
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { calculateStatus, getTimeLeft } from '@/utils/date';
 
 type EventItemProps = {
   item: {
     status: 'planned' | 'ongoing' | 'ended';
     category: string;
     eventTitle: string;
-    eventDate: string;
+    startDate: string;
+    endDate: string;
     visibility: 'public' | 'members';
     timeRemaining: string;
     venue: string;
-    id: string;
+    _id: string;
     groups: string[];
     startTime: string;
     endTime: string;
@@ -26,6 +28,10 @@ const EventItem = ({ item, onEdit, onDelete }: EventItemProps) => {
     ongoing: 'bg-blue-50 text-blue-400',
     ended: 'bg-red-50 text-red-400'
   };
+   const status = calculateStatus(item.startDate, item.endDate);
+    const timeRemaining = getTimeLeft(item.startDate, item.endDate);
+    
+   
 
   return (
     <div className="bg-white rounded-lg shadow p-4 md:p-6">
@@ -33,8 +39,8 @@ const EventItem = ({ item, onEdit, onDelete }: EventItemProps) => {
         <div className="flex-1">
           <div className="flex flex-col md:flex-row md:items-center gap-3">
             <div>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[item.status]}`}>
-              {item.status ? item.status.charAt(0).toUpperCase() + item.status.slice(1) : 'Unknown'}
+              <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[status]}`}>
+              {status ?status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown'}
               </span>
             </div>
             <div>
@@ -42,7 +48,7 @@ const EventItem = ({ item, onEdit, onDelete }: EventItemProps) => {
             </div>
           </div>
           <p className="font-medium mt-2 text-gray-800">{item.division}</p>
-          <p className="text-gray-500 text-sm mt-1">{item.eventDate}</p>
+          <p className="text-gray-500 text-sm mt-1">{item.startDate}</p>
           <div className="mt-2">
             <span className={`text-xs px-2 py-1 rounded ${item.visibility === 'public' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'}`}>
               {item.visibility === 'public' ? 'Public' : 'Members Only'}
@@ -50,7 +56,7 @@ const EventItem = ({ item, onEdit, onDelete }: EventItemProps) => {
           </div>
         </div>
         <div className="text-right">
-          <p className="font-bold text-sm md:text-base">{item.timeRemaining}</p>
+          <p className="font-bold text-sm md:text-base">{timeRemaining}</p>
           <p className="text-gray-500 text-sm mt-1">Venue: {item.venue}</p>
         </div>
       </div>
@@ -64,7 +70,7 @@ const EventItem = ({ item, onEdit, onDelete }: EventItemProps) => {
             <FiEdit2 size={18} />
           </button>
           <button 
-            onClick={() => onDelete(item.id)}
+            onClick={() => onDelete(item._id)}
             className="text-red-500 hover:text-red-700"
           >
             <FiTrash2 size={18} />

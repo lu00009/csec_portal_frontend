@@ -1,44 +1,76 @@
-// utils/dateUtils.ts
+export type Status = 'planned' | 'ongoing' | 'ended';
 
-// Detect and parse any common date format
-export function parseAnyDate(dateStr: string): Date | null {
-  if (!dateStr) return null;
+export const calculateStatus = (
+  startDate?: string | Date | null,
+  endDate?: string | Date | null,
+  currentDate: Date = new Date()
+): Status => {
+  const start = parseAnyDate(startDate);
+  const end = parseAnyDate(endDate);
+
+  if (!start || !end) return 'planned';
   
-  // Try different formats in order of likelihood
-  const formats = [
-    // DD/MM/YY or DD/MM/YYYY
-    /^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/,
-    // YYYY-MM-DD (ISO)
-    /^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})$/,
-    // Month DD, YYYY (e.g., "Jan 15, 2023")
-    /^([a-zA-Z]{3,9})\s(\d{1,2}),\s(\d{4})$/,
-    // Timestamp
-    /^\d{10,13}$/
-  ];
+  if (currentDate > end) return 'ended';
+  if (currentDate >= start && currentDate <= end) return 'ongoing';
+  return 'planned';
+};
 
-  for (const format of formats) {
-    const match = dateStr.match(format);
-    if (match) {
-      // Handle different format types
-      if (format === formats[0]) { // DD/MM/YY or DD/MM/YYYY
-        let day = parseInt(match[1], 10);
-        let month = parseInt(match[2], 10) - 1;
-        let year = parseInt(match[3], 10);
-        if (year < 100) year += 2000;
-        return new Date(year, month, day);
-      }
-      // Add handling for other formats...
-    }
+export const getTimeLeft = (
+  startDate?: string | Date | null,
+  endDate?: string | Date | null,
+  currentDate: Date = new Date()
+): string => {
+  const start = parseAnyDate(startDate);
+  const end = parseAnyDate(endDate);
+
+  if (!start || !end) return 'Date not specified';
+
+  // Check if it's the same day
+  const isSameDay = start.toDateString() === end.toDateString();
+
+  if (currentDate > end) {
+    return 'Session ended';
   }
 
-  // Fallback to native Date parsing
-  const parsed = new Date(dateStr);
-  return isNaN(parsed.getTime()) ? null : parsed;
-}
+  if (currentDate >= start) {
+    // Session is ongoing - show time left until end
+    const diff = end.getTime() - currentDate.getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (isSameDay) {
+      // For same-day sessions, show the time range
+      const startTime = start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const endTime = end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return `${startTime} - ${endTime}`;
+    }
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m Remaining`;
+    }
+    return ` ${minutes}m Remaining`;
+  }
 
-// Format date consistently for display
-export function formatDisplayDate(dateInput: string | Date): string {
-  const date = typeof dateInput === 'string' ? parseAnyDate(dateInput) : dateInput;
+  // Session is planned - show time until start
+  const diff = start.getTime() - currentDate.getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  
+  if (isSameDay) {
+    // For same-day sessions, show the time range
+    const startTime = start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const endTime = end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `${startTime} - ${endTime}`;
+  }
+  
+  if (days > 0) {
+    return `${days}d ${hours}h Remaining`;
+  }
+  return `${hours}h Remaining`;
+};
+
+export function formatDisplayDate(dateInput: string | Date | null | undefined): string {
+  const date = parseAnyDate(dateInput);
   if (!date || isNaN(date.getTime())) return "Invalid date";
 
   return date.toLocaleDateString('en-GB', {
@@ -49,31 +81,51 @@ export function formatDisplayDate(dateInput: string | Date): string {
   });
 }
 
-// Format for API (YYYY-MM-DD)
-export function formatApiDate(dateInput: string | Date): string {
-  const date = typeof dateInput === 'string' ? parseAnyDate(dateInput) : dateInput;
-  if (!date || isNaN(date.getTime())) return "";
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+export function parseAnyDate(dateStr: string | Date | null | undefined): Date | null {
+  if (!dateStr) return null;
+  if (dateStr instanceof Date) return dateStr;
   
-  return `${year}-${month}-${day}`;
-}
+  // Try ISO format first
+  const isoDate = new Date(dateStr);
+  if (!isNaN(isoDate.getTime())) return isoDate;
 
-// Calculate time remaining
-export function getTimeLeft(endDateInput: string | Date): string {
-  const endDate = typeof endDateInput === 'string' ? parseAnyDate(endDateInput) : endDateInput;
-  if (!endDate || isNaN(endDate.getTime())) return "Invalid date";
+  // Try other common formats
+  const formats = [
+    // DD/MM/YYYY or DD-MM-YYYY
+    /^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/,
+    // MM/DD/YYYY or MM-DD-YYYY
+    /^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/,
+    // YYYY/MM/DD or YYYY-MM-DD
+    /^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})$/,
+    // Month DD, YYYY (e.g., "Jan 15, 2023")
+    /^([a-zA-Z]{3,9})\s(\d{1,2}),\s(\d{4})$/
+  ];
 
-  const now = new Date();
-  const diffMs = endDate.getTime() - now.getTime();
-  if (diffMs <= 0) return "Ended";
+  for (const format of formats) {
+    const match = String(dateStr).match(format);
+    if (match) {
+      try {
+        if (format === formats[0] || format === formats[1]) {
+          const day = parseInt(match[1], 10);
+          const month = parseInt(match[2], 10) - 1;
+          const year = parseInt(match[3], 10);
+          return new Date(year, month, day);
+        }
+        if (format === formats[2]) {
+          const year = parseInt(match[1], 10);
+          const month = parseInt(match[2], 10) - 1;
+          const day = parseInt(match[3], 10);
+          return new Date(year, month, day);
+        }
+        if (format === formats[3]) {
+          return new Date(dateStr);
+        }
+      } catch {
+        throw new Error(`Error parsing date: ${dateStr}. Format: ${format}`);
+       continue;
+      }
+        }
+  }
 
-  const totalMinutes = Math.floor(diffMs / 60000);
-  const days = Math.floor(totalMinutes / (24 * 60));
-  const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
-  const minutes = totalMinutes % 60;
-
-  return `${days}d ${hours}h ${minutes}m left`;
+  return null;
 }

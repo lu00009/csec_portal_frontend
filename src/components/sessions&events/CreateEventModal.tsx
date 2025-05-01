@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { FiX } from 'react-icons/fi';
 import { useFormik } from 'formik';
 
@@ -26,47 +26,47 @@ type CreateEventModalProps = {
     startTime?: string;
     endTime?: string;
     attendance?: string;
-
   } | null;
 };
 
 const CreateEventModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateEventModalProps) => {
+  // Handle form reset when modal is closed
   const formik = useFormik({
     initialValues: {
       eventTitle: editingItem?.eventTitle || '',
       visibility: editingItem?.visibility || 'public',
       division: editingItem?.division || '',
       groups: editingItem?.groups
-      ? Array.isArray(editingItem.groups)
-        ? editingItem.groups
-        : editingItem.groups.split(/,\s*/)
-      : ['Group 1'],
+        ? Array.isArray(editingItem.groups)
+          ? editingItem.groups
+          : editingItem.groups.split(/,\s*/)
+        : ['Group 1'],
       eventDate: editingItem?.eventDate || '',
       startTime: editingItem?.startTime || '',
       endTime: editingItem?.endTime || '',
       attendance: editingItem?.attendance || 'optional',
-   
     },
+    enableReinitialize: true, // This ensures the form will reinitialize when `editingItem` changes
     onSubmit: (values) => {
-      const eventData = {
-        ...values,
-      };
+      const eventData = { ...values };
       console.log('Event Data:', eventData);
       onSubmit(eventData);
       onClose();
     }
   });
 
-  // const handleRemoveTag = (index: number) => {
-  //   const newTags: string[] = formik.values.tags.filter((_: string, i: number) => i !== index);
-  //   formik.setFieldValue('tags', newTags);
-  // };
+  // Reset form only when modal is closed, and `editingItem` changes
+  useEffect(() => {
+    if (!isOpen) {
+      formik.resetForm();
+    }
+  }, [isOpen, editingItem]);
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-opacity-30 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="absolute inset-0 bg-opacity-30 backdrop-blur-sm"></div>
       <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-md z-10 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">{editingItem ? 'Edit Event' : 'Add New Event'}</h2>
@@ -119,20 +119,20 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateEven
                   <option value="Div 2">Div 2</option>
                 </select>
                 <select
-              name="groups"
-              value={formik.values.groups}
-              onChange={(e) => {
-                const selected = Array.from(e.target.selectedOptions, (option) => option.value);
-                formik.setFieldValue('groups', selected);
-              }}
-              className="border rounded px-4 py-2"
-              multiple
-            >
-              <option value="Group 1">Group 1</option>
-              <option value="Group 2">Group 2</option>
-              <option value="Group 3">Group 3</option>
-              <option value="Group 4">Group 4</option>
-            </select>
+                  name="groups"
+                  value={formik.values.groups}
+                  onChange={(e) => {
+                    const selected = Array.from(e.target.selectedOptions, (option) => option.value);
+                    formik.setFieldValue('groups', selected);
+                  }}
+                  className="border rounded px-4 py-2"
+                  multiple
+                >
+                  <option value="Group 1">Group 1</option>
+                  <option value="Group 2">Group 2</option>
+                  <option value="Group 3">Group 3</option>
+                  <option value="Group 4">Group 4</option>
+                </select>
               </div>
               <div className="mb-4">
                 <label className="font-semibold mb-1">Attendance</label>
@@ -165,9 +165,6 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateEven
             <input type="time" name="startTime" value={formik.values.startTime} onChange={formik.handleChange} className="border rounded px-4 py-2" required />
             <input type="time" name="endTime" value={formik.values.endTime} onChange={formik.handleChange} className="border rounded px-4 py-2" required />
           </div>
-
-          
-
 
           <div className="flex justify-end gap-4">
             <button type="button" onClick={onClose} className="px-4 py-2 border rounded">
