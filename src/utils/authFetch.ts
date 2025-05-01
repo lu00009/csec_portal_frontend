@@ -13,10 +13,10 @@ export const authFetch = async <T = any>(
   const store = useUserStore.getState();
 
   const executeRequest = async (): Promise<Response> => {
-    const {token } = store;
+    const { token } = store;
 
     // Validate token exists
-    if (token) {
+    if (!token) {
       store.logout();
       throw new Error('No authentication token available');
     }

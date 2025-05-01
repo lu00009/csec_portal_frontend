@@ -1,5 +1,4 @@
 'use client';
-import React, { useEffect, useState } from 'react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Attendance from '@/components/profile/attendance';
 import ProfileHeader from '@/components/profile/header';
@@ -8,9 +7,10 @@ import OptionalInfo from '@/components/profile/optionalinfo';
 import Progress from '@/components/profile/progress';
 import RequiredInfo from '@/components/profile/requiredinfo';
 import Resources from '@/components/profile/resources';
-import { useUserStore } from '@/stores/userStore';
 import { useAttendanceStore } from '@/stores/attendanceStore';
+import { useUserStore } from '@/stores/userStore';
 import { Member } from '@/types/member';
+import React, { useEffect, useState } from 'react';
 import { FiUser as FiProfile, FiInfo as FiRequired, FiBook as FiResources } from 'react-icons/fi';
 import { HiOutlineDocumentText } from 'react-icons/hi';
 import { LuClipboardList } from 'react-icons/lu';
@@ -46,7 +46,7 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${useUserStore.getState().refreshToken}`,
+            'Authorization': `Bearer ${useUserStore.getState().token}`,
           },
         });
 

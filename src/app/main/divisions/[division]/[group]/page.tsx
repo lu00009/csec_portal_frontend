@@ -1,369 +1,282 @@
 "use client"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { AddMemberDialog } from "@/components/divisions/add-member-dialog"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import Button from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import Input from "@/components/ui/input"
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ChevronDown, Filter, Import, Plus, Search } from "lucide-react"
+import { useDivisionsStore } from "@/stores/DivisionStore"
+import { ChevronRight, Download, Filter, Home, Pencil, Plus, Search, Trash2, User } from "lucide-react"
 import Link from "next/link"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 
-interface Member {
-  id: string
-  name: string
-  email: string
-  phone?: string
-  status: "Active" | "Inactive"
-  role: string
-  banned?: boolean
-}
-
-interface GroupPageProps {
-  params: {
-    division: string
-    group: string
-  }
-}
-
-const formatName = (str: string) =>
-  str
-    .split("-")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ")
-
-export default function GroupPage({ params }: GroupPageProps) {
-  const divisionName = formatName(params.division)
-  const groupName = formatName(params.group)
-  const groupId = params.group.replace("group-", "")
-
-  const [members, setMembers] = useState<Member[]>([])
-  const [loading, setLoading] = useState(true)
+export default function GroupMembersPage() {
+  const router = useRouter()
+  const params = useParams()
+  const searchParams = useSearchParams()
+  
+  const divisionName = decodeURIComponent(params.division as string)
+  const groupName = decodeURIComponent(params.group as string)
+  
+  const searchQuery = searchParams.get("search") || ""
+  const page = Number.parseInt(searchParams.get("page") || "1")
+  const [statusFilter, setStatusFilter] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE;
+  const {
+    members,
+    totalMembers,
+    isLoading,
+    fetchGroupMembers,
+    showAddMemberDialog,
+    setShowAddMemberDialog,
+  } = useDivisionsStore()
+
   useEffect(() => {
-    const fetchMembers = async () => {
+    const loadGroupMembers = async () => {
       try {
-        console.log("Fetching members for:", {
-          group: `Group ${groupId}`,
-          division: divisionName
-        })
-
-        const response = await fetch(`${API_BASE_URL}/groups/getMembers`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            group: `Group ${groupId}`,
-            division: divisionName,
-          }),
-          cache: "no-store",
-        })
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-
-        const data = await response.json()
-        console.log("API Response:", data)
-
-        if (!data.groupMembers || !Array.isArray(data.groupMembers)) {
-          throw new Error("Invalid response format - groupMembers array missing")
-        }
-
-        // Transform the API response to match our UI structure
-        const formattedMembers: Member[] = data.groupMembers.map((member: any) => {
-          // Extract name from email if name field doesn't exist
-          const name = member.name || member.email.split("@")[0]
-          // Format name to be more readable
-          const formattedName = name
-            .split(".")
-            .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1))
-            .join(" ")
-
-          return {
-            id: member._id,
-            name: formattedName,
-            email: member.email,
-            phone: member.phone || "N/A",
-            status: member.banned ? "Inactive" : "Active",
-            role: member.clubRole || "Member",
-            banned: member.banned,
+        await fetchGroupMembers(
+          divisionName,
+          groupName, 
+          {
+            search: searchQuery,
+            page,
+            limit: 10,
+            status: statusFilter
           }
-        })
-
-        console.log("Formatted Members:", formattedMembers)
-        setMembers(formattedMembers)
+        )
       } catch (error) {
-        console.error("Error fetching members:", error)
-        setError(error instanceof Error ? error.message : "Failed to load members. Please try again later.")
-      } finally {
-        setLoading(false)
+        setError("Failed to load group members. Please try again later.")
+        console.error(error)
       }
     }
 
-    fetchMembers()
-  }, [divisionName, groupId])
+    if (divisionName && groupName) {
+      loadGroupMembers()
+    }
+  }, [divisionName, groupName, searchQuery, page, statusFilter])
 
-  // Filter members based on search term
-  const filteredMembers = members.filter(
-    (member) =>
-      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.role.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
-
-  const activeMembers = filteredMembers.filter((member) => member.status === "Active")
-  const inactiveMembers = filteredMembers.filter((member) => member.status === "Inactive")
-  if (loading) {
-    return (
-      <div className="flex min-h-screen bg-white">
-        <div className="flex-1 p-6">
-          <header className="flex justify-between items-center mb-6">
-            <div>
-              <nav className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-                <Link href="/main/divisions" className="hover:text-blue-600 transition-colors">
-                  All Divisions
-                </Link>
-                <span>{">"}</span>
-                <Link href={`/main/divisions/${params.division}`} className="hover:text-blue-600 transition-colors">
-                  {divisionName} Division
-                </Link>
-                <span>{">"}</span>
-                <span className="text-gray-700">{groupName}</span>
-              </nav>
-              <h1 className="text-2xl font-semibold text-gray-900">
-                {divisionName} Division - {groupName}
-              </h1>
-            </div>
-          </header>
-
-          {/* Loading skeleton */}
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
-            <div className="bg-gray-50 p-4 border-b border-gray-200">
-              <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-            <div className="p-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex justify-between items-center py-4 border-b border-gray-100">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 bg-gray-200 rounded-full animate-pulse"></div>
-                    <div>
-                      <div className="h-5 w-32 bg-gray-200 rounded animate-pulse"></div>
-                      <div className="h-4 w-24 bg-gray-200 rounded mt-1 animate-pulse"></div>
-                    </div>
-                  </div>
-                  <div className="h-6 w-16 bg-gray-200 rounded animate-pulse"></div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    )
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value
+    const params = new URLSearchParams()
+    if (query) params.set("search", query)
+    if (page > 1) params.set("page", page.toString())
+    if (statusFilter) params.set("status", statusFilter)
+    
+    router.push(`/main/divisions/${encodeURIComponent(divisionName)}/${encodeURIComponent(groupName)}?${params.toString()}`)
   }
 
-  if (error) {
-    return (
-      <div className="flex min-h-screen bg-white">
-        <div className="flex-1 p-6">
-          <header className="flex justify-between items-center mb-6">
-            <div>
-              <nav className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-                <Link href="/main/divisions" className="hover:text-blue-600 transition-colors">
-                  All Divisions
-                </Link>
-                <span>{">"}</span>
-                <Link href={`/main/divisions/${params.division}`} className="hover:text-blue-600 transition-colors">
-                  {divisionName} Division
-                </Link>
-                <span>{">"}</span>
-                <span className="text-gray-700">{groupName}</span>
-              </nav>
-              <h1 className="text-2xl font-semibold text-gray-900">
-                {divisionName} Division - {groupName}
-              </h1>
-            </div>
-          </header>
-
-          <div className="p-4 border border-red-200 bg-red-50 rounded-md text-red-600">{error}</div>
-        </div>
-      </div>
-    )
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(searchParams)
+    params.set("page", newPage.toString())
+    router.push(`/main/divisions/${encodeURIComponent(divisionName)}/${encodeURIComponent(groupName)}?${params.toString()}`)
   }
+
+  const handleFilterChange = (status: string | null) => {
+    setStatusFilter(status)
+    const params = new URLSearchParams(searchParams)
+    status ? params.set("status", status) : params.delete("status")
+    params.set("page", "1")
+    router.push(`/main/divisions/${encodeURIComponent(divisionName)}/${encodeURIComponent(groupName)}?${params.toString()}`)
+  }
+
+  const getStatusBadge = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "active":
+        return <Badge className="bg-green-100 text-green-800">Active</Badge>
+      case "inactive":
+        return <Badge className="bg-red-100 text-red-800">Inactive</Badge>
+      case "pending":
+        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
+      default:
+        return <Badge>{status}</Badge>
+    }
+  }
+
+  const totalPages = Math.ceil(totalMembers / 10)
 
   return (
-    <div className="flex min-h-screen bg-white">
-      <div className="flex-1 p-6">
-        {/* Header Section */}
-        <header className="flex justify-between items-center mb-6">
-          {/* <div>
-            <nav className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-              <Link href="/main/divisions" className="hover:text-blue-600 transition-colors">
+    <div className="flex flex-col h-full">
+      <div className="border-b">
+        <div className="flex h-16 items-center px-4 justify-between">
+          <div className="flex items-center">
+            <nav className="flex items-center space-x-2">
+              <Link href="/main/divisions" className="text-muted-foreground hover:text-foreground">
+                <Home className="h-4 w-4" />
+                <span className="sr-only">Home</span>
+              </Link>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <Link href="/main/divisions" className="text-muted-foreground hover:text-foreground">
                 All Divisions
               </Link>
-              <span>{">"}</span>
-              <Link href={`/main/divisions/${params.division}`} className="hover:text-blue-600 transition-colors">
-                {divisionName} Division
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <Link 
+                href={`/main/divisions/${encodeURIComponent(divisionName)}`} 
+                className="text-muted-foreground hover:text-foreground"
+              >
+                {divisionName}
               </Link>
-              <span>{">"}</span>
-              <span className="text-gray-700">{groupName}</span>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <span className="font-medium text-foreground">{groupName}</span>
             </nav>
-            <h1 className="text-2xl font-semibold text-gray-900">
-              {divisionName} Division - {groupName}
-            </h1>
-          </div> */}
+          </div>
+        </div>
+      </div>
 
-          {/* User Controls */}
-          {/* <div className="flex items-center gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                className="pl-10 pr-4 py-2 w-64 rounded-full bg-gray-100 border-none focus-visible:ring-2"
-                placeholder="Search"
-              />
-            </div>
+      <div className="flex-1 p-6 space-y-4">
+        {error && (
+          <Alert variant="destructive">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-            <Button variant="ghost" size="icon" className="text-gray-500 hover:bg-gray-100">
-              <Bell className="h-5 w-5" />
-            </Button>
-
-            <div className="flex items-center gap-2">
-              <Avatar className="h-8 w-8 border border-gray-200">
-                <AvatarImage src="/placeholder.svg?height=32&width=32" alt="User" />
-                <AvatarFallback>HA</AvatarFallback>
-              </Avatar>
-              <Button variant="ghost" className="flex items-center gap-1 p-2">
-                <span className="text-sm font-medium">Henok Assefa</span>
-                <ChevronDown className="h-4 w-4 text-gray-500" />
-              </Button>
-            </div>
-          </div> */}
-        </header>
-
-        {/* Action Bar */}
-        <div className="flex justify-between items-center mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        <div className="flex justify-between items-center">
+          <div className="relative w-64">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              className="pl-10 pr-4 py-2 w-64 rounded-md border border-gray-200 focus-visible:ring-2"
+              type="search"
               placeholder="Search members"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-8"
+              value={searchQuery}
+              onChange={handleSearch}
             />
           </div>
-
-          <div className="flex items-center gap-2">
+          <div className="flex gap-2">
             <Button variant="outline" className="gap-2">
-              <Import className="h-4 w-4" />
+              <Download className="h-4 w-4" />
               Import
             </Button>
-            <Button variant="outline" className="gap-2">
-              <Filter className="h-4 w-4" />
-              Filter
-            </Button>
-            <Button className="gap-2 bg-blue-600 hover:bg-blue-700">
+            <Button onClick={() => setShowAddMemberDialog(true)} className="gap-2">
               <Plus className="h-4 w-4" />
               Add Member
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Filter className="h-4 w-4" />
+                  Filter
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleFilterChange(null)}>All</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleFilterChange("active")}>Active</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleFilterChange("inactive")}>Inactive</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleFilterChange("pending")}>Pending</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
-        {/* Members Table */}
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader className="bg-gray-50">
-              <TableRow>
-                <TableHead className="font-medium">Member Name</TableHead>
-                <TableHead className="font-medium">Email</TableHead>
-                <TableHead className="font-medium">Phone</TableHead>
-                <TableHead className="font-medium">Status</TableHead>
-                <TableHead className="font-medium">Role</TableHead>
-                <TableHead className="font-medium text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredMembers.length > 0 ? (
-                filteredMembers.map((member, index) => (
-                  <TableRow key={`${member.id}-${index}`} className="hover:bg-gray-50">
+        {isLoading ? (
+          <div className="rounded-md border">
+            <Table>
+              {/* Loading skeleton */}
+            </Table>
+          </div>
+        ) : members.length === 0 ? (
+          <div className="text-center py-12">
+            <h3 className="text-lg font-medium">No members found</h3>
+            <p className="text-muted-foreground mt-2">
+              {searchQuery || statusFilter
+                ? "Try different search terms or filters"
+                : "Get started by adding members to this group"}
+            </p>
+            <Button onClick={() => setShowAddMemberDialog(true)} className="mt-4">
+              Add Member
+            </Button>
+          </div>
+        ) : (
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Member</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {members.map((member) => (
+                  <TableRow key={member.id}>
                     <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8  border-gray-200">
-                          <AvatarImage
-                            src={`/placeholder.svg?height=32&width=32&text=${member.name.charAt(0).toUpperCase()}`}
-                            alt={member.name}
-                          />
-                          <AvatarFallback>
-                            {member.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium">{member.name}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                          <User className="h-4 w-4" />
+                        </div>
+                        <span>{member.email.split('@')[0]}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-gray-600">{member.email}</TableCell>
-                    <TableCell className="text-gray-600">{member.phone || "N/A"}</TableCell>
-                    <TableCell>
-                      <Badge variant={member.status === "Active" ? "success" : "error"} className="rounded-full">
-                        {member.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="default" className="rounded-full">
-                        {member.role}
-                      </Badge>
-                    </TableCell>
+                    <TableCell>{member.email}</TableCell>
+                    <TableCell>{member.role}</TableCell>
+                    <TableCell>{getStatusBadge(member.status)}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                          <path
-                            d="M2 4H14M2 8H14M2 12H14"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                      </Button>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-6 text-gray-500">
-                    No members found matching "{searchTerm}"
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-
-          {/* Table Footer */}
-          <div className="flex items-center justify-between p-4  border-gray-200 bg-gray-50">
-            <div className="text-sm text-gray-600">
-              Showing <span className="font-medium">1-{filteredMembers.length}</span> of{" "}
-              <span className="font-medium">{filteredMembers.length}</span> members •{" "}
-              <span className="text-green-600">{activeMembers.length} active</span> •{" "}
-              <span className="text-red-600">{inactiveMembers.length} inactive</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                <ChevronDown className="h-4 w-4 rotate-90" />
-              </Button>
-              <Button variant="default" size="sm" className="h-8 w-8 p-0">
-                1
-              </Button>
-              <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                <ChevronDown className="h-4 w-4 -rotate-90" />
-              </Button>
-            </div>
+                ))}
+              </TableBody>
+            </Table>
           </div>
-        </div>
+        )}
+
+        {members.length > 0 && (
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Page {page} of {totalPages} • {totalMembers} total members
+            </div>
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => page > 1 && handlePageChange(page - 1)}
+                    className={page <= 1 ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+                
+                {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+                  const pageNum = page > 3 ? page - 2 + i : i + 1
+                  return (
+                    <PaginationItem key={i}>
+                      <PaginationLink
+                        isActive={pageNum === page}
+                        onClick={() => handlePageChange(pageNum)}
+                      >
+                        {pageNum}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                })}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => page < totalPages && handlePageChange(page + 1)}
+                    className={page >= totalPages ? "pointer-events-none opacity-50" : ""}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </div>
+      <AddMemberDialog
+        open={showAddMemberDialog}
+        onOpenChange={setShowAddMemberDialog}
+        divisionId={divisionName}
+        groupId={groupName}
+      />
     </div>
   )
 }
