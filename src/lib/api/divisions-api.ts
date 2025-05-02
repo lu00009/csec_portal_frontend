@@ -1,3 +1,4 @@
+// This file contains the API client for managing divisions and groups.
 import { useUserStore } from "@/stores/userStore";
 import axios from "axios";
 
@@ -76,43 +77,30 @@ export const divisionsApi = {
   },
 
   getGroupMembers: async (
-    divisionName: string,
-    groupName: string,
-    filters: {
-      search?: string;
-      campusStatus?: string;
-      attendance?: string;
-      membershipStatus?: string;
-      page?: number;
-      limit?: number;
-    } = {}
-  ): Promise<{ members: any[]; total: number }> => {
+    division: string,
+    group: string,
+    filters: { search?: string; page?: number; limit?: number; status?: string } = {}
+  ): Promise<any> => {
     try {
-      const params = new URLSearchParams({
-        division: divisionName,
-        group: groupName,
-        ...(filters.search && { search: filters.search }),
-        ...(filters.campusStatus && { campusStatus: filters.campusStatus }),
-        ...(filters.attendance && { attendance: filters.attendance }),
-        ...(filters.membershipStatus && { membershipStatus: filters.membershipStatus }),
-        ...(filters.page && { page: filters.page.toString() }),
-        ...(filters.limit && { limit: filters.limit.toString() }),
+      console.log(`[API] Fetching members for group: ${group} in division: ${division}`);
+      const response = await apiClient.get("/groups/getMembers", {
+        params: {
+          division, // Pass division as a query parameter
+          group,    // Pass group as a query parameter
+          ...filters, // Include additional filters like search, page, limit, and status
+        },
       });
-
-      const response = await apiClient.get(`/groups/getMembers?${params.toString()}`);
-      return {
-        members: response.data.members || [],
-        total: response.data.total || 0
-      };
+      console.log(`[API] Members response:`, response.data);
+      return response.data || { members: [], total: 0 };
     } catch (error) {
-      console.error("Members fetch error:", error);
-      return { members: [], total: 0 };
+      console.error(`[API] Members fetch error for group "${group}" in division "${division}":`, error);
+      throw error;
     }
   },
 
   createDivision: async (payload: { name: string; head: string; email: string }) => {
     try {
-      await apiClient.post("/divisions/create", payload);
+      await apiClient.post("/divisions/createDivision", payload);
       return payload.name;
     } catch (error) {
       console.error("Error creating division:", error);
@@ -122,7 +110,7 @@ export const divisionsApi = {
 
   createGroup: async (divisionName: string, groupName: string) => {
     try {
-      await apiClient.post("/groups/create", {
+      await apiClient.post("/groups/createGroup", {
         division: divisionName,
         name: groupName
       });
@@ -135,7 +123,7 @@ export const divisionsApi = {
 
   createMember: async (division: string, group: string, member: { email: string; password: string }) => {
     try {
-      const response = await apiClient.post("/members/create", {
+      const response = await apiClient.post("/members/createMember", {
         division,
         group,
         email: member.email,

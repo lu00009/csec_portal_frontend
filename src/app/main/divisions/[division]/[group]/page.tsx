@@ -1,6 +1,7 @@
 "use client"
 import { AddMemberDialog } from "@/components/divisions/add-member-dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import Button from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -8,7 +9,7 @@ import Input from "@/components/ui/input"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useDivisionsStore } from "@/stores/DivisionStore"
-import { ChevronRight, Download, Filter, Home, Pencil, Plus, Search, Trash2, User } from "lucide-react"
+import { ChevronRight, Download, Filter, Home, Pencil, Plus, Search, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -40,24 +41,26 @@ export default function GroupMembersPage() {
       try {
         await fetchGroupMembers(
           divisionName,
-          groupName, 
+          groupName,
           {
             search: searchQuery,
             page,
             limit: 10,
-            status: statusFilter
+            status: statusFilter,
           }
-        )
+        );
+        console.log("Members after fetch:", useDivisionsStore.getState().members); // Log directly from the store
+        setError(null);
       } catch (error) {
-        setError("Failed to load group members. Please try again later.")
-        console.error(error)
+        setError("Failed to load group members. Please try again later.");
+        console.error(error);
       }
-    }
+    };
 
     if (divisionName && groupName) {
-      loadGroupMembers()
+      loadGroupMembers();
     }
-  }, [divisionName, groupName, searchQuery, page, statusFilter])
+  }, [divisionName, groupName, searchQuery, page, statusFilter]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value
@@ -83,18 +86,22 @@ export default function GroupMembersPage() {
     router.push(`/main/divisions/${encodeURIComponent(divisionName)}/${encodeURIComponent(groupName)}?${params.toString()}`)
   }
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string | undefined) => {
+    if (!status) {
+      return <Badge className="bg-gray-100 text-gray-800">Unknown</Badge>; // Handle undefined status
+    }
+
     switch (status.toLowerCase()) {
       case "active":
-        return <Badge className="bg-green-100 text-green-800">Active</Badge>
+        return <Badge className="bg-green-100 text-green-800">Active</Badge>;
       case "inactive":
-        return <Badge className="bg-red-100 text-red-800">Inactive</Badge>
+        return <Badge className="bg-red-100 text-red-800">Inactive</Badge>;
       case "pending":
-        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
+        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
       default:
-        return <Badge>{status}</Badge>
+        return <Badge>{status}</Badge>;
     }
-  }
+  };
 
   const totalPages = Math.ceil(totalMembers / 10)
 
@@ -177,60 +184,71 @@ export default function GroupMembersPage() {
               {/* Loading skeleton */}
             </Table>
           </div>
-        ) : members.length === 0 ? (
-          <div className="text-center py-12">
-            <h3 className="text-lg font-medium">No members found</h3>
-            <p className="text-muted-foreground mt-2">
-              {searchQuery || statusFilter
-                ? "Try different search terms or filters"
-                : "Get started by adding members to this group"}
-            </p>
-            <Button onClick={() => setShowAddMemberDialog(true)} className="mt-4">
-              Add Member
-            </Button>
-          </div>
         ) : (
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Member</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {members.map((member) => (
-                  <TableRow key={member.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                          <User className="h-4 w-4" />
-                        </div>
-                        <span>{member.email.split('@')[0]}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{member.email}</TableCell>
-                    <TableCell>{member.role}</TableCell>
-                    <TableCell>{getStatusBadge(member.status)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon">
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+          Array.isArray(members) && members.length === 0 ? (
+            <div className="text-center py-12">
+              <h3 className="text-lg font-medium">No members found</h3>
+              <p className="text-muted-foreground mt-2">
+                {searchQuery || statusFilter
+                  ? "Try different search terms or filters"
+                  : "Get started by adding members to this group"}
+              </p>
+              <Button onClick={() => setShowAddMemberDialog(true)} className="mt-4">
+                Add Member
+              </Button>
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Member</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {Array.isArray(members) &&
+                    members.map((member) => (
+                      <TableRow key={member._id}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage
+                                src={member.profilePicture || `https://robohash.org/${member.email}.png?set=set3&size=100x100`}
+                                alt={`${member.email}'s profile`}
+                              />
+                              <AvatarFallback>
+                                {member.email.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span>{member.email.split('@')[0]}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{member.email}</TableCell>
+                        <TableCell>{member.clubRole}</TableCell>
+                        <TableCell>{getStatusBadge(member.status)}</TableCell> {/* Safely handle status */}
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="icon">
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
+          )
         )}
+
+        {console.log("Members in component:", members)}
 
         {members.length > 0 && (
           <div className="flex items-center justify-between">
