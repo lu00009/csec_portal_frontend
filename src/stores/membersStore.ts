@@ -68,26 +68,28 @@ const useMembersStore = create<MembersState>((set, get) => ({
     return user ? canDeleteMembers(user.member.clubRole) : false;
   },
 
-  // API operations
-  fetchMembers: async (options: FetchMembersOptions = {}) => {
-    set({ loading: true, error: null });
-    try {
-      const data = await membersApi.fetchMembers(options);
-      set({
-        members: data.members,
-        totalMembers: data.totalMembers,
-        currentPage: options.page || 1,
-        totalPages: data.totalPages || Math.ceil(data.totalMembers / (options.limit || 10)),
-        loading: false
-      });
-    } catch (err) {
-      set({
-        error: err instanceof Error ? err.message : 'Failed to load members',
-        loading: false
-      });
-      throw err;
-    }
-  },
+  // In your members store
+fetchMembers: async (options: FetchMembersOptions = {}) => {
+  set({ loading: true, error: null });
+  try {
+    const data = await membersApi.fetchMembers(options);
+    
+    // Handle API response structure correctly
+    set({
+      members: data.updatedProfilePicturemembers || [], // Match API response key
+      totalMembers: data.totalMembers,
+      currentPage: options.page || 1,
+      totalPages: data.totalPages || Math.ceil(data.totalMembers / (options.limit || 10)),
+      loading: false
+    });
+  } catch (err) {
+    set({
+      error: err instanceof Error ? err.message : 'Failed to load members',
+      loading: false
+    });
+    throw err;
+  }
+},
 
   fetchHeads: async () => {
     set({ loading: true, error: null });

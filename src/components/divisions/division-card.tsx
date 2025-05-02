@@ -29,7 +29,7 @@ export function DivisionCard({ division }: DivisionCardProps) {
           {division.groups?.map((groupName) => (
             <Link
               key={`${division.name}-${groupName}`}
-              href={`/main/divisions/getGroups/${encodeURIComponent(division.name)}/${encodeURIComponent(groupName)}`}
+              href={`/main/divisions/${encodeURIComponent(division.name)}/${encodeURIComponent(groupName)}`}
               className="flex justify-between items-center p-2 hover:bg-muted rounded-md transition-colors"
             >
               <span>{groupName}</span>

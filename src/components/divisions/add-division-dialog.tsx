@@ -4,7 +4,6 @@ import Button from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import Input from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useDivisionsStore } from "@/stores/DivisionStore"
 import { useState } from "react"
 
@@ -64,17 +63,14 @@ export function AddDivisionDialog({ open, onOpenChange }: AddDivisionDialogProps
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="division-head">Select Division Head</Label>
-            <Select value={head} onValueChange={setHead}>
-              <SelectTrigger id="division-head">
-                <SelectValue placeholder="Select Division Head" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="john-doe">John Doe</SelectItem>
-                <SelectItem value="jane-smith">Jane Smith</SelectItem>
-                <SelectItem value="alex-johnson">Alex Johnson</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="division-head">Add Head</Label>
+            <Input
+              id="head"
+              type="head"
+              value={head}
+              onChange={(e) => setHead(e.target.value)}
+              placeholder="Head Name"
+            />
           </div>
         </div>
         <DialogFooter>
