@@ -5,7 +5,7 @@ interface DivisionCardProps {
   division: {
     name: string;
     groups?: string[];
-    memberCount: number;
+    length: number;
   };
 }
 
@@ -22,7 +22,7 @@ export function DivisionCard({ division }: DivisionCardProps) {
             View All
           </Link>
         </div>
-        <p className="text-sm text-muted-foreground">{division.memberCount} members</p>
+        <p className="text-sm text-muted-foreground">{division.length} members</p>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
@@ -34,7 +34,7 @@ export function DivisionCard({ division }: DivisionCardProps) {
             >
               <span>{groupName}</span>
               <span className="text-muted-foreground">
-                {division.memberCount} members
+                {division.length} members
               </span>
             </Link>
           ))}

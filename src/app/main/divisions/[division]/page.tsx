@@ -8,6 +8,8 @@ import { useDivisionsStore } from "@/stores/DivisionStore"
 import { Search } from "lucide-react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
+import { ChevronRight, Home } from "lucide-react"
+import Link from "next/link"
 
 export default function DivisionDetailPage() {
   const router = useRouter()
@@ -30,7 +32,7 @@ export default function DivisionDetailPage() {
       try {
         await fetchDivisionGroups(divisionName)
         setError(null)
-        console.log("Division details loaded successfully")
+        console.log("Division details loaded successfully, currentDivision:", currentDivision)
       } catch (err) {
         setError("Failed to load division details")
       }
@@ -54,6 +56,29 @@ export default function DivisionDetailPage() {
 
   return (
     <div className="flex flex-col h-full">
+      <div className="border-b">
+        <div className="flex h-16 items-center px-4 justify-between">
+          <div className="flex items-center">
+            <nav className="flex items-center space-x-2">
+              <Link href="/main/divisions" className="text-muted-foreground hover:text-foreground">
+                <Home className="h-4 w-4" />
+                <span className="sr-only">Home</span>
+              </Link>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <Link href="/main/divisions" className="text-muted-foreground hover:text-foreground">
+                All Divisions
+              </Link>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <Link 
+                href={`/main/divisions/${encodeURIComponent(divisionName)}`} 
+                className="text-muted-foreground hover:text-foreground"
+              >
+                {divisionName}
+              </Link>
+            </nav>
+          </div>
+        </div>
+      </div>
       <div className="flex-1 p-6 space-y-6">
         {error && (
           <Alert variant="destructive">

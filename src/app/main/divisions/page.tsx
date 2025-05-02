@@ -8,6 +8,8 @@ import { useDivisionsStore } from "@/stores/DivisionStore"
 import { Search } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
+import { ChevronRight, Home } from "lucide-react"
+import Link from "next/link"
 
 export default function DivisionsPage() {
   const router = useRouter()
@@ -22,6 +24,9 @@ export default function DivisionsPage() {
       try {
         await fetchDivisions(searchQuery)
         setError(null)
+        console.log("Divisions loaded successfully:", divisions)
+
+
       } catch (err) {
         setError("Failed to load divisions. Please try again later.")
         console.error(err)
@@ -42,6 +47,23 @@ export default function DivisionsPage() {
 
   return (
     <div className="flex flex-col h-full">
+       <div className="border-b">
+        <div className="flex h-16 items-center px-4 justify-between">
+          <div className="flex items-center">
+            <nav className="flex items-center space-x-2">
+              <Link href="/main/divisions" className="text-muted-foreground hover:text-foreground">
+                <Home className="h-4 w-4" />
+                <span className="sr-only">Home</span>
+              </Link>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              <Link href="/main/divisions" className="text-muted-foreground hover:text-foreground">
+                All Divisions
+              </Link>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </nav>
+          </div>
+        </div>
+      </div>
       <div className="border-b">
         <div className="flex h-16 items-center px-4 justify-between">
           <h1 className="text-xl font-semibold">All Divisions</h1>

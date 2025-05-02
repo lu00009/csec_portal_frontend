@@ -136,15 +136,16 @@ members: [],
     set({ isLoading: true, error: null });
     try {
       const response = await divisionsApi.getDivisionGroups(divisionName);
-      console.log("Fetched division groups:", response); // Debug log
+      console.log("Fetched division groupsdeeeeeeeeeeeee:", response); // Debug log
       set({
         currentDivision: {
           name: divisionName,
           slug: divisionName.toLowerCase().replace(/\s+/g, "-"),
-          groups: response.groups || [], // Map the groups array from the API response
+          groups: response || [], // Map the groups array from the API response
           description: `${divisionName} Division Information`,
           memberCount: response.length || 0, // Use the length property for member count
         },
+
       });
     } catch (error) {
       set({ error: "Failed to fetch division groups", isLoading: false });

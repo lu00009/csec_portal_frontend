@@ -217,8 +217,9 @@ export default function GroupMembersPage() {
                           <div className="flex items-center gap-2">
                             <Avatar className="h-8 w-8">
                               <AvatarImage
-                                src={member.profilePicture || `https://robohash.org/${member.email}.png?set=set3&size=100x100`}
+                                src={`https://robohash.org/${member.email}.png?set=set3&size=100x100`}
                                 alt={`${member.email}'s profile`}
+                                identifier="avatar"
                               />
                               <AvatarFallback>
                                 {member.email.charAt(0).toUpperCase()}
@@ -229,7 +230,7 @@ export default function GroupMembersPage() {
                         </TableCell>
                         <TableCell>{member.email}</TableCell>
                         <TableCell>{member.clubRole}</TableCell>
-                        <TableCell>{getStatusBadge(member.status)}</TableCell> {/* Safely handle status */}
+                        <TableCell>{getStatusBadge(member.membershipStatus)}</TableCell> {/* Safely handle status */}
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             <Button variant="ghost" size="icon">
