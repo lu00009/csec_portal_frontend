@@ -30,6 +30,7 @@ export default function DivisionDetailPage() {
       try {
         await fetchDivisionGroups(divisionName)
         setError(null)
+        console.log("Division details loaded successfully")
       } catch (err) {
         setError("Failed to load division details")
       }
@@ -38,6 +39,8 @@ export default function DivisionDetailPage() {
     if (divisionName) loadDivisionDetails()
   }, [divisionName])
 
+  console.log("Current Division:", currentDivision);
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value
     const params = new URLSearchParams()
@@ -45,9 +48,9 @@ export default function DivisionDetailPage() {
     router.push(`/main/divisions/${encodeURIComponent(divisionName)}?${params.toString()}`)
   }
 
-  const filteredGroups = currentDivision?.groups?.filter(group =>
+  const filteredGroups = currentDivision?.groups?.filter((group) =>
     group.toLowerCase().includes(searchQuery.toLowerCase())
-  ) || []
+  ) || [];
 
   return (
     <div className="flex flex-col h-full">
@@ -79,7 +82,7 @@ export default function DivisionDetailPage() {
               <div key={i} className="h-64 rounded-lg border animate-pulse bg-muted" />
             ))}
           </div>
-        ) : filteredGroups.length === 0 ? (
+        ) : filteredGroups.memberCount === 0 ? (
           <div className="text-center py-12">
             <h3 className="text-lg font-medium">No groups found</h3>
             <p className="text-muted-foreground mt-2">
@@ -96,7 +99,7 @@ export default function DivisionDetailPage() {
                 key={groupName}
                 groupName={groupName}
                 divisionName={divisionName}
-                memberCount={currentDivision?.memberCount || 0}
+                memberCount={currentDivision?.memberCount}
               />
             ))}
           </div>

@@ -39,8 +39,11 @@ interface DivisionsState {
   totalMembers: number;
   currentPage: number;
   itemsPerPage: number;
-  
-  // Actions
+  showAddGroupDialog: boolean;
+  showAddMemberDialog: boolean;
+
+  setShowAddGroupDialog: (show: boolean) => void;
+  setShowAddMemberDialog: (show: boolean) => void;
   fetchDivisions: (search?: string) => Promise<void>;
   addDivision: (payload: { name: string; head: string; email: string }) => Promise<void>;
   setShowAddDivisionDialog: (show: boolean) => void;
@@ -48,37 +51,38 @@ interface DivisionsState {
   setSearchTerm: (term: string) => void;
   addGroup: (divisionName: string, groupName: string) => Promise<void>;
   fetchGroupMembers: (
-    divisionName: string,
-    groupName: string,
+    division: string,
+    group: string,
     filters?: {
       search?: string;
-      campusStatus?: string;
-      membershipStatus?: string;
-      page?: number;
-      limit?: number;}
-    
+            page?: number;
+      limit?: number;
+      status?: string;
+    }
   ) => Promise<void>;
 
     addMember: (division: string, group: string, member: { email: string; password: string }) => Promise<void>;
   }
-
 
 export const useDivisionsStore = create<DivisionsState>((set, get) => ({
   divisions: [],
   isLoading: false,
   error: null,
   showAddDivisionDialog: false,
+  showAddGroupDialog: false,
+  showAddMemberDialog: false,
   currentDivision: null,
   currentDivisionGroups: [],
-  members: [],
+members: [],
   totalMembers: 0,
   isLoadingGroups: false,
   groupsError: null,
   searchTerm: '',
-  members: [],
-  totalMembers: 0,
   currentPage: 1,
   itemsPerPage: 10,
+  
+  setShowAddGroupDialog: (show) => set({ showAddGroupDialog: show }),
+  setShowAddMemberDialog: (show) => set({ showAddMemberDialog: show }),
 
   fetchDivisions: async (search = '') => {
     set({ isLoading: true, error: null });
@@ -129,32 +133,24 @@ export const useDivisionsStore = create<DivisionsState>((set, get) => ({
   },
 
   fetchDivisionGroups: async (divisionName) => {
-    set({ isLoadingGroups: true, groupsError: null });
+    set({ isLoading: true, error: null });
     try {
-      const groups = await divisionsApi.getDivisionGroups(divisionName);
-      
-      const groupsWithMembers = await Promise.all(
-        groups.map(async (groupName, index) => {
-          const members = await divisionsApi.getGroupMembers(divisionName, groupName);
-          return {
-            name: groupName,
-            id: `group-${index + 1}`,
-            members: members.map(member => ({
-              id: member._id,
-              name: member.name || member.email?.split("@")[0] || "Unknown",
-              email: member.email,
-              role: member.clubRole || "Member",
-              clubRole: member.clubRole,
-            }))
-          };
-        })
-      );
-
-      set({ currentDivisionGroups: groupsWithMembers });
+      const response = await divisionsApi.getDivisionGroups(divisionName);
+      console.log("Fetched division groups:", response); // Debug log
+      set({
+        currentDivision: {
+          name: divisionName,
+          slug: divisionName.toLowerCase().replace(/\s+/g, "-"),
+          groups: response.groups || [], // Map the groups array from the API response
+          description: `${divisionName} Division Information`,
+          memberCount: response.length || 0, // Use the length property for member count
+        },
+      });
     } catch (error) {
-      set({ groupsError: error instanceof Error ? error.message : "Failed to load groups" });
+      set({ error: "Failed to fetch division groups", isLoading: false });
+      console.error(error);
     } finally {
-      set({ isLoadingGroups: false });
+      set({ isLoading: false });
     }
   },
 
@@ -173,21 +169,28 @@ export const useDivisionsStore = create<DivisionsState>((set, get) => ({
     }
   },
 
-  fetchGroupMembers: async (divisionName, groupName, filters = {}) => {
+  fetchGroupMembers: async (
+    division: string,
+    group: string,
+    filters: { search?: string; page?: number; limit?: number; status?: string } = {}
+  ) => {
+    set({ isLoading: true, error: null });
     try {
-      const response = await divisionsApi.getGroupMembers(divisionName, groupName, {
-        ...filters,
-        page: filters.page || 1,
-        limit: filters.limit || 10
-      });
-      
+      const response = await divisionsApi.getGroupMembers(division, group, filters);
+      const membersWithDefaults = response.groupMembers.map((member) => ({
+        ...member,
+        status: member.status || "Unknown", // Provide a default value for missing status
+      }));
       set({
-        members: response.members,
-        totalMembers: response.total,
-        currentPage: filters.page || 1
+        members: membersWithDefaults,
+        totalMembers: response.totalGroupMembers || 0,
+        currentPage: filters.page || 1,
       });
     } catch (error) {
-      console.error("Error fetching members:", error);
+      set({ error: "Failed to fetch group members", isLoading: false, members: [] });
+      console.error(error);
+    } finally {
+      set({ isLoading: false });
     }
   },
 
@@ -205,6 +208,7 @@ export const useDivisionsStore = create<DivisionsState>((set, get) => ({
           membershipStatus: 'active'
         }]
       }));
+console.log("Updated members:", get().members);
     } catch (error) {
       throw error;
     }
@@ -213,3 +217,4 @@ export const useDivisionsStore = create<DivisionsState>((set, get) => ({
   setSearchTerm: (term) => set({ searchTerm: term }),
   setShowAddDivisionDialog: (show) => set({ showAddDivisionDialog: show }),
 }));
+

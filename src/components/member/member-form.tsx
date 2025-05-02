@@ -9,6 +9,8 @@ export function MemberForm() {
   const { addMember } = useMembersStore()
   const [isOpen, setIsOpen] = useState(false)
   const [email, setEmail] = useState("")
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
   const [division, setDivision] = useState("")
   const [isDivisionOpen, setIsDivisionOpen] = useState(false)
   const [group, setGroup] = useState("")
@@ -40,6 +42,8 @@ export function MemberForm() {
     setIsSubmitting(true)
     try {
       await addMember({
+        firstName,
+        lastName,
         email,
         division,
         group,
@@ -57,6 +61,8 @@ export function MemberForm() {
   }
 
   const resetForm = () => {
+    setFirstName("")
+    setLastName("")
     setEmail("")
     setDivision("")
     setGroup("")
@@ -144,14 +150,36 @@ export function MemberForm() {
 
             {/* Modal Body */}
             <div className="p-4 space-y-4">
-              {/* Email Input */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input
                   type="email"
                   placeholder="member@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+              {/* Email Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                <input
+                  type="text"
+                  placeholder="robel"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                <input
+                  type="text"
+                  placeholder="robel"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                   className="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />

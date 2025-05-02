@@ -1,5 +1,4 @@
 "use client"
-"use client"
 
 import { MemberForm } from "@/components/member/member-form";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -229,22 +228,28 @@ export default function MembersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
-                  Array(5).fill(0).map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell colSpan={7} className="h-16 text-center">
-                        <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4 mx-auto"></div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : members.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
-                      No members found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  members.map((member) => (
+  {loading ? (
+    Array(5).fill(0).map((_, i) => (
+      <TableRow key={i}>
+        <TableCell colSpan={7} className="h-16 text-center">
+          <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4 mx-auto"></div>
+        </TableCell>
+      </TableRow>
+    ))
+  ) : error ? (
+    <TableRow>
+      <TableCell colSpan={7} className="h-24 text-center text-red-500">
+        Error: {error}
+      </TableCell>
+    </TableRow>
+  ) : (members?.length ?? 0) === 0 ? (
+    <TableRow>
+      <TableCell colSpan={7} className="h-24 text-center">
+        No members found
+      </TableCell>
+    </TableRow>
+  ) : (
+    members?.map((member) => (
                     <TableRow key={member._id}>
                       <TableCell className="font-medium flex items-center gap-2">
                         <Avatar>
@@ -372,8 +377,8 @@ export default function MembersPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will be ban the member
-              {selectedMember && ` ${selectedMember.firstName || 'this member'}`} from the database.
+              This action cannot be undone. This will ban the member
+              {selectedMember && ` ${selectedMember.firstName || 'this member'}`} from the club.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
