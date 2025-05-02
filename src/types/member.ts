@@ -36,7 +36,11 @@ export interface Member {
       mentor?: string;
       specialization?: string;
       department?: string;
-      github?: string;   
+      github?: string;  
+      resource?: Array<string>;
+      resources?: Array<string>;    
+      
+
     }
     }
    

@@ -1,59 +1,42 @@
-"use client";
+'use client';
 
-import React from 'react';
-
-type RecordItem = {
-  _id: string;
-  date: string;
-  status: 'Present' | 'Absent' | 'Excused';
-  sessionTitle: string;
-  startTime: string;
-  endTime: string;
-};
-
-type AttendanceData = {
-  week?: { records: RecordItem[] };
-  month?: { records: RecordItem[] };
-  overall?: { records: RecordItem[] };
-};
+import React, { useEffect } from 'react';
+import { useAttendanceStore } from '@/stores/profileAttendancsStore';
 
 type AttendanceProps = {
-  records: AttendanceData | null;
+  id: string;
 };
 
-const Attendance: React.FC<AttendanceProps> = ({ records }) => {
-  console.log('Received attendance data:', records);
+const Attendance: React.FC<AttendanceProps> = ({ id }) => {
+  const { records, loading, fetchRecords } = useAttendanceStore();
 
-  if (!records) {
-    return <div>No attendance records available.</div>;
-  }
+  useEffect(() => {
+    if (id) fetchRecords(id);
+  }, [id, fetchRecords]);
 
-  const allRecords: RecordItem[] = [
-    ...(records.week?.records || []),
-    ...(records.month?.records || []),
-    ...(records.overall?.records || [])
-  ];
-
-  // Deduplicate by _id
-  const uniqueRecords = allRecords.filter((record, index, self) =>
-    index === self.findIndex((r) => r._id === record._id)
+  const uniqueRecords = records.filter(
+    (record, index, self) => index === self.findIndex((r) => r._id === record._id)
   );
-
-  if (uniqueRecords.length === 0) {
-    return <div>No attendance records available.</div>;
-  }
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
+  if (loading) {
+    return <div className="text-center p-4 w-160">Loading attendance...</div>;
+  }
+
+  if (uniqueRecords.length === 0) {
+    return <div className="text-center p-4 w-160">No attendance records available.</div>;
+  }
+
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 mt-3 overflow-x-auto">
+    <div className="bg-white rounded-lg shadow-sm p-6 mt-3 overflow-x-auto w-160">
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>

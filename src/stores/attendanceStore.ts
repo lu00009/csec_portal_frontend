@@ -1,11 +1,11 @@
-import { 
+import {
   fetchAllSessions as apiFetchAllSessions,
   fetchMemberAttendanceRecords as apiFetchMemberAttendance,
+  fetchMemberAttendanceRecords as apiFetchMemberAttendanceRecords,
   fetchSessionData as apiFetchSessionData,
-  submitAttendance as apiSubmitAttendance,
-  fetchMemberAttendanceRecords as apiFetchMemberAttendanceRecords 
-} from "@/lib/api";
-import type { MemberAttendanceRecords, Member, Session } from "@/types/attendance";
+  submitAttendance as apiSubmitAttendance
+} from "@/lib/api/attendanceApi";
+import type { Member, MemberAttendanceRecords, Session } from "@/types/attendance";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 

@@ -8,28 +8,34 @@ import toast from 'react-hot-toast';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, login, isLoading, error, isInitialized } = useUserStore();
-
+  const { login, isLoading, error, isAuthenticated, initialize } = useUserStore();
+  
   useEffect(() => {
-    if (user && isInitialized) {
-      toast.success('Login successful! Redirecting...');
-      setTimeout(() => router.push('/main/dashboard'), 1000);
+    // Initialize auth state when component mounts
+    initialize();
+    
+    // Redirect if already authenticated
+    if (isAuthenticated()) {
+      router.push('/main/dashboard');
     }
-  }, [user, isInitialized, router]);
+  }, [initialize, isAuthenticated, router]);
 
-  const handleSubmit = async (values: { email: string; password: string }) => {
+  const handleSubmit = async (values: { email: string; password: string; rememberMe: boolean }) => {
     try {
-      const success = await login(values.email, values.password);
-      if (!success) toast.error('Invalid credentials or login failed.');
+      const success = await login(values.email, values.password, values.rememberMe);
+      if (success) {
+        toast.success('Login successful! Redirecting...');
+        router.push('/main/dashboard');
+      } else {
+        toast.error('Invalid credentials');
+      }
     } catch (err) {
-      console.error('Login error:', err);
-      toast.error('Login error. Please try again.');
+      toast.error('Login failed');
     }
   };
 
-  if (typeof window !== 'undefined' && user && isInitialized) {
-    router.replace('/main/dashboard');
-    return null;
+  if (isAuthenticated()) {
+    return null; // Prevent flash of login page
   }
 
   return (

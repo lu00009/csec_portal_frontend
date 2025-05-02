@@ -55,6 +55,10 @@ const UserProfile = () => {
     joinedDate: user?.member.createdAt || 'Not provided',
     shortbio: user?.member.bio || 'Not provided',
   };
+  const resourcesData = {
+    resources: Array.isArray(user?.member?.resources) ? user.member.resources : [],
+  };
+  
 
   const handleTabChange = (tab: 'required' | 'optional' | 'resources') => {
     setTabHistory(prev => [...prev, tab]);
@@ -216,15 +220,15 @@ const UserProfile = () => {
                 <div className="mt-6">
                   {activeTab === 'required' && <RequiredInfo member={requiredData} />}
                   {activeTab === 'optional' && <OptionalInfo member={optionalData} />}
-                  {activeTab === 'resources' && <Resources />}
+                  {activeTab === 'resources' && <Resources id ={user?.member._id} />}
                 </div>
               </>
             ) : activeView === 'attendance' ? (
-              <Attendance />
+              <Attendance id = {user?.member._id}/>
             ) : activeView === 'progress' ? (
-              <Progress />
+              <Progress id ={user?.member._id} />
             ) : (
-              <HeadsUp />
+              <HeadsUp id = {user?.member._id} />
             )}
           </div>
         </div>

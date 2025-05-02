@@ -1,5 +1,4 @@
 'use client';
-import React, { useEffect, useState } from 'react';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import Attendance from '@/components/profile/attendance';
 import ProfileHeader from '@/components/profile/header';
@@ -8,9 +7,10 @@ import OptionalInfo from '@/components/profile/optionalinfo';
 import Progress from '@/components/profile/progress';
 import RequiredInfo from '@/components/profile/requiredinfo';
 import Resources from '@/components/profile/resources';
-import { useUserStore } from '@/stores/userStore';
 import { useAttendanceStore } from '@/stores/attendanceStore';
+import { useUserStore } from '@/stores/userStore';
 import { Member } from '@/types/member';
+import React, { useEffect, useState } from 'react';
 import { FiUser as FiProfile, FiInfo as FiRequired, FiBook as FiResources } from 'react-icons/fi';
 import { HiOutlineDocumentText } from 'react-icons/hi';
 import { LuClipboardList } from 'react-icons/lu';
@@ -31,7 +31,6 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
   const { user } = useUserStore();
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE;
-  const {memberAttendanceRecords,  fetchMemberAttendanceRecords} = useAttendanceStore();
   
 
   useEffect(() => {
@@ -46,7 +45,7 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${useUserStore.getState().refreshToken}`,
+            'Authorization': `Bearer ${useUserStore.getState().token}`,
           },
         });
 
@@ -67,11 +66,7 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
     fetchMemberData();
   }, [memberId, user?.member.refreshToken]);
 
-  useEffect(() => {
-    if (memberId) {
-      fetchMemberAttendanceRecords(memberId);
-    }
-  }, [memberId, fetchMemberAttendanceRecords]);
+
 
  
 
@@ -131,6 +126,9 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
     joinedDate: member.member.createdAt || 'Not provided',
     shortbio: member.member.bio || 'Not provided',
   };
+  const resourcesData = {
+    resources: Array.isArray(user?.member?.resources) ? user.member.resources : [],
+  }
 
   return (
     <>
@@ -184,19 +182,16 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
               <div className="mt-6">
                 {activeTab === 'required' && <RequiredInfo member={requiredData} />}
                 {activeTab === 'optional' && <OptionalInfo member={optionalData} />}
-                {activeTab === 'resources' && <Resources />}
+                {activeTab === 'resources' && <Resources id ={member.member._id} />}
               </div>
             </>
           ) : activeView === 'attendance' ? (
-            <Attendance records={memberAttendanceRecords} />
+            <Attendance id = {member.member._id} />
           ) : activeView === 'progress' ? (
-            <Progress 
-              weekPercentage={memberAttendanceRecords?.week}
-              monthPercentage={memberAttendanceRecords?.month}
-              overallPercentage={memberAttendanceRecords?.overall}
+            <Progress id = {member.member._id}
             />
           ) : (
-            <HeadsUp />
+            <HeadsUp id = {member.member._id}/>
           )}
         </div>
       </div>

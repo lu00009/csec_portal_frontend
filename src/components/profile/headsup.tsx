@@ -1,31 +1,82 @@
-import React from 'react';
-import { Card, Typography, Row, Col } from 'antd';
-import { InfoCircleOutlined } from '@ant-design/icons'; // Import the blue icon
-import member1Data from '../../app/data/members';
+'use client';
+import React, { useEffect, useState } from 'react';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { useHeadsUpStore } from '@/stores/headsupStore';
 
-const { Title, Text } = Typography;
+interface HeadsUpProps {
+  id: string;
+}
 
-const HeadsUp = () => {
+interface HeadsUpItem {
+  title: string;
+  message: string;
+  date?: string;
+}
+
+const HeadsUp: React.FC<HeadsUpProps> = ({ id }) => {
+  const { headsUp, fetchHeadsUp } = useHeadsUpStore();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+  useEffect(() => {
+    if (token && id) {
+      setLoading(true);
+      fetchHeadsUp(id)
+        .then(() => setLoading(false))
+        .catch((err: any) => {
+          setError('Failed to fetch notifications.');
+          setLoading(false);
+        });
+    }
+  }, [token, id, fetchHeadsUp]);
+
+  const headsUpList: HeadsUpItem[] = headsUp?.overall?.records?.headsup ?? [];
+
+  if (loading) {
+    console.log('HeadsUp data:', headsUpList);
+    return (
+      <div className="p-8 text-center w-160">
+        <p className="text-gray-600">Loading heads-up notifications...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center w-160">
+        <p className="text-red-600">Error loading notifications: {error}</p>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ padding: '2rem' }}>
-      <Row gutter={[16, 16]}>
-        {member1Data.headsUp.map((item, index) => (
-          <Col span={24} key={index}>
-            <Card style={{ borderRadius: 12, padding: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-                {/* Display the icon with blue color on the left */}
-                <InfoCircleOutlined style={{ fontSize: 24, color: '#003087', marginTop: 4 }} />
+    <div className="p-8 w-160">
+      <div className="grid grid-cols-1 gap-4">
+        {headsUpList.length > 0 ? (
+          headsUpList.map((item: HeadsUpItem, index: number) => (
+            <div key={index} className="rounded-xl shadow p-6 bg-white dark:bg-gray-800">
+              <div className="flex items-start gap-4">
+                <InfoCircleOutlined className="text-blue-800 text-xl mt-1" />
                 <div>
-                  {/* Title for the heads-up */}
-                  <Title level={4} style={{ margin: 0 }}>{item.title}</Title>
-                  {/* Message for the heads-up */}
-                  <Text type="secondary">{item.message}</Text>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white m-0">{item.title}</h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">{item.message}</p>
+                  {item.date && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      Date: {new Date(item.date).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
               </div>
-            </Card>
-          </Col>
-        ))}
-      </Row>
+            </div>
+          ))
+        ) : (
+          <div className="rounded-xl shadow p-6 bg-white dark:bg-gray-800">
+            <p className="text-gray-600 dark:text-gray-300">No heads-up notifications available</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

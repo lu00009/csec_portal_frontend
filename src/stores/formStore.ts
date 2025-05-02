@@ -25,6 +25,7 @@ interface FormData {
   leetcode: string;
   joiningDate: string;
   bio: string;
+  resources: Array<string>;
 }
 
 interface FormState {
@@ -58,6 +59,7 @@ const initialState: FormData = {
   codeforces: "",
   instagram: "",
   joiningDate: "",
+  resources: [],
   // profilePicture: 'http://csec-portal-backend-1.onrender.com/uploads/1745141572956-684074600.png',
 };
 
