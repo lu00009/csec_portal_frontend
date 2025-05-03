@@ -1,14 +1,13 @@
 'use client';
-import { Formik, Form, useFormikContext, FormikHelpers } from 'formik';
-import React from 'react';
-import * as Yup from 'yup';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
 import useFormStore from '@/stores/formStore';
-import { useRef, useState, useEffect } from 'react';
 import { useUserStore } from '@/stores/userStore';
 import axios from 'axios';
-import { FiUser, FiInfo, FiBook } from 'react-icons/fi';
+import { Form, Formik, FormikHelpers, useFormikContext } from 'formik';
+import React, { useEffect, useRef, useState } from 'react';
+import { FiBook, FiInfo, FiUser } from 'react-icons/fi';
+import * as Yup from 'yup';
 
 const Select = React.forwardRef<HTMLSelectElement, {
   label?: string;
@@ -70,7 +69,7 @@ const validationSchema = Yup.object({
   leetcode: Yup.string(),
   joiningDate: Yup.string(),
   bio: Yup.string().max(500, 'Bio must be 500 characters or less'),
-  resources: Yup.string()
+  // resources: Yup.string()
 });
 
 const ProfilePicUpload = () => {
@@ -191,7 +190,7 @@ export default function ProfileEditPage() {
     leetcodeHandle: formData.leetcode || '' || user?.member?.leetcodeHandle,
     linkedinHandle: formData.linkedin || '' || user?.member?.linkedinHandle,
     codeforcesHandle: formData.codeforces || '' || user?.member?.codeforcesHandle,
-    resources: formData.resources || '' || user?.member?.resource
+    // resources: formData.resources || '' || user?.member?.resource
   };
 
   useEffect(() => {
@@ -223,6 +222,7 @@ export default function ProfileEditPage() {
         {
           headers: {
             'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         }
       );
@@ -277,31 +277,37 @@ export default function ProfileEditPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow">      
+    <div className="max-w-6xl mx-auto p-6 bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-lg">
       <div className="flex justify-between mb-8 px-12">
         <div 
-          className={`flex flex-col items-center cursor-pointer ${step === 1 ? 'text-blue-600' : 'text-gray-500'}`}
+          className={`flex flex-col items-center cursor-pointer ${
+            step === 1 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-300'
+          }`}
           onClick={() => setStep(1)}
         >
-          <FiUser className={`w-6 h-6 ${step === 1 ? 'text-blue-600' : 'text-gray-500'}`} />
+          <FiUser className={`w-6 h-6 ${step === 1 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-300'}`} />
           <span className="mt-2 text-sm font-medium">Required Information</span>
         </div>
         <div 
-          className={`flex flex-col items-center cursor-pointer ${step === 2 ? 'text-blue-600' : 'text-gray-500'}`}
+          className={`flex flex-col items-center cursor-pointer ${
+            step === 2 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-300'
+          }`}
           onClick={() => setStep(2)}
         >
-          <FiInfo className={`w-6 h-6 ${step === 2 ? 'text-blue-600' : 'text-gray-500'}`} />
+          <FiInfo className={`w-6 h-6 ${step === 2 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-300'}`} />
           <span className="mt-2 text-sm font-medium">Optional Information</span>
         </div>
         <div 
-          className={`flex flex-col items-center cursor-pointer ${step === 3 ? 'text-blue-600' : 'text-gray-500'}`}
+          className={`flex flex-col items-center cursor-pointer ${
+            step === 3 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-300'
+          }`}
           onClick={() => setStep(3)}
         >
-          <FiBook className={`w-6 h-6 ${step === 3 ? 'text-blue-600' : 'text-gray-500'}`} />
+          <FiBook className={`w-6 h-6 ${step === 3 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-300'}`} />
           <span className="mt-2 text-sm font-medium">Resources</span>
         </div>
       </div>
-
+  
       <Formik
         initialValues={initialFormValues}
         validationSchema={validationSchema}
@@ -312,79 +318,85 @@ export default function ProfileEditPage() {
           <Form>
             {step === 1 && (
               <>
-               <div className=" ">
-              <ProfilePicUpload />
-            </div>
-              <div className="grid grid-cols-2 gap-16 w-200">
-                                
-                <Input
-                  label="First Name *"
-                  name="firstName"
-                  onChange={handleChange}
-                  value={values.firstName}
-                  error={touched.firstName && errors.firstName}
-                  required
-                />
-                <Input
-                  label="Last Name *"
-                  name="lastName"
-                  onChange={handleChange}
-                  value={values.lastName}
-                  error={touched.lastName && errors.lastName}
-                  required
-                />
-                <Input
-                  label="Mobile Number *"
-                  name="phoneNumber"
-                  onChange={handleChange}
-                  value={values.phoneNumber}
-                  error={touched.phoneNumber && errors.phoneNumber}
-                  required
-                />
-                <Input
-                  label="Email Address *"
-                  name="email"
-                  type="email"
-                  onChange={handleChange}
-                  value={values.email}
-                  error={touched.email && errors.email}
-                  required
-                />
-                <Input
-                  label="Date of Birth *"
-                  name="birthDate"
-                  type="date"
-                  onChange={handleChange}
-                  value={values.birthDate}
-                  error={touched.birthDate && errors.birthDate}
-                  required
-                />
-                <Input
-                  label="GitHub *"
-                  name="github"
-                  onChange={handleChange}
-                  value={values.github}
-                  error={touched.github && errors.github}
-                  required
-                />
-                <Select
-                  label="Gender *"
-                  name="gender"
-                  onChange={handleChange}
-                  value={values.gender}
-                  error={touched.gender && errors.gender}
-                  required
-                >
-                  <option value="">Select Gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                  <option value="prefer-not-to-say">Prefer not to say</option>
-                </Select>
-              </div></>
-             
+                <div className="">
+                  <ProfilePicUpload />
+                </div>
+                <div className="grid grid-cols-2 gap-16 w-200">
+                  <Input
+                    label="First Name *"
+                    name="firstName"
+                    onChange={handleChange}
+                    value={values.firstName}
+                    error={touched.firstName && errors.firstName}
+                    className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                    required
+                  />
+                  <Input
+                    label="Last Name *"
+                    name="lastName"
+                    onChange={handleChange}
+                    value={values.lastName}
+                    error={touched.lastName && errors.lastName}
+                    className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                    required
+                  />
+                  <Input
+                    label="Mobile Number *"
+                    name="phoneNumber"
+                    onChange={handleChange}
+                    value={values.phoneNumber}
+                    error={touched.phoneNumber && errors.phoneNumber}
+                    className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                    required
+                  />
+                  <Input
+                    label="Email Address *"
+                    name="email"
+                    type="email"
+                    onChange={handleChange}
+                    value={values.email}
+                    error={touched.email && errors.email}
+                    className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                    required
+                  />
+                  <Input
+                    label="Date of Birth *"
+                    name="birthDate"
+                    type="date"
+                    onChange={handleChange}
+                    value={values.birthDate}
+                    error={touched.birthDate && errors.birthDate}
+                    className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                    required
+                  />
+                  <Input
+                    label="GitHub *"
+                    name="github"
+                    onChange={handleChange}
+                    value={values.github}
+                    error={touched.github && errors.github}
+                    className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                    required
+                  />
+                  <Select
+                    label="Gender *"
+                    name="gender"
+                    onChange={handleChange}
+                    value={values.gender}
+                    error={touched.gender && errors.gender}
+                    className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                    required
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                    <option value="prefer-not-to-say">Prefer not to say</option>
+                  </Select>
+                </div>
+              </>
             )}
-
+  
             {step === 2 && (
               <div className="grid grid-cols-2 gap-16 w-200">
                 <Input
@@ -393,6 +405,7 @@ export default function ProfileEditPage() {
                   onChange={handleChange}
                   value={values.telegramHandle}
                   error={touched.telegramHandle && errors.telegramHandle}
+                  className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                   required
                   placeholder="@username"
                 />
@@ -403,6 +416,7 @@ export default function ProfileEditPage() {
                   onChange={handleChange}
                   value={values.graduationYear}
                   error={touched.graduationYear && errors.graduationYear}
+                  className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                   required
                 />
                 <Input
@@ -411,6 +425,7 @@ export default function ProfileEditPage() {
                   onChange={handleChange}
                   value={values.specialization}
                   error={touched.specialization && errors.specialization}
+                  className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                   required
                 />
                 <Input
@@ -419,6 +434,7 @@ export default function ProfileEditPage() {
                   onChange={handleChange}
                   value={values.department}
                   error={touched.department && errors.department}
+                  className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                   required
                 />
                 <Input
@@ -427,6 +443,7 @@ export default function ProfileEditPage() {
                   onChange={handleChange}
                   value={values.mentor}
                   error={touched.mentor && errors.mentor}
+                  className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                   required
                 />
                 <Input
@@ -435,6 +452,7 @@ export default function ProfileEditPage() {
                   onChange={handleChange}
                   value={values.universityId}
                   error={touched.universityId && errors.universityId}
+                  className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                 />
                 <Input
                   label="Instagram Handle"
@@ -442,6 +460,7 @@ export default function ProfileEditPage() {
                   onChange={handleChange}
                   value={values.instagramHandle || ''}
                   error={touched.instagramHandle && errors.instagramHandle}
+                  className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                   placeholder="@username"
                 />
                 <Input
@@ -450,6 +469,7 @@ export default function ProfileEditPage() {
                   onChange={handleChange}
                   value={values.linkedinHandle || ''}
                   error={touched.linkedinHandle && errors.linkedinHandle}
+                  className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                   placeholder="https://linkedin.com/in/username"
                 />
                 <Input
@@ -458,6 +478,7 @@ export default function ProfileEditPage() {
                   onChange={handleChange}
                   value={values.codeforcesHandle || ''}
                   error={touched.codeforcesHandle && errors.codeforcesHandle}
+                  className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                 />
                 <Input
                   label="CV URL"
@@ -465,6 +486,7 @@ export default function ProfileEditPage() {
                   onChange={handleChange}
                   value={values.cv}
                   error={touched.cv && errors.cv}
+                  className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                   placeholder="https://example.com/your-cv"
                 />
                 <Input
@@ -473,6 +495,7 @@ export default function ProfileEditPage() {
                   onChange={handleChange}
                   value={values.leetcodeHandle || ''}
                   error={touched.leetcodeHandle && errors.leetcodeHandle}
+                  className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                 />
                 <Input
                   label="Joining Date"
@@ -481,58 +504,59 @@ export default function ProfileEditPage() {
                   onChange={handleChange}
                   value={values.joiningDate}
                   error={touched.joiningDate && errors.joiningDate}
+                  className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                 />
                 <div className="col-span-2 w-200">
                   <div className="flex flex-col">
-                    <label className="block text-sm font-medium text-gray-500 mb-1">
+                    <label className="block text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">
                       Short Bio (Max 500 characters)
                     </label>
                     <textarea
                       name="bio"
                       onChange={handleChange}
                       value={values.bio}
-                      className={`form-textarea mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
-                        touched.bio && errors.bio ? 'border-red-500' : ''
+                      className={`form-textarea mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:focus:ring-blue-400 ${
+                        touched.bio && errors.bio ? 'border-red-500 dark:border-red-400' : ''
                       }`}
                       rows={4}
                       maxLength={500}
                     />
-                    <div className="text-right text-xs text-gray-500">
+                    <div className="text-right text-xs text-gray-500 dark:text-gray-400">
                       {values.bio?.length || 0}/500
                     </div>
                     {touched.bio && errors.bio && (
-                      <p className="mt-1 text-sm text-red-600">{errors.bio}</p>
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.bio}</p>
                     )}
                   </div>
                 </div>
               </div>
             )}
-
+  
             {step === 3 && (
               <div className="grid grid-cols-2 gap-6 w-200">
-                <div className="col-span-2">
+                {/* <div className="col-span-2">
                   <div className="flex flex-col">
-                    <label className="block text-sm font-medium text-gray-500 mb-1">
+                    <label className="block text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">
                       Resources
                     </label>
                     <textarea
                       name="resources"
                       onChange={handleChange}
                       value={values.resources}
-                      className={`form-textarea mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
-                        touched.resources && errors.resources ? 'border-red-500' : ''
+                      className={`form-textarea mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 ${
+                        touched.resources && errors.resources ? 'border-red-500 dark:border-red-400' : ''
                       }`}
                       rows={6}
                       placeholder="Add any resources or links you'd like to share (one per line)"
                     />
                     {touched.resources && errors.resources && (
-                      <p className="mt-1 text-sm text-red-600">{errors.resources}</p>
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.resources}</p>
                     )}
                   </div>
-                </div>
+                </div> */}
               </div>
             )}
-
+  
             <div className="flex justify-between mt-8">
               <div>
                 {step > 1 && (
@@ -540,7 +564,7 @@ export default function ProfileEditPage() {
                     type="button"
                     variant="outline"
                     onClick={handlePrevious}
-                    className="px-6 py-2"
+                    className="px-6 py-2 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700"
                   >
                     Back
                   </Button>
@@ -551,15 +575,15 @@ export default function ProfileEditPage() {
                   type="button"
                   variant="outline"
                   onClick={resetForm}
-                  className="px-6 py-2"
+                  className="px-6 py-2 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700"
                 >
                   Reset Form
                 </Button>
-                {step < 3 ? (
+                {step <= 2 ? (
                   <Button
                     type="button" 
                     onClick={() => handleNext(values)}
-                    className="px-6 py-2"
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white"
                   >
                     Next
                   </Button>
@@ -567,7 +591,7 @@ export default function ProfileEditPage() {
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white"
+                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white"
                   >
                     {isSubmitting ? 'Updating...' : 'Update Profile'}
                   </Button>
@@ -578,5 +602,4 @@ export default function ProfileEditPage() {
         )}
       </Formik>
     </div>
-  );
-}
+  )};

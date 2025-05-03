@@ -49,91 +49,93 @@ const TopHeader: React.FC = () => {
   };
 
   return (
-    <header className="bg-white shadow-2xs py-0.5 px-6 ml-[30px] w-[900px]">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Left - Greeting */}
-        <div>
-          <h1 className="text-lg font-bold text-gray-800">{getPageTitle()}</h1>
-          <p className="text-sm text-gray-600">Good Morning</p>
+    <header className="bg-white dark:bg-gray-800 shadow-2xs py-0.5 px-6 ml-[30px] w-[900px] dark:border-b dark:border-gray-700">
+    <div className="max-w-7xl mx-auto flex items-center justify-between">
+      {/* Left - Greeting */}
+      <div>
+        <h1 className="text-lg font-bold text-gray-800 dark:text-white">{getPageTitle()}</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-300">Good Morning</p>
+      </div>
+  
+      {/* Center - Search and Notification */}
+      <div className="flex">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <FiSearch className="absolute left-3 top-1/2 h-5 w-5 text-gray-400 dark:text-gray-400 transform -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search"
+              className="pl-10 pr-4 py-2 w-64 rounded-lg border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
+            />
+          </div>
+  
+          <button className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+            <FiBell className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500"></span>
+          </button>
         </div>
-
-        {/* Center - Search and Notification */}
-        <div className="flex">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 h-5 w-5 text-gray-400 transform -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search"
-                className="pl-10 pr-4 py-2 w-64 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <button className="relative p-2 rounded-full hover:bg-gray-100">
-              <FiBell className="h-6 w-6 text-gray-500" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500"></span>
-            </button>
-          </div>
-
-          {/* Right - Profile with Dropdown */}
-          <div className="relative flex ml-4">
-            <button
-              className="flex items-center gap-2"
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            >
-              <Avatar size="md" robohashSet="set4">
-                <Avatar.Image
-                  src={`https://robohash.org/${user?._id}?set=set3&size=100x100`} // Fallback to a placeholder image if profilePicture is not available
-                  alt={"User Avatar"}
-                  identifier={user?.member._id}
-                />
-                <Avatar.Fallback>{user?.member.firstName?.[0]}</Avatar.Fallback>
-              </Avatar>
-              <div className="text-left">
-                <div className="flex items-center">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800">
-                      {user?.member.firstName || "User"}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {user?.member.clubRole?.toUpperCase() || "MEMBER"}
-                    </p>
-                  </div>
-                  <FiChevronDown
-                    className={`h-4 w-4 ml-1 text-gray-500 transition-transform ${
-                      isDropdownOpen ? "rotate-180" : ""
-                    }`}
-                  />
+  
+        {/* Right - Profile with Dropdown */}
+        <div className="relative flex ml-4">
+          <button
+            className="flex items-center gap-2"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          >
+           <Avatar size="md" robohashSet="set3"> {/* Match the set parameter */}
+  <Avatar.Image
+    src={`https://robohash.org/${user?.member._id}?set=set3&size=100x100`} // Use member ID
+    alt="User Avatar"
+    identifier={user?.member._id} // Consistent identifier
+  />
+  <Avatar.Fallback className="dark:bg-gray-600 dark:text-white">
+    {user?.member.firstName?.[0]}{user?.member.lastName?.[0]}
+  </Avatar.Fallback>
+</Avatar>
+            <div className="text-left">
+              <div className="flex items-center">
+                <div>
+                  <p className="text-sm font-semibold text-gray-800 dark:text-white">
+                    {user?.member.firstName || "User"}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {user?.member.clubRole?.toUpperCase() || "MEMBER"}
+                  </p>
                 </div>
+                <FiChevronDown
+                  className={`h-4 w-4 ml-1 text-gray-500 dark:text-gray-400 transition-transform ${
+                    isDropdownOpen ? "rotate-180" : ""
+                  }`}
+                />
               </div>
-            </button>
-
-            {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 border border-gray-100 z-10">
-                <button
-                  onClick={() => handleNavigation("/main/profile")}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  Profile
-                </button>
-                <button
-                  onClick={() => handleNavigation("/main/settings")}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  Settings
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-red-200"
-                >
-                  Sign out
-                </button>
-              </div>
-            )}
-          </div>
+            </div>
+          </button>
+  
+          {isDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 border border-gray-100 dark:border-gray-700 z-10">
+              <button
+                onClick={() => handleNavigation("/main/profile")}
+                className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Profile
+              </button>
+              <button
+                onClick={() => handleNavigation("/main/settings")}
+                className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                Settings
+              </button>
+              <button
+                onClick={handleLogout}
+                className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-red-200 dark:hover:bg-red-500/20"
+              >
+                Sign out
+              </button>
+            </div>
+          )}
         </div>
       </div>
-    </header>
+    </div>
+  </header>
   );
 };
 

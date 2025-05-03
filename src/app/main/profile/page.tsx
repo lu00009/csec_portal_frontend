@@ -1,25 +1,26 @@
 'use client';
 import Attendance from '@/components/profile/attendance';
+import ProfileHeader from '@/components/profile/header';
 import HeadsUp from '@/components/profile/headsup';
 import OptionalInfo from '@/components/profile/optionalinfo';
 import Progress from '@/components/profile/progress';
 import RequiredInfo from '@/components/profile/requiredinfo';
 import Resources from '@/components/profile/resources';
-import ProfileHeader from '@/components/profile/header';
 
 import { useUserStore } from '@/stores/userStore';
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 import {
+  FiArrowLeft as FiBack,
   FiUser as FiProfile,
   FiInfo as FiRequired,
-  FiBook as FiResources,
-  FiArrowLeft as FiBack
+  FiBook as FiResources
 } from 'react-icons/fi';
 import { HiOutlineDocumentText } from 'react-icons/hi';
 import { LuClipboardList } from 'react-icons/lu';
 import { MdEventAvailable, MdWorkOutline } from 'react-icons/md';
+
 
 const UserProfile = () => {
   const [activeView, setActiveView] = useState<'profile' | 'attendance' | 'progress' | 'headsup'>('profile');
@@ -101,38 +102,50 @@ const UserProfile = () => {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      {/* Header with full width */}
-      <div className="bg-white shadow-sm">
-      <button
-                onClick={handleBack}
-                className="flex items-center px-4 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-lg mb-4 w-full"
-              >
-                <FiBack className="mr-2" />
-              </button>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <ProfileHeader
-            fullName={`${user?.member.firstName} ${user?.member.lastName}`}
-            role={user?.member.role || 'Member'}
-            isOwnProfile={true}
-            profilePicture={user?.member.profilePicture}
-          />
-        </div>
+    <div className="bg-gray-50 dark:bg-gray-900 min-h-screen">
+  {/* Sticky header with constrained width */}
+  <div className="bg-white dark:bg-gray-800 shadow-sm dark:shadow-gray-900/30 sticky top-0 z-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex items-center justify-between py-4">
+        {/* Back button with proper alignment */}
+        <button
+          onClick={handleBack}
+          className="flex items-center px-3 py-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-lg transition-all duration-200"
+        >
+          <FiBack className="mr-2 text-lg" />
+          <span className="text-sm font-medium">Back</span>
+        </button>
+
+        {/* Optional right-aligned elements can be added here */}
+        <div>{/* Add any right-side content */}</div>
       </div>
+      
+      {/* Profile header with better vertical spacing */}
+      <div className="pb-6 pt-4">
+        <ProfileHeader
+          fullName={`${user?.member.firstName} ${user?.member.lastName}`}
+          role={user?.member.role || 'Member'}
+          isOwnProfile={true}
+          profilePicture={user?.member.profilePicture}
+          id={user?.member._id}
+        />
+      </div>
+    </div>
+  </div>
 
       {/* Main content container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex">
           {/* Sidebar Navigation */}
           <div className="w-50">
-            <div className="bg-white rounded-lg p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm dark:shadow-none">
               <div className="space-y-2">
                 <button
                   onClick={() => handleViewChange('profile')}
-                  className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${
+                  className={`w-full flex items-center px-4 py-2 font-medium rounded-lg transition-colors ${
                     activeView === 'profile'
-                      ? 'text-white bg-[#003087]'
-                      : 'text-gray-500 hover:bg-gray-50'
+                      ? 'text-white bg-[#003087] dark:bg-blue-700'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   <FiProfile className="mr-2" />
@@ -140,10 +153,10 @@ const UserProfile = () => {
                 </button>
                 <button
                   onClick={() => handleViewChange('attendance')}
-                  className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${
+                  className={`w-full flex items-center px-4 py-2 font-medium rounded-lg transition-colors ${
                     activeView === 'attendance'
-                      ? 'text-white bg-[#003087]'
-                      : 'text-gray-500 hover:bg-gray-50'
+                      ? 'text-white bg-[#003087] dark:bg-blue-700'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   <MdEventAvailable className="mr-2" />
@@ -151,10 +164,10 @@ const UserProfile = () => {
                 </button>
                 <button
                   onClick={() => handleViewChange('progress')}
-                  className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${
+                  className={`w-full flex items-center px-4 py-2 font-medium rounded-lg transition-colors ${
                     activeView === 'progress'
-                      ? 'text-white bg-[#003087]'
-                      : 'text-gray-500 hover:bg-gray-50'
+                      ? 'text-white bg-[#003087] dark:bg-blue-700'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   <HiOutlineDocumentText className="mr-2" />
@@ -162,10 +175,10 @@ const UserProfile = () => {
                 </button>
                 <button
                   onClick={() => handleViewChange('headsup')}
-                  className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${
+                  className={`w-full flex items-center px-4 py-2 font-medium rounded-lg transition-colors ${
                     activeView === 'headsup'
-                      ? 'text-white bg-[#003087]'
-                      : 'text-gray-500 hover:bg-gray-50'
+                      ? 'text-white bg-[#003087] dark:bg-blue-700'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   <LuClipboardList className="mr-2" />
@@ -180,13 +193,13 @@ const UserProfile = () => {
             {activeView === 'profile' ? (
               <>
                 {/* Profile Tabs */}
-                <div className="flex border-b border-gray-200 justify-around">
+                <div className="flex border-b border-gray-200 dark:border-gray-700 justify-around">
                   <button
                     onClick={() => handleTabChange('required')}
-                    className={`px-4 py-2 font-medium ${
+                    className={`px-4 py-2 font-medium transition-colors ${
                       activeTab === 'required'
-                        ? 'text-blue-600 border-b-2 border-blue-600'
-                        : 'text-gray-500 hover:text-gray-700'
+                        ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                     }`}
                   >
                     <FiRequired className="inline mr-2" />
@@ -194,10 +207,10 @@ const UserProfile = () => {
                   </button>
                   <button
                     onClick={() => handleTabChange('optional')}
-                    className={`px-4 py-2 font-medium ${
+                    className={`px-4 py-2 font-medium transition-colors ${
                       activeTab === 'optional'
-                        ? 'text-blue-600 border-b-2 border-blue-600'
-                        : 'text-gray-500 hover:text-gray-700'
+                        ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                     }`}
                   >
                     <MdWorkOutline className="inline mr-2" />
@@ -205,10 +218,10 @@ const UserProfile = () => {
                   </button>
                   <button
                     onClick={() => handleTabChange('resources')}
-                    className={`px-4 py-2 font-medium ${
+                    className={`px-4 py-2 font-medium transition-colors ${
                       activeTab === 'resources'
-                        ? 'text-blue-600 border-b-2 border-blue-600'
-                        : 'text-gray-500 hover:text-gray-700'
+                        ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                     }`}
                   >
                     <FiResources className="inline mr-2" />
@@ -220,15 +233,15 @@ const UserProfile = () => {
                 <div className="mt-6">
                   {activeTab === 'required' && <RequiredInfo member={requiredData} />}
                   {activeTab === 'optional' && <OptionalInfo member={optionalData} />}
-                  {activeTab === 'resources' && <Resources id ={user?.member._id} />}
+                  {activeTab === 'resources' && <Resources id={user?.member._id} />}
                 </div>
               </>
             ) : activeView === 'attendance' ? (
-              <Attendance id = {user?.member._id}/>
+              <Attendance id={user?.member._id} />
             ) : activeView === 'progress' ? (
-              <Progress id ={user?.member._id} />
+              <Progress id={user?.member._id} />
             ) : (
-              <HeadsUp id = {user?.member._id} />
+              <HeadsUp id={user?.member._id} />
             )}
           </div>
         </div>
@@ -236,5 +249,4 @@ const UserProfile = () => {
     </div>
   );
 };
-
 export default UserProfile;

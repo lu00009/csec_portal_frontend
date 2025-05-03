@@ -1,9 +1,8 @@
 'use client';
 
-import React from 'react';
 import { useFormik } from 'formik';
-import * as Yup from 'yup';
 import { FiX } from 'react-icons/fi';
+import * as Yup from 'yup';
 
 // Define Resource type
 type Resource = {
@@ -51,11 +50,14 @@ const ResourceModal = ({ isOpen, onClose, onSubmit, resource, division, division
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-opacity-30 backdrop-blur-sm"></div>
-      <div className="relative bg-white rounded-lg shadow-lg p-6 w-full max-w-md z-10">
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm dark:bg-black/50"></div>
+      <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md z-10 transition-colors">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">{resource ? 'Edit Resource' : 'Add Resource'}</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <h2 className="text-xl font-bold dark:text-white">{resource ? 'Edit Resource' : 'Add Resource'}</h2>
+          <button 
+            onClick={onClose} 
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 transition-colors"
+          >
             <FiX size={24} />
           </button>
         </div>
@@ -68,10 +70,10 @@ const ResourceModal = ({ isOpen, onClose, onSubmit, resource, division, division
               placeholder="Resource Name"
               value={formik.values.resourceName}
               onChange={formik.handleChange}
-              className="w-full border rounded px-4 py-2"
+              className="w-full border rounded px-4 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
             />
             {formik.touched.resourceName && formik.errors.resourceName && (
-              <div className="text-red-500 text-sm mt-1">{formik.errors.resourceName}</div>
+              <div className="text-red-500 dark:text-red-400 text-sm mt-1">{formik.errors.resourceName}</div>
             )}
           </div>
 
@@ -82,10 +84,10 @@ const ResourceModal = ({ isOpen, onClose, onSubmit, resource, division, division
               placeholder="Resource Link"
               value={formik.values.resourceLink}
               onChange={formik.handleChange}
-              className="w-full border rounded px-4 py-2"
+              className="w-full border rounded px-4 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
             />
             {formik.touched.resourceLink && formik.errors.resourceLink && (
-              <div className="text-red-500 text-sm mt-1">{formik.errors.resourceLink}</div>
+              <div className="text-red-500 dark:text-red-400 text-sm mt-1">{formik.errors.resourceLink}</div>
             )}
           </div>
 
@@ -94,25 +96,32 @@ const ResourceModal = ({ isOpen, onClose, onSubmit, resource, division, division
               name="division"
               value={formik.values.division}
               onChange={formik.handleChange}
-              className="w-full border rounded px-4 py-2"
+              className="w-full border rounded px-4 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             >
-              <option value="">Select Division</option>
+              <option value="" className="dark:bg-gray-700">Select Division</option>
               {divisions.map((div) => (
-                <option key={div} value={div}>
+                <option key={div} value={div} className="dark:bg-gray-700">
                   {div}
                 </option>
               ))}
             </select>
             {formik.touched.division && formik.errors.division && (
-              <div className="text-red-500 text-sm mt-1">{formik.errors.division}</div>
+              <div className="text-red-500 dark:text-red-400 text-sm mt-1">{formik.errors.division}</div>
             )}
           </div>
 
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={onClose} className="border px-4 py-2 rounded">
+            <button 
+              type="button" 
+              onClick={onClose} 
+              className="border px-4 py-2 rounded dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
               Cancel
             </button>
-            <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            <button 
+              type="submit" 
+              className="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
+            >
               {resource ? 'Update' : 'Add'}
             </button>
           </div>

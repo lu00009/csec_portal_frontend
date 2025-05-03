@@ -7,7 +7,6 @@ import OptionalInfo from '@/components/profile/optionalinfo';
 import Progress from '@/components/profile/progress';
 import RequiredInfo from '@/components/profile/requiredinfo';
 import Resources from '@/components/profile/resources';
-import { useAttendanceStore } from '@/stores/attendanceStore';
 import { useUserStore } from '@/stores/userStore';
 import { Member } from '@/types/member';
 import React, { useEffect, useState } from 'react';
@@ -32,7 +31,6 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE;
   
-
   useEffect(() => {
     const fetchMemberData = async () => {
       try {
@@ -66,22 +64,18 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
     fetchMemberData();
   }, [memberId, user?.member.refreshToken]);
 
-
-
- 
-
   if (loading) {
     return <LoadingSpinner />;
   }
 
   if (error) {
     return (
-      <div className="bg-gray-50 min-h-screen flex">
-        <div className="w-50 bg-white p-4"></div>
+      <div className="bg-gray-50 dark:bg-gray-900 min-h-screen flex">
+        <div className="w-50 bg-white dark:bg-gray-800 p-4"></div>
         <div className="flex-1 p-4">
-          <div className="p-6 bg-white rounded-lg shadow">
-            <h2 className="text-xl font-semibold text-red-600">Error Loading Profile</h2>
-            <p className="mt-2 text-gray-600">{error}</p>
+          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+            <h2 className="text-xl font-semibold text-red-600 dark:text-red-400">Error Loading Profile</h2>
+            <p className="mt-2 text-gray-600 dark:text-gray-300">{error}</p>
           </div>
         </div>
       </div>
@@ -90,12 +84,12 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
 
   if (!member) {
     return (
-      <div className="bg-gray-50 min-h-screen flex">
-        <div className="w-50 bg-white p-4"></div>
+      <div className="bg-gray-50 dark:bg-gray-900 min-h-screen flex">
+        <div className="w-50 bg-white dark:bg-gray-800 p-4"></div>
         <div className="flex-1 p-4">
-          <div className="p-6 bg-white rounded-lg shadow">
-            <h2 className="text-xl font-semibold text-red-600">Member Not Found</h2>
-            <p className="mt-2 text-gray-600">The requested member does not exist.</p>
+          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+            <h2 className="text-xl font-semibold text-red-600 dark:text-red-400">Member Not Found</h2>
+            <p className="mt-2 text-gray-600 dark:text-gray-300">The requested member does not exist.</p>
           </div>
         </div>
       </div>
@@ -113,6 +107,7 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
     gender: member.member.gender || 'Not provided',
     telegramUsername: member.member.telegramHandle || 'Not provided',
     joinedDate: member.member.createdAt || 'Not provided',
+    avatar: member.member.avatar || '', // Add avatar field
   };
 
   const optionalData = {
@@ -126,6 +121,7 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
     joinedDate: member.member.createdAt || 'Not provided',
     shortbio: member.member.bio || 'Not provided',
   };
+
   const resourcesData = {
     resources: Array.isArray(user?.member?.resources) ? user.member.resources : [],
   }
@@ -136,24 +132,54 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
         fullName={`${member?.member.firstName} ${member.member.lastName}`}
         role={member.member.role || 'Member'}
         isOwnProfile={false}
+        profilePicture=''
+        id='' // Pass avatar to ProfileHeader
       />
-      <div className="bg-gray-50 min-h-screen flex">
+      <div className="bg-gray-50 dark:bg-gray-900 min-h-screen flex">
         <div className="w-50">
-          <div className="bg-white rounded-lg p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-4">
             <div className="space-y-2">
-              <button onClick={() => setActiveView('profile')} className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${activeView === 'profile' ? 'text-white bg-[#003087]' : 'text-gray-500 hover:bg-gray-50'}`}>
+              <button 
+                onClick={() => setActiveView('profile')} 
+                className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${
+                  activeView === 'profile' 
+                    ? 'text-white bg-[#003087] dark:bg-blue-900' 
+                    : 'text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
                 <FiProfile className="mr-2" />
                 Profile
               </button>
-              <button onClick={() => setActiveView('attendance')} className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${activeView === 'attendance' ? 'text-white bg-[#003087]' : 'text-gray-500 hover:bg-gray-50'}`}>
+              <button 
+                onClick={() => setActiveView('attendance')} 
+                className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${
+                  activeView === 'attendance' 
+                    ? 'text-white bg-[#003087] dark:bg-blue-900' 
+                    : 'text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
                 <MdEventAvailable className="mr-2" />
                 Attendance
               </button>
-              <button onClick={() => setActiveView('progress')} className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${activeView === 'progress' ? 'text-white bg-[#003087]' : 'text-gray-500 hover:bg-gray-50'}`}>
+              <button 
+                onClick={() => setActiveView('progress')} 
+                className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${
+                  activeView === 'progress' 
+                    ? 'text-white bg-[#003087] dark:bg-blue-900' 
+                    : 'text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
                 <HiOutlineDocumentText className="mr-2" />
                 Progress
               </button>
-              <button onClick={() => setActiveView('headsup')} className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${activeView === 'headsup' ? 'text-white bg-[#003087] font-bold' : 'text-gray-500 hover:bg-gray-50'}`}>
+              <button 
+                onClick={() => setActiveView('headsup')} 
+                className={`w-full flex items-center px-4 py-2 font-medium rounded-lg ${
+                  activeView === 'headsup' 
+                    ? 'text-white bg-[#003087] dark:bg-blue-900 font-bold' 
+                    : 'text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
                 <LuClipboardList className="mr-2" />
                 Heads Up
               </button>
@@ -164,16 +190,37 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
         <div className="flex-1">
           {activeView === 'profile' ? (
             <>
-              <div className="flex border-b border-gray-200 justify-around">
-                <button onClick={() => setActiveTab('required')} className={`px-4 py-2 font-medium ${activeTab === 'required' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+              <div className="flex border-b border-gray-200 dark:border-gray-700 justify-around">
+                <button 
+                  onClick={() => setActiveTab('required')} 
+                  className={`px-4 py-2 font-medium ${
+                    activeTab === 'required' 
+                      ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' 
+                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'
+                  }`}
+                >
                   <FiRequired className="inline mr-2" />
                   Required Info
                 </button>
-                <button onClick={() => setActiveTab('optional')} className={`px-4 py-2 font-medium ${activeTab === 'optional' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+                <button 
+                  onClick={() => setActiveTab('optional')} 
+                  className={`px-4 py-2 font-medium ${
+                    activeTab === 'optional' 
+                      ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' 
+                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'
+                  }`}
+                >
                   <MdWorkOutline className="inline mr-2" />
                   Optional Info
                 </button>
-                <button onClick={() => setActiveTab('resources')} className={`px-4 py-2 font-medium ${activeTab === 'resources' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>
+                <button 
+                  onClick={() => setActiveTab('resources')} 
+                  className={`px-4 py-2 font-medium ${
+                    activeTab === 'resources' 
+                      ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' 
+                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100'
+                  }`}
+                >
                   <FiResources className="inline mr-2" />
                   Resources
                 </button>
@@ -182,16 +229,15 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
               <div className="mt-6">
                 {activeTab === 'required' && <RequiredInfo member={requiredData} />}
                 {activeTab === 'optional' && <OptionalInfo member={optionalData} />}
-                {activeTab === 'resources' && <Resources id ={member.member._id} />}
+                {activeTab === 'resources' && <Resources id={member.member._id} />}
               </div>
             </>
           ) : activeView === 'attendance' ? (
-            <Attendance id = {member.member._id} />
+            <Attendance id={member.member._id} />
           ) : activeView === 'progress' ? (
-            <Progress id = {member.member._id}
-            />
+            <Progress id={member.member._id} />
           ) : (
-            <HeadsUp id = {member.member._id}/>
+            <HeadsUp id={member.member._id} />
           )}
         </div>
       </div>

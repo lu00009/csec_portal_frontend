@@ -21,52 +21,52 @@ const RequiredInfo = ({ member }: RequiredInfoProps) => {
   };
 
   return (
-    <div className="bg-white w-160 rounded-lg shadow-sm p-6 mt-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="bg-white dark:bg-gray-800 w-160 rounded-lg shadow-sm p-6 mt-6 grid grid-cols-1 md:grid-cols-2 gap-8 dark:border dark:border-gray-700">
       {/* Left Column */}
       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-1">First Name</label>
-          <p className="font-medium">{member.firstName}</p>
+          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">First Name</label>
+          <p className="font-medium dark:text-gray-200">{member.firstName}</p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-1">Last Name</label>
-          <p className="font-medium">{member.lastName}</p>
+          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Last Name</label>
+          <p className="font-medium dark:text-gray-200">{member.lastName}</p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-1">Mobile Number</label>
-          <p className="font-medium">{member.phoneNumber}</p>
+          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Mobile Number</label>
+          <p className="font-medium dark:text-gray-200">{member.phoneNumber}</p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-1">Email Address</label>
-          <p className="font-medium">{member.email}</p>
+          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Email Address</label>
+          <p className="font-medium dark:text-gray-200">{member.email}</p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-1">Department</label>
-          <p className="font-medium">{member.department}</p>
+          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Department</label>
+          <p className="font-medium dark:text-gray-200">{member.department}</p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-1">Expected Graduation Year</label>
-          <p className="font-medium">{member.graduation}</p>
+          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Expected Graduation Year</label>
+          <p className="font-medium dark:text-gray-200">{member.graduation}</p>
         </div>
       </div>
 
       {/* Right Column */}
       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-1">Date of Birth</label>
-          <p className="font-medium">{member.birth}</p>
+          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Date of Birth</label>
+          <p className="font-medium dark:text-gray-200">{member.birth}</p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-1">Gender</label>
-          <p className="font-medium">{member.gender}</p>
+          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Gender</label>
+          <p className="font-medium dark:text-gray-200">{member.gender}</p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-1">Telegram Handle</label>
-          <p className="font-medium">{member.telegramUsername}</p>
+          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Telegram Handle</label>
+          <p className="font-medium dark:text-gray-200">{member.telegramUsername}</p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-1">Joined Date</label>
-          <p className="font-medium">{formatDate(member.joinedDate)}</p>
+          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Joined Date</label>
+          <p className="font-medium dark:text-gray-200">{formatDate(member.joinedDate)}</p>
         </div>
       </div>
     </div>

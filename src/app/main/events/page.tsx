@@ -1,18 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { FiPlus, FiChevronDown, FiArrowLeft } from 'react-icons/fi';
-import SessionItem from '@/components/sessions&events/SessionItem';
+import CreateEventModal from '@/components/sessions&events/CreateEventModal';
+import CreateSessionModal from '@/components/sessions&events/CreateSessionModal';
 import EventItem from '@/components/sessions&events/EventItem';
-import SessionsTable from '@/components/sessions&events/SessionsTable';
 import EventTable from '@/components/sessions&events/EventTable';
 import Pagination from '@/components/sessions&events/Pagination';
+import SessionItem from '@/components/sessions&events/SessionItem';
+import SessionsTable from '@/components/sessions&events/SessionsTable';
 import ViewToggle from '@/components/sessions&events/ViewToggle';
-import CreateSessionModal from '@/components/sessions&events/CreateSessionModal';
-import CreateEventModal from '@/components/sessions&events/CreateEventModal';
-import { formatDisplayDate } from '@/utils/date';
-import { Session, Event } from '@/types/eventSession';
 import { useSessionEventStore } from '@/stores/sessionEventstore';
+import { Event, Session } from '@/types/eventSession';
+import { formatDisplayDate } from '@/utils/date';
+import { useEffect, useState } from 'react';
+import { FiArrowLeft, FiChevronDown, FiPlus } from 'react-icons/fi';
 
 type NavigationState = {
   contentType: 'sessions' | 'events';
@@ -150,21 +150,22 @@ const SessionsPage = () => {
   const canGoBack = currentStackIndex > 0;
 
   return (
-    <div className="p-4 md:p-6 text-foreground bg-background min-h-screen transition-colors">
+    <div className="p-4 md:p-6 text-foreground bg-background min-h-screen transition-colors dark:bg-gray-900 dark:text-gray-100">
       {/* Header Controls */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <div className="flex items-center gap-4">
           <button 
             onClick={handleBack}
             className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors
-              ${canGoBack ? 'bg-gray-100 hover:bg-gray-200 text-gray-600' : 'bg-gray-50 text-gray-400 cursor-not-allowed'}`}
+              ${canGoBack ? 'bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-300' 
+              : 'bg-gray-50 text-gray-400 dark:bg-gray-800 dark:text-gray-600 cursor-not-allowed'}`}
             disabled={!canGoBack}
             aria-label="Go back"
           >
             <FiArrowLeft className="text-lg" />
           </button>
           <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-2xl font-bold dark:text-white">
               {contentType === 'sessions' ? 'Sessions' : 'Events'}
             </h1>
             <div className="relative">
@@ -174,12 +175,13 @@ const SessionsPage = () => {
                   setContentType(e.target.value as 'sessions' | 'events');
                   setCurrentPage(1);
                 }}
-                className="appearance-none bg-background border border-border text-foreground rounded-lg pl-3 pr-8 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
+                className="appearance-none bg-background border border-border text-foreground rounded-lg pl-3 pr-8 py-2 focus:outline-none focus:ring-2 focus:ring-ring
+                         dark:bg-gray-800 dark:border-gray-700 dark:text-white"
               >
                 <option value="sessions">Sessions</option>
                 <option value="events">Events</option>
               </select>
-              <FiChevronDown className="absolute right-3 top-3 text-muted-foreground pointer-events-none" />
+              <FiChevronDown className="absolute right-3 top-3 text-muted-foreground dark:text-gray-400 pointer-events-none" />
             </div>
           </div>
         </div>
@@ -191,7 +193,8 @@ const SessionsPage = () => {
               setEditingItem(null);
               contentType === 'sessions' ? setShowCreateModal(true) : setShowEventModal(true);
             }}
-            className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors
+                     dark:bg-blue-700 dark:hover:bg-blue-800"
           >
             <FiPlus className="mr-2" />
             {contentType === 'sessions' ? 'Create Session' : 'Create Event'}
@@ -201,7 +204,7 @@ const SessionsPage = () => {
 
       {/* Main View */}
       {loading ? (
-        <div className="text-center text-muted-foreground">Loading...</div>
+        <div className="text-center text-muted-foreground dark:text-gray-400">Loading...</div>
       ) : viewMode === 'list' ? (
         <div className="space-y-4">
           {items.length > 0 ? (
@@ -213,6 +216,7 @@ const SessionsPage = () => {
                   onEdit={handleEdit}
                   onDelete={handleDelete}
                   date={formatDisplayDate(item.startDate)}
+                  className="dark:bg-gray-800 dark:hover:bg-gray-700"
                 />
               ) : (
                 <EventItem
@@ -220,11 +224,13 @@ const SessionsPage = () => {
                   item={item}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
+                  className="dark:bg-gray-800 dark:hover:bg-gray-700"
                 />
               )
             )
           ) : (
-            <div className="bg-card text-card-foreground rounded-lg shadow p-6 text-center text-muted-foreground">
+            <div className="bg-card text-card-foreground rounded-lg shadow p-6 text-center text-muted-foreground
+                          dark:bg-gray-800 dark:text-gray-300">
               No {contentType} found.
             </div>
           )}
@@ -236,12 +242,14 @@ const SessionsPage = () => {
           onEdit={handleEdit}
           onDelete={handleDelete}
           date={items.length > 0 ? formatDisplayDate((items[0] as Session).startDate) : ''}
+          className="dark:bg-gray-800"
         />
       ) : (
         <EventTable
           items={items as Event[]}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          className="dark:bg-gray-800"
         />
       )}
 
@@ -251,6 +259,7 @@ const SessionsPage = () => {
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}
+          className="dark:text-gray-300 dark:border-gray-700"
         />
       )}
 
@@ -263,6 +272,8 @@ const SessionsPage = () => {
         }}
         onSubmit={handleSessionSubmit}
         editingItem={editingItem as Session | null}
+        overlayClassName="dark:bg-gray-900/80"
+        contentClassName="dark:bg-gray-800"
       />
 
       <CreateEventModal
@@ -273,9 +284,10 @@ const SessionsPage = () => {
         }}
         onSubmit={handleEventSubmit}
         editingItem={editingItem as Event | null}
+        overlayClassName="dark:bg-gray-900/80"
+        contentClassName="dark:bg-gray-800"
       />
     </div>
   );
 };
-
 export default SessionsPage;

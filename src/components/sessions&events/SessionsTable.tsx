@@ -1,5 +1,5 @@
-import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 import { calculateStatus } from '@/utils/date';
+import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 
 type SessionItem = {
   id?: string;
@@ -28,46 +28,48 @@ const SessionsTable = ({ items, contentType, onEdit, onDelete }: SessionsTablePr
   };
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden dark:shadow-lg">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-900">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</th>
               {contentType === 'sessions' ? (
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Division</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Division</th>
               ) : (
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Category</th>
               )}
               {contentType === 'sessions' && (
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Groups</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Groups</th>
               )}
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {items.map((item) => {
               const key = item.id || item._id;
               const status = (item.status || calculateStatus(item.startDate, item.endDate) || '').toLowerCase();
 
               return (
-                <tr key={key}>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm">{item.startDate}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">{item.sessionTitle}</td>
+                <tr key={key} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm dark:text-gray-200">{item.startDate}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium dark:text-gray-100">{item.sessionTitle}</td>
                   {contentType === 'sessions' ? (
-                    <td className="px-4 py-4 whitespace-nowrap text-sm">{item.division}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm dark:text-gray-300">{item.division}</td>
                   ) : (
-                    <td className="px-4 py-4 whitespace-nowrap text-sm">{item.category}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm dark:text-gray-300">{item.category}</td>
                   )}
                   {contentType === 'sessions' && (
-                    <td className="px-4 py-4 whitespace-nowrap text-sm">
+                    <td className="px-4 py-4 whitespace-nowrap text-sm dark:text-gray-300">
                       {item.groups?.join(', ')}
                     </td>
                   )}
                   <td className="px-4 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[status] || 'bg-gray-100 text-gray-400'}`}>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      statusColors[status] || 'bg-gray-100 dark:bg-gray-600 text-gray-400 dark:text-gray-200'
+                    }`}>
                       {status.charAt(0).toUpperCase() + status.slice(1)}
                     </span>
                   </td>
@@ -79,7 +81,7 @@ const SessionsTable = ({ items, contentType, onEdit, onDelete }: SessionsTablePr
                           startDate: item.startDate as string, 
                           sessionTitle: item.sessionTitle as string 
                         })}
-                        className="text-blue-500 hover:text-blue-700"
+                        className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                       >
                         <FiEdit2 size={18} />
                       </button>
@@ -87,7 +89,7 @@ const SessionsTable = ({ items, contentType, onEdit, onDelete }: SessionsTablePr
                     {key && (
                       <button 
                         onClick={() => onDelete(key)}
-                        className="text-red-500 hover:text-red-700"
+                        className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
                       >
                         <FiTrash2 size={18} />
                       </button>

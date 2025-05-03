@@ -22,19 +22,19 @@ const OptionalInfo = ({ member }: OptionalInfoProps) => {
   };
 
   return (
-    <div className="bg-white w-160 rounded-lg shadow-sm p-6 mt-6 grid grid-cols-1 md:grid-cols-2 gap-8">      
+    <div className="bg-white dark:bg-gray-800 w-160 rounded-lg shadow-sm p-6 mt-6 grid grid-cols-1 md:grid-cols-2 gap-8 dark:border dark:border-gray-700">
       {/* Left Column */}
       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-1">University ID</label>
-          <p className="font-medium">{member.uniId}</p>
+          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">University ID</label>
+          <p className="font-medium dark:text-gray-200">{member.uniId}</p>
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-1">LinkedIn Account</label>
+          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">LinkedIn Account</label>
           <a 
             href={member.linkedin.startsWith('http') ? member.linkedin : '#'} 
-            className="font-medium text-blue-600 hover:underline"
+            className="font-medium text-blue-600 dark:text-blue-400 hover:underline transition-colors duration-200"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -43,28 +43,28 @@ const OptionalInfo = ({ member }: OptionalInfoProps) => {
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-1">Codeforces Handle</label>
+          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Codeforces Handle</label>
           <a 
             href={member.codeforces.startsWith('http') ? member.codeforces : '#'} 
-            className="font-medium text-blue-600 hover:underline"
+            className="font-medium text-blue-600 dark:text-blue-400 hover:underline transition-colors duration-200"
             target="_blank"
             rel="noopener noreferrer"
           >
             {member.codeforces}
-            <FaExternalLinkAlt className="inline-block ml-1 text-gray-400" />
+            <FaExternalLinkAlt className="inline-block ml-1 text-gray-400 dark:text-gray-500" />
           </a>
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-1">Leetcode Handle</label>
+          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Leetcode Handle</label>
           <a 
             href={member.leetcode.startsWith('http') ? member.leetcode : '#'} 
-            className="font-medium text-blue-600 hover:underline"
+            className="font-medium text-blue-600 dark:text-blue-400 hover:underline transition-colors duration-200"
             target="_blank"
             rel="noopener noreferrer"
           >
             {member.leetcode}
-            <FaExternalLinkAlt className="inline-block ml-1 text-gray-400" />
+            <FaExternalLinkAlt className="inline-block ml-1 text-gray-400 dark:text-gray-500" />
           </a>
         </div>
       </div>
@@ -72,37 +72,37 @@ const OptionalInfo = ({ member }: OptionalInfoProps) => {
       {/* Right Column */}
       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-1">Instagram Handle</label>
-          <p className="font-medium">{member.insta}</p>
+          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Instagram Handle</label>
+          <p className="font-medium dark:text-gray-200">{member.insta}</p>
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-1">Birth Date</label>
-          <p className="font-medium">{member.birthdate}</p>
+          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Birth Date</label>
+          <p className="font-medium dark:text-gray-200">{member.birthdate}</p>
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-1">CV</label>
+          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">CV</label>
           <a 
             href={member.cv.startsWith('http') ? member.cv : '#'} 
-            className="font-medium text-blue-600 hover:underline"
+            className="font-medium text-blue-600 dark:text-blue-400 hover:underline transition-colors duration-200"
             target="_blank"
             rel="noopener noreferrer"
           >
             {member.cv}
-            <FaExternalLinkAlt className="inline-block ml-1 text-gray-400" />
+            <FaExternalLinkAlt className="inline-block ml-1 text-gray-400 dark:text-gray-500" />
           </a>
         </div>
         
         <div>
-          <label className="block text-sm font-medium text-gray-500 mb-1">Joining Date</label>
-          <p className="font-medium">{formatDate(member.joinedDate)}</p>
+          <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Joining Date</label>
+          <p className="font-medium dark:text-gray-200">{formatDate(member.joinedDate)}</p>
         </div>
       </div>
       
       <div>
-        <label className="block text-sm font-medium text-gray-500 mb-1">Short Bio</label>
-        <p className="font-medium">
+        <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Short Bio</label>
+        <p className="font-medium dark:text-gray-200">
           {member.shortbio}
         </p>
       </div>

@@ -132,82 +132,83 @@ export function MemberForm() {
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-700"
+        className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
       >
         <FiPlusCircle className="mr-2" />
         Add Member
       </button>
-
+  
       {/* Modal Backdrop */}
       {isOpen && (
-        <div className="fixed inset-0  backdrop-blur-sm  flex items-center justify-center z-50">
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex items-center justify-center z-50">
           {/* Modal Content */}
-          <div ref={modalRef} className="bg-white rounded-lg shadow-lg w-full max-w-md mx-4">
+          <div ref={modalRef} className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-md mx-4">
             {/* Modal Header */}
-            <div className="p-4 text-center border-b">
-              <h2 className="text-lg font-semibold">Invite New Member</h2>
+            <div className="p-4 text-center border-b dark:border-gray-700">
+              <h2 className="text-lg font-semibold dark:text-gray-100">Invite New Member</h2>
             </div>
-
+  
             {/* Modal Body */}
             <div className="p-4 space-y-4">
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
                 <input
                   type="email"
                   placeholder="member@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-gray-100"
                   required
                 />
               </div>
-              {/* Email Input */}
+  
+              {/* Name Inputs */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">First Name</label>
                 <input
                   type="text"
                   placeholder="robel"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  className="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-gray-100"
                   required
                 />
               </div>
+  
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Name</label>
                 <input
                   type="text"
                   placeholder="robel"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  className="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 bg-white dark:bg-gray-700 dark:text-gray-100"
                   required
                 />
               </div>
-
+  
               {/* Division Dropdown */}
               <div ref={divisionRef} className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Division *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Division *</label>
                 <div
                   onClick={() => setIsDivisionOpen(!isDivisionOpen)}
-                  className="w-full p-2.5 border border-gray-300 rounded-md flex justify-between items-center cursor-pointer bg-white"
+                  className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-md flex justify-between items-center cursor-pointer bg-white dark:bg-gray-700 dark:text-gray-100"
                 >
-                  <span className={division ? "" : "text-gray-500"}>
+                  <span className={division ? "dark:text-gray-100" : "text-gray-500 dark:text-gray-400"}>
                     {division || "Select Division"}
                   </span>
                   <svg
-                    className="w-4 h-4 text-gray-500"
+                    className="w-4 h-4 text-gray-500 dark:text-gray-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
-
+  
                 {isDivisionOpen && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg">
                     {divisions.map((div) => (
                       <div
                         key={div.id}
@@ -215,7 +216,7 @@ export function MemberForm() {
                           setDivision(div.id)
                           setIsDivisionOpen(false)
                         }}
-                        className="p-2.5 hover:bg-gray-100 cursor-pointer"
+                        className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer dark:text-gray-100"
                       >
                         {div.name}
                       </div>
@@ -223,30 +224,29 @@ export function MemberForm() {
                   </div>
                 )}
               </div>
-
+  
               {/* Group Dropdown */}
               <div ref={groupRef} className="relative">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Group</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Group</label>
                 <div
                   onClick={() => setIsGroupOpen(!isGroupOpen)}
-                  className="w-full p-2.5 border border-gray-300 rounded-md flex justify-between items-center cursor-pointer bg-white"
+                  className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-md flex justify-between items-center cursor-pointer bg-white dark:bg-gray-700 dark:text-gray-100"
                 >
-                  <span className={group ? "" : "text-gray-500"}>
+                  <span className={group ? "dark:text-gray-100" : "text-gray-500 dark:text-gray-400"}>
                     {group || "Select Group"}
                   </span>
                   <svg
-                    className="w-4 h-4 text-gray-500"
+                    className="w-4 h-4 text-gray-500 dark:text-gray-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
-
+  
                 {isGroupOpen && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg">
                     {groups.map((grp) => (
                       <div
                         key={grp.id}
@@ -254,7 +254,7 @@ export function MemberForm() {
                           setGroup(grp.id)
                           setIsGroupOpen(false)
                         }}
-                        className="p-2.5 hover:bg-gray-100 cursor-pointer"
+                        className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer dark:text-gray-100"
                       >
                         {grp.name}
                       </div>
@@ -262,47 +262,47 @@ export function MemberForm() {
                   </div>
                 )}
               </div>
-
+  
               {/* Password Section */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password *</label>
                 <div className="flex space-x-2">
                   <input
                     type="text"
                     placeholder="Click generate to create password"
                     value={generatedPassword}
                     readOnly
-                    className="w-full p-2.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                    className="w-full p-2.5 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-gray-50 dark:bg-gray-700 dark:text-gray-100"
                   />
                   <button
                     onClick={generateRandomPassword}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors whitespace-nowrap"
+                    className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white font-medium py-2 px-4 rounded-md transition-colors whitespace-nowrap"
                     disabled={isSubmitting}
                   >
                     Generate
                   </button>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                   This password will be sent to the member's email
                 </p>
               </div>
             </div>
-
+  
             {/* Modal Footer */}
-            <div className="p-4 border-t flex justify-between">
+            <div className="p-4 border-t dark:border-gray-700 flex justify-between">
               <button
                 onClick={() => {
                   setIsOpen(false)
                   resetForm()
                 }}
-                className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors dark:text-gray-100"
                 disabled={isSubmitting}
               >
                 Cancel
               </button>
               <button
                 onClick={handleInvite}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors"
+                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white font-medium py-2 px-4 rounded-md transition-colors"
                 disabled={isSubmitting || !generatedPassword}
               >
                 {isSubmitting ? 'Sending Invite...' : 'Send Invite'}
@@ -312,5 +312,4 @@ export function MemberForm() {
         </div>
       )}
     </>
-  )
-}
+  )}

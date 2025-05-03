@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
 import { useAttendanceStore } from '@/stores/profileAttendancsStore';
+import React, { useEffect } from 'react';
 
 type AttendanceProps = {
   id: string;
@@ -36,29 +36,29 @@ const Attendance: React.FC<AttendanceProps> = ({ id }) => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 mt-3 overflow-x-auto w-160">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mt-3 overflow-x-auto w-160 dark:shadow-gray-900/50">
+      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <thead className="bg-gray-50 dark:bg-gray-900">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Session</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Time</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Time</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Session</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Start Time</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">End Time</th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
           {uniqueRecords.map((record) => (
-            <tr key={record._id}>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            <tr key={record._id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                 {formatDate(record.date)}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                 {record.sessionTitle}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                 {record.startTime}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                 {record.endTime}
               </td>
             </tr>
@@ -68,5 +68,4 @@ const Attendance: React.FC<AttendanceProps> = ({ id }) => {
     </div>
   );
 };
-
 export default Attendance;

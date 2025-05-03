@@ -1,13 +1,4 @@
-// app/main/members/[memberId]/layout.tsx
 'use client';
-
-import { Inter } from 'next/font/google';
-import '../../../../styles/globals.css';
-
-const inter = Inter({ 
-  subsets: ['latin'],
-  variable: '--font-inter', // Best practice for font variables
-});
 
 export default function MemberLayout({
   children,
@@ -15,14 +6,9 @@ export default function MemberLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body>
-      
-        {children}
-    
-          
-        
-      </body>
-    </html>
+    // Simple wrapper without HTML/Body tags
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {children}
+    </div>
   );
 }

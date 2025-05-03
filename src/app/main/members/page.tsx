@@ -141,193 +141,198 @@ export default function MembersPage() {
     }
   };
   return (
-    <div className="container mx-auto p-4 space-y-4">
-      <Card>
-        <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
-          <CardTitle className="text-2xl font-bold">All Members</CardTitle>
-          <div className="flex items-center space-x-2">
-            {canAddMember() && (
-              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                  <MemberForm onSubmit={handleAddMember} />
-              </Dialog>
-            )}
+    <div className="container mx-auto p-4 space-y-4 dark:bg-gray-900">
+    <Card className="dark:border dark:border-gray-800">
+      <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0 dark:bg-gray-800">
+        <CardTitle className="text-2xl font-bold dark:text-white">All Members</CardTitle>
+        <div className="flex items-center space-x-2">
+          {canAddMember() && (
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <MemberForm onSubmit={handleAddMember} />
+            </Dialog>
+          )}
+        </div>
+      </CardHeader>
+  
+      <CardContent className="dark:bg-gray-900">
+        {/* Search and Filter Section */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground dark:text-gray-400" />
+            <Input 
+              placeholder="Search members..." 
+              className="pl-8 dark:bg-gray-800 dark:border-gray-700 dark:text-white dark:placeholder-gray-400" 
+              value={searchQuery} 
+              onChange={handleSearch} 
+            />
           </div>
-        </CardHeader>
-        <CardContent>
-          {/* Search and filter section */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search members..." 
-                className="pl-8" 
-                value={searchQuery} 
-                onChange={handleSearch} 
-              />
-            </div>
+          <Button
+            variant="outline"
+            className="flex items-center gap-2 w-full sm:w-auto dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            onClick={() => setShowFilters(!showFilters)}
+          >
+            <Filter className="h-4 w-4" />
+            <span>Filters</span>
+          </Button>
+        </div>
+  
+        {showFilters && (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full mt-4">
+            <select
+              className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+              value={filterOptions.division}
+              onChange={(e) => handleFilterChange({ ...filterOptions, division: e.target.value })}
+            >
+              <option value="">All Divisions</option>
+              <option value="Competitive Programming Division">Competitive Programming Division</option>
+              <option value="Development Division">Development Division</option>
+              <option value="Capacity Building Division">Capacity Building Division</option>
+              <option value="Cybersecurity Division">Cybersecurity Division</option>
+              <option value="Data Science Division">Data Science Division</option>
+            </select>
+  
+            <select
+              className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+              value={filterOptions.membershipStatus}
+              onChange={(e) => handleFilterChange({ ...filterOptions, membershipStatus: e.target.value })}
+            >
+              <option value="">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="banned">Banned</option>
+            </select>
+  
+            <select
+              className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+              value={filterOptions.campusStatus}
+              onChange={(e) => handleFilterChange({ ...filterOptions, campusStatus: e.target.value })}
+            >
+              <option value="">All Campus Statuses</option>
+              <option value="on-campus">On Campus</option>
+              <option value="off-campus">Off Campus</option>
+            </select>
+          </div>
+        )}
+  
+        {/* Members Table */}
+        <div className="rounded-md border overflow-hidden dark:border-gray-800">
+          <Table>
+            <TableHeader className="dark:bg-gray-800">
+              <TableRow className="hover:bg-transparent dark:border-gray-800">
+                <TableHead className="dark:text-gray-300">Member Name</TableHead>
+                <TableHead className="hidden md:table-cell dark:text-gray-300">ID</TableHead>
+                <TableHead className="hidden md:table-cell dark:text-gray-300">Division</TableHead>
+                <TableHead className="hidden lg:table-cell dark:text-gray-300">Group</TableHead>
+                <TableHead className="hidden lg:table-cell dark:text-gray-300">Attendance</TableHead>
+                <TableHead className="hidden md:table-cell dark:text-gray-300">Year</TableHead>
+                <TableHead className="dark:text-gray-300">Status</TableHead>
+                <TableHead className="text-right dark:text-gray-300">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+  
+            <TableBody>
+              {loading ? (
+                Array(5).fill(0).map((_, i) => (
+                  <TableRow key={i} className="dark:border-gray-800">
+                    <TableCell colSpan={7} className="h-16 text-center">
+                      <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4 mx-auto dark:bg-gray-700"></div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : error ? (
+                <TableRow className="dark:border-gray-800">
+                  <TableCell colSpan={7} className="h-24 text-center text-red-500 dark:text-red-400">
+                    Error: {error}
+                  </TableCell>
+                </TableRow>
+              ) : (members?.length ?? 0) === 0 ? (
+                <TableRow className="dark:border-gray-800">
+                  <TableCell colSpan={7} className="h-24 text-center dark:text-gray-400">
+                    No members found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                members?.map((member) => (
+                  <TableRow key={member._id} className="dark:border-gray-800 dark:hover:bg-gray-800">
+                    <TableCell className="font-medium flex items-center gap-2 dark:text-white">
+                      <Avatar>
+                        <AvatarImage 
+                          src={member.url || `https://robohash.org/${member._id}?set=set3`} 
+                          alt={member.firstName || 'Member'} 
+                          onClick={() => handleProfileClick(member._id)}
+                          className="cursor-pointer"
+                        />
+                        <AvatarFallback className="dark:bg-gray-700 dark:text-white">
+                          {getInitials(member.firstName)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div>{[member.firstName, member.lastName].filter(Boolean).join(' ') || 'Unnamed Member'}</div>
+                        <div className="text-xs text-muted-foreground dark:text-gray-400">
+                          {member.clubRole || 'No role specified'}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell dark:text-gray-400">
+                      {member.universityId || 'N/A'}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell dark:text-gray-400">
+                      {member.division || 'N/A'}
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell dark:text-gray-400">
+                      {member.group || 'N/A'}
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell dark:text-gray-400">
+                      {member.Attendance || 'N/A'}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell dark:text-gray-400">
+                      {member.graduationYear || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={`${getStatusColor(member.membershipStatus)} dark:bg-opacity-30`}>
+                        {member.membershipStatus || 'Unknown'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="dark:hover:bg-gray-700"
+                        onClick={() => {
+                          setSelectedMember(member);
+                          setIsDeleteDialogOpen(true);
+                        }}
+                        disabled={!canDeleteMember()}
+                      >
+                        <Trash2 className="h-4 w-4 dark:text-gray-300" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+  
+        {/* Pagination */}
+        <div className="flex items-center justify-between mt-4">
+          <div className="text-sm text-muted-foreground dark:text-gray-400">
+            Showing {currentPage * itemsPerPage - itemsPerPage + 1} to{" "}
+            {Math.min(currentPage * itemsPerPage, totalMembers)} of {totalMembers} records
+          </div>
+  
+          <div className="flex items-center gap-1">
             <Button
               variant="outline"
-              className="flex items-center gap-2 w-full sm:w-auto"
-              onClick={() => setShowFilters(!showFilters)}
+              size="icon"
+              className="dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
             >
-              <Filter className="h-4 w-4" />
-              <span>Filters</span>
+              <ChevronLeft className="h-4 w-4" />
             </Button>
-          </div>
-          {showFilters && (
-  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full mt-4">
-    <select
-      className="p-2 border rounded-md"
-      value={filterOptions.division}
-      onChange={(e) => handleFilterChange({ ...filterOptions, division: e.target.value })}
-    >
-      <option value="">All Divisions</option>
-      <option value="Competitive Programming Divison">Competitive Programming Division</option>
-      <option value="Development Divison">Development Division</option>
-      <option value="Capacity Bulding Division">Capacity Building Division</option>
-      <option value="Cybersecurity Division">Cybersecurity Division</option>
-      <option value="Data Science Division">Data Science Division</option>
-    </select>
-
-    <select
-      className="p-2 border rounded-md"
-      value={filterOptions.membershipStatus}
-      onChange={(e) => handleFilterChange({ ...filterOptions, membershipStatus: e.target.value })}
-    >
-      <option value="">All Statuses</option>
-      <option value="active">Active</option>
-      <option value="inactive">Inactive</option>
-      <option value="banned">banned</option>
-    </select>
-
-    <select
-      className="p-2 border rounded-md"
-      value={filterOptions.campusStatus}
-      onChange={(e) => handleFilterChange({ ...filterOptions, campusStatus: e.target.value })}
-    >
-      <option value="">All Campus Statuses</option>
-      <option value="on-campus">On Campus</option>
-      <option value="off-campus">Off Campus</option>
-    </select>
-  </div>
-)}
-
-          {/* Members table */}
-          <div className="rounded-md border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Member Name</TableHead>
-                  <TableHead className="hidden md:table-cell">ID</TableHead>
-                  <TableHead className="hidden md:table-cell">Division</TableHead>
-                  <TableHead className="hidden lg:table-cell">Group</TableHead>
-                  <TableHead className="hidden lg:table-cell">Attendance</TableHead>
-                  <TableHead className="hidden md:table-cell">Year</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-  {loading ? (
-    Array(5).fill(0).map((_, i) => (
-      <TableRow key={i}>
-        <TableCell colSpan={7} className="h-16 text-center">
-          <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4 mx-auto"></div>
-        </TableCell>
-      </TableRow>
-    ))
-  ) : error ? (
-    <TableRow>
-      <TableCell colSpan={7} className="h-24 text-center text-red-500">
-        Error: {error}
-      </TableCell>
-    </TableRow>
-  ) : (members?.length ?? 0) === 0 ? (
-    <TableRow>
-      <TableCell colSpan={7} className="h-24 text-center">
-        No members found
-      </TableCell>
-    </TableRow>
-  ) : (
-    members?.map((member) => (
-                    <TableRow key={member._id}>
-                      <TableCell className="font-medium flex items-center gap-2">
-                        <Avatar>
-                          <AvatarImage 
-                            src={member.url || `https://robohash.org/${member._id}?set=set3`} 
-                            alt={member.firstName || 'Member'} 
-                            onClick={() => handleProfileClick(member._id)}
-                            className="cursor-pointer"
-                          />
-                          <AvatarFallback>
-                            {getInitials(member.firstName)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div>{[member.firstName, member.lastName].filter(Boolean).join(' ') || 'Unnamed Member'}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {member.clubRole || 'No role specified'}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        {member.universityId || 'N/A'}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {member.division || 'N/A'}}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        {member.group || 'N/A'}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        {member.Attendance || 'N/A'}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        {member.graduationYear || 'N/A'}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(member.membershipStatus)}>
-                          {member.membershipStatus || 'Unknown'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                       <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setSelectedMember(member);
-                            setIsDeleteDialogOpen(true);
-                          }}
-                          disabled={!canDeleteMember()}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                       
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          <div className="flex items-center justify-between mt-4">
-            <div className="text-sm text-muted-foreground">
-              Showing {currentPage * itemsPerPage - itemsPerPage + 1} to{" "}
-              {Math.min(currentPage * itemsPerPage, totalMembers)} of {totalMembers} records
-            </div>
-
-            <div className="flex items-center gap-1">
-  <Button
-    variant="outline"
-    size="icon"
-    onClick={() => handlePageChange(currentPage - 1)}
-    disabled={currentPage === 1}
-  >
-    <ChevronLeft className="h-4 w-4" />
-  </Button>
-
-  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+  
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
     let pageNumber = i + 1;
     if (totalPages > 5 && currentPage > 3) {
       pageNumber = currentPage - 2 + i;
@@ -358,40 +363,43 @@ export default function MembersPage() {
     </Button>
   )}
 
-  <Button
-    variant="outline"
-    size="icon"
-    onClick={() => handlePageChange(currentPage + 1)}
-    disabled={currentPage === totalPages}
-  >
-    <ChevronRight className="h-4 w-4" />
-  </Button>
-</div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will ban the member
-              {selectedMember && ` ${selectedMember.firstName || 'this member'}`} from the club.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteMember} 
-              className="bg-red-600 hover:bg-red-700 text-white"
+  
+            <Button
+              variant="outline"
+              size="icon"
+              className="dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
             >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
-  );
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  
+    {/* Delete Dialog */}
+    <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialogContent className="dark:bg-gray-800 dark:border-gray-700">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="dark:text-white">Are you sure?</AlertDialogTitle>
+          <AlertDialogDescription className="dark:text-gray-400">
+            This action cannot be undone. This will ban the member
+            {selectedMember && ` ${selectedMember.firstName || 'this member'}`} from the club.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel className="dark:border-gray-600 dark:text-white dark:hover:bg-gray-700">
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={handleDeleteMember} 
+            className="bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white"
+          >
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </div>);
 }

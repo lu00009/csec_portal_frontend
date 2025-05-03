@@ -1,6 +1,5 @@
 'use client';
 
-import AttendanceOverview from "@/components/home/attendanceOverview";
 import CalendarSidebar from "@/components/home/CalendarSidebar";
 import StatsPage from "@/components/home/statsCard";
 import UpcomingEvent from "@/components/home/UpcomingEvent";
@@ -34,16 +33,16 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900">
       {/* Main content area */}
       <div className="flex-1 w-[800px] h-[50px]">
         <UpcomingEvent />
         <StatsPage />
-        <AttendanceOverview />
-        <div className="absolute right-0 top-20 h-full w-[300px] bg-white shadow-sm border-l border-gray-200 overflow-y-auto">
+        {/* <AttendanceOverview /> */}
+        <div className="absolute right-0 top-20 h-full w-[300px] bg-white dark:bg-gray-800 shadow-sm border-l border-gray-200 dark:border-gray-700 overflow-y-auto dark:text-gray-100">
           <CalendarSidebar />
         </div>
       </div>
     </div>
   );
-}
+}                                                 

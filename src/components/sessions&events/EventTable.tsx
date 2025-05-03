@@ -1,5 +1,5 @@
-import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 import { calculateStatus } from '@/utils/date';
+import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 
 type EventTableProps = {
   items: {
@@ -31,57 +31,63 @@ const EventTable = ({ items, onEdit, onDelete }: EventTableProps) => {
      const status = calculateStatus(items.startDate, items.endDate);
   
 
-  return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event Type</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visibility</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {items.map((item) => (
-              <tr key={item._id}>
-                <td className="px-4 py-4 whitespace-nowrap text-sm">{item.startDate}</td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">{item.eventTitle}</td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm">{item.division}</td>
-                <td className="px-4 py-4 whitespace-nowrap text-sm">
-                  <span className={`px-2 py-1 rounded text-xs ${item.visibility === 'public' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'}`}>
-                    {item.visibility === 'public' ? 'Public' : 'Members'}
-                  </span>
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[status]}`}>
-                  {status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown'}
-                  </span>
-                </td>
-                <td className="px-4 py-4 whitespace-nowrap flex gap-2">
-                  <button 
-                    onClick={() => onEdit(item)}
-                    className="text-blue-500 hover:text-blue-700"
-                  >
-                    <FiEdit2 size={18} />
-                  </button>
-                  <button 
-                    onClick={() => onDelete(item._id)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <FiTrash2 size={18} />
-                  </button>
-                </td>
+     return (
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden dark:shadow-xl dark:border dark:border-gray-700">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-900">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Event</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Event Type</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Visibility</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              {items.map((item) => (
+                <tr key={item._id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm dark:text-gray-200">{item.startDate}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium dark:text-gray-100">{item.eventTitle}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm dark:text-gray-300">{item.division}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm">
+                    <span className={`px-2 py-1 rounded text-xs ${
+                      item.visibility === 'public' 
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' 
+                        : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100'
+                    }`}>
+                      {item.visibility === 'public' ? 'Public' : 'Members'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      statusColors[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                    }`}>
+                      {status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap flex gap-2">
+                    <button 
+                      onClick={() => onEdit(item)}
+                      className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                    >
+                      <FiEdit2 size={18} />
+                    </button>
+                    <button 
+                      onClick={() => onDelete(item._id)}
+                      className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                    >
+                      <FiTrash2 size={18} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
-  );
+    );
 };
 
 export default EventTable;
