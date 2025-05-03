@@ -21,7 +21,7 @@ export function RoleCard({ role }: RoleCardProps) {
             <Badge className={role.status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
               {role.status === "active" ? "Active" : "Inactive"}
             </Badge>
-            <h3 className="font-medium">{role.name}</h3>
+            <h3 className="font-medium">{role.firstName}</h3>
           </div>
           <div className="flex gap-2">
             <Button variant="ghost" size="icon">
