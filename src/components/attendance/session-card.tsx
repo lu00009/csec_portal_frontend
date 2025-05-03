@@ -38,22 +38,22 @@ export default function SessionCard({ session, onClick }: SessionCardProps) {
   }
 
   return (
-    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow  dark:bg-gray-800  dark:text-white">
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Badge
               className={cn(
-                "px-3 py-1 text-xs font-medium",
+                "px-3 py-1 text-xs font-medium dark:bg-gray-800  dark:text-white",
                 session.status.toLowerCase() === "ended" ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800",
               )}
             >
               {session.status}
             </Badge>
-            <h3 className="font-semibold">{session.division}</h3>
+            <h3 className="font-semibold dark:bg-gray-800  dark:text-white">{session.division}</h3>
           </div>
-          <h4 className="text-lg font-semibold mb-1">{session.sessionTitle}</h4>
-          <p className="text-sm text-muted-foreground">
+          <h4 className="text-lg font-semibold mb-1 dark:bg-gray-800  dark:text-white">{session.sessionTitle}</h4>
+          <p className="text-sm text-muted-foreground dark:bg-gray-800  dark:text-white">
             {formatDate(startDate)} - {formatDate(endDate)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">{sessionTime}</p>

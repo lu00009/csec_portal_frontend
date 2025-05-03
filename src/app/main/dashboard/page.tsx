@@ -34,7 +34,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen flex">
+    <div className="min-h-screen flex">
       {/* Main content area */}
       <div className="flex-1 w-[800px] h-[50px]">
         <UpcomingEvent />

@@ -1,5 +1,7 @@
 import { Roboto } from "next/font/google";
 import "../styles/globals.css";
+import { ThemeProvider } from '@/components/ThemeProvider';
+
 
 const roboto = Roboto({ weight: "400", subsets: ["latin"] });
 
@@ -16,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={roboto.className}>
       <body className="min-h-screen bg-gray-50">
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

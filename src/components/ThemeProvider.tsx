@@ -1,22 +1,34 @@
-// components/ThemeProvider.tsx
-import { useSettingsStore } from "@/stores/settingsStore"
-import type { ReactNode } from 'react'
-import { useEffect } from 'react'
+'use client';
 
-interface ThemeProviderProps {
-  children: ReactNode
-}
+import { useSettingsStore } from "@/stores/settingsStore";
+import { useEffect, useState } from 'react';
 
-export const ThemeProvider = ({ children }: ThemeProviderProps) => {
-  const theme = useSettingsStore((state) => state.theme)
+export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
+  const [mounted, setMounted] = useState(false);
+  const theme = useSettingsStore((state) => state.theme);
 
   useEffect(() => {
-    const root = document.documentElement
-    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    setMounted(true);
+    const root = document.documentElement;
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
-    const isDark = theme === 'system' ? systemDark : theme === 'dark'
-    root.classList.toggle('dark', isDark)
-  }, [theme])
+    const isDark = theme === 'system' ? systemDark : theme === 'dark';
+    root.classList.toggle('dark', isDark);
 
-  return <>{children}</>
-}
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = () => {
+      if (theme === 'system') {
+        root.classList.toggle('dark', mediaQuery.matches);
+      }
+    };
+    mediaQuery.addEventListener('change', handler);
+
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, [theme]);
+
+  if (!mounted) {
+    return null;
+  }
+
+  return <>{children}</>;
+};

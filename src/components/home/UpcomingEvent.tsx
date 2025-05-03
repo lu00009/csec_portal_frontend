@@ -24,7 +24,7 @@ const UpcomingEvent = () => {
   const visibility = latestEvent?.visibility === 'onlymember' ? 'Only Members' : 'Public';
 
   return (
-    <div className="w-[580px] px-6 mt-6 not-last:h-[250px]">
+    <div className="w-[580px] px-6 mt-6 not-last:h-[250px] dark:bg-gray-800  dark:text-white">
       <div className="max-w-4xl mx-auto">
         <div className="bg-blue-400 h-[260px] rounded-lg shadow-sm p-6 border border-gray-100">
           {/* First row - Event title and Members tag */}
@@ -51,12 +51,7 @@ const UpcomingEvent = () => {
 
           {/* Add to calendar button */}
           <div className="flex justify-end">
-            <div className="bg-blue-800 rounded-lg p-2 text-white hover:bg-blue-700 transition duration-200">
-              <button className="flex items-center">
-                <FiPlus className="mr-1" />
-                <span>Add to calendar</span>
-              </button>
-            </div>
+           
           </div>
         </div>
       </div>
