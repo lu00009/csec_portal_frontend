@@ -1,34 +1,41 @@
-import { Member } from '@/types/member';
+import { UserRole } from '@/utils/roles';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-type UserRole =
-  | 'President'
-  | 'Vice President'
-  | 'Competitive Programming Division President'
-  | 'Development Division President'
-  | 'Capacity Building Division President'
-  | 'Cybersecurity Division President'
-  | 'Data Science Division President'
-  | 'Member';
-
 type Division = 'CPD' | 'Dev' | 'CBD' | 'SEC' | 'DS';
 
+interface User {
+  _id: string;
+  email: string;
+  member: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    clubRole: UserRole;
+    division?: string;
+    profilePicture?: string;
+    banned?: boolean;
+    membershipStatus?: string;
+    // Add other member fields as needed
+  };
+}
+
 interface UserStore {
-  user: Member | null;
+  user: User | null;
   refreshToken: string | null;
   isLoading: boolean;
   isInitialized: boolean;
   error: string | null;
   token: string | null;
+  isAuthenticated: boolean;
 
   initialize: () => Promise<void>;
   login: (email: string, password: string, rememberMe: boolean) => Promise<boolean>;
   logout: () => void;
   refreshSession: () => Promise<void>;
 
-  fetchUserById: (id: string) => Promise<Member>;
-  updateUserProfile: (updates: Partial<Member>) => Promise<void>;
+  fetchUserById: (id: string) => Promise<User>;
+  updateUserProfile: (updates: Partial<User>) => Promise<void>;
 
   hasRole: (role: UserRole) => boolean;
   hasAnyRole: (roles: UserRole[]) => boolean;
@@ -36,7 +43,6 @@ interface UserStore {
   isPresident: () => boolean;
   isDivisionHead: () => boolean;
 
-  isAuthenticated: () => boolean;
   getAuthHeader: () => { Authorization: string } | null;
 }
 
@@ -76,210 +82,171 @@ const useUserStore = create<UserStore>()(
       isInitialized: false,
       error: null,
       token: null,
+      isAuthenticated: false,
 
-      login: async (email, password, rememberMe) => {
-        set({ isLoading: true, error: null });
+      login: async (email: string, password: string, rememberMe: boolean) => {
         try {
-          const response = await fetch(`${BASE_URL}/members/login`, {
+          // First, attempt login to get tokens
+          const loginResponse = await fetch(`${BASE_URL}/members/login`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+            },
             body: JSON.stringify({ email, password }),
           });
-      
-          const data = await response.json();
-      
-          if (!response.ok || !data.token || !data.refreshToken) {
-            throw new Error(data.message || 'Login failed');
+
+          const loginData = await loginResponse.json();
+          console.log('Login response:', loginData);
+
+          if (!loginResponse.ok) {
+            throw new Error(loginData.message || 'Login failed');
           }
-      
-          const { token, refreshToken } = data;
-          
-          // Immediately set tokens in store
-          set({ token, refreshToken }); // <-- Critical fix
-          
-          // Store tokens in appropriate storage
+
+          // Get tokens from login response
+          const token = loginData.token;
+          const refreshToken = loginData.refreshToken;
+
+          if (!token || !refreshToken) {
+            throw new Error('Missing token in response');
+          }
+
+          // Get user ID from token
+          const tokenPayload = parseJwt(token);
+          if (!tokenPayload?.id) {
+            throw new Error('Invalid token: missing user ID');
+          }
+
+          // Fetch user data using the ID
+          const userResponse = await fetch(`${BASE_URL}/members/${tokenPayload.id}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (!userResponse.ok) {
+            throw new Error('Failed to fetch user data');
+          }
+
+          const userData = await userResponse.json();
+          console.log('User data:', userData);
+
+          // Validate user data
+          if (!userData.member?.clubRole) {
+            throw new Error('Invalid user data: missing club role');
+          }
+
+          // Store tokens and user data
           const storage = rememberMe ? localStorage : sessionStorage;
           storage.setItem('token', token);
           storage.setItem('refreshToken', refreshToken);
-          localStorage.setItem('rememberMe', String(rememberMe));
-      
-          // Get FRESH token from store
-          const currentToken = get().token; // <-- Important
-          if (!currentToken) throw new Error('Token not set');
-          
-          // Fetch user with updated token
-          const payload = parseJwt(currentToken);
-          if (!payload?.id) throw new Error('Invalid token payload');
-          
-          const user = await get().fetchUserById(payload.id);
-          set({ user, isLoading: false });
-      
+          storage.setItem('userRole', userData.member.clubRole);
+          storage.setItem('user', JSON.stringify(userData));
+
+          set({
+            token,
+            refreshToken,
+            user: userData,
+            isAuthenticated: true,
+            error: null,
+          });
+
           return true;
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Login failed';
-          set({ error: message, isLoading: false });
+          console.error('Login error:', error);
+          const errorMessage = error instanceof Error ? error.message : 'Login failed. Please check your credentials.';
+          set({ error: errorMessage });
           return false;
         }
       },
-    // Updated refreshSession method in userStore.ts
-refreshSession: async () => {
-  const { refreshToken } = get();
-  try {
-    // Validate refresh token existence
-    if (!refreshToken) {
-      console.error('No refresh token available');
-      get().logout();
-      throw new Error('Session expired');
-    }
 
-    // Parse and validate refresh token
-    const payload = parseJwt(refreshToken);
-    if (!payload || !payload.exp) {
-      console.log('Invalid refresh token format');
-      get().logout();
-      throw new Error('Invalid session');
-    }
+      initialize: async () => {
+        if (get().isInitialized) return;
 
-    // Check refresh token expiration with 5-minute buffer
-    if (payload.exp * 1000 < Date.now() - 300000) {
-      console.log('Refresh token expired');
-      get().logout();
-      throw new Error('Session expired');
-    }
+        set({ isLoading: true });
+        try {
+          // Try to get token from storage
+          const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+          const refreshToken = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
+          const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
 
-    // Get rememberMe preference
-    const rememberMe = localStorage.getItem('rememberMe') === 'true';
-    const storage = rememberMe ? localStorage : sessionStorage;
+          if (token && refreshToken && storedUser) {
+            try {
+              // Parse stored user data
+              const user = JSON.parse(storedUser);
+              
+              // Validate user data structure
+              if (!user.member?.clubRole) {
+                throw new Error('Invalid stored user data');
+              }
 
-    // Make refresh request
-    const response = await fetch(`${BASE_URL}/members/refresh`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${refreshToken}`,
+              // Set initial state with stored data
+              set({
+                token,
+                refreshToken,
+                user,
+                isInitialized: true,
+                isAuthenticated: true
+              });
+
+              // Try to refresh user data from server
+              try {
+                const response = await fetch(`${BASE_URL}/members/me`, {
+                  headers: {
+                    'Authorization': `Bearer ${token}`
+                  }
+                });
+
+                if (response.ok) {
+                  const data = await response.json();
+                  if (data.member?.clubRole) {
+                    set({ user: data });
+                  }
+                }
+              } catch (error) {
+                console.warn('Failed to refresh user data:', error);
+                // Continue with stored data
+              }
+            } catch (error) {
+              console.error('Failed to parse stored user data:', error);
+              // Clear invalid data
+              localStorage.removeItem('user');
+              sessionStorage.removeItem('user');
+              set({ isInitialized: true });
+            }
+          } else {
+            set({ isInitialized: true });
+          }
+        } catch (error) {
+          console.error('Initialization error:', error);
+          set({ error: 'Failed to initialize session' });
+        } finally {
+          set({ isLoading: false });
+        }
       },
-    });
 
-    if (!response.ok) {
-      throw new Error(`Refresh failed with status: ${response.status}`);
-    }
+      logout: () => {
+        // Clear all storage
+        ['localStorage', 'sessionStorage'].forEach(storageType => {
+          const storage = window[storageType as 'localStorage' | 'sessionStorage'];
+          storage.removeItem('token');
+          storage.removeItem('refreshToken');
+          storage.removeItem('userRole');
+          storage.removeItem('user');
+        });
 
-    const data = await response.json();
-    
-    // Validate response format
-    if (!data.token || !data.refreshToken) {
-      throw new Error('Invalid refresh response');
-    }
+        // Clear cookies
+        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        document.cookie = 'userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 
-    // Store new tokens
-    storage.setItem('token', data.token);
-    storage.setItem('refreshToken', data.refreshToken);
+        set({
+          user: null,
+          token: null,
+          refreshToken: null,
+          isAuthenticated: false,
+          error: null,
+        });
+      },
 
-    // Update store state
-    set({
-      token: data.token,
-      refreshToken: data.refreshToken,
-    });
-
-    // Fetch updated user data
-    const newPayload = parseJwt(data.token);
-    if (!newPayload?.id) {
-      throw new Error('Invalid token payload');
-    }
-
-    const user = await get().fetchUserById(newPayload.id);
-    set({ user });
-  } catch (error) {
-    console.error('Session refresh failed:', error);
-    
-    // Clear invalid tokens
-    get().logout();
-    
-    // Only throw specific errors
-    if (error instanceof Error) {
-      throw new Error(error.message.includes('401') 
-        ? 'Session expired. Please log in again.'
-        : 'Failed to refresh session');
-    }
-    
-    throw new Error('Failed to refresh session');
-  }
-},
-
-// Updated initialize function
-initialize: async () => {
-  if (typeof window === 'undefined') {
-    set({ isInitialized: true });
-    return;
-  }
-
-  set({ isLoading: true });
-  try {
-    const rememberMe = localStorage.getItem('rememberMe') === 'true';
-    const storage = rememberMe ? localStorage : sessionStorage;
-
-    const token = storage.getItem('token');
-    const refreshToken = storage.getItem('refreshToken');
-
-    // Exit if no tokens found
-    if (!token || !refreshToken) {
-      set({ isInitialized: true, isLoading: false });
-      return;
-    }
-
-    // Set tokens first to prevent race conditions
-    set({ token, refreshToken });
-
-    // Validate refresh token first
-    const refreshPayload = parseJwt(refreshToken);
-    if (!refreshPayload?.exp || refreshPayload.exp * 1000 < Date.now()) {
-      console.log('Refresh token validation failed');
-      get().logout();
-      return;
-    }
-
-    // Validate access token
-    const accessPayload = parseJwt(token);
-    if (!accessPayload?.id) {
-      console.log('Invalid access token');
-      get().logout();
-      return;
-    }
-
-    // Refresh if access token expired (with 1-minute buffer)
-    if (accessPayload.exp * 1000 < Date.now() - 60000) {
-      console.log('Access token needs refresh');
-      await get().refreshSession();
-    } else {
-      // Directly load user if token is valid
-      const user = await get().fetchUserById(accessPayload.id);
-      set({ user });
-    }
-  } catch (error) {
-    console.error('Initialization error:', error);
-    get().logout();
-  } finally {
-    set({ isInitialized: true, isLoading: false });
-  }
-},
-     // Add to your logout function
-logout: () => {
-  // Clear all possible storage locations
-  ['localStorage', 'sessionStorage'].forEach(storageType => {
-    (window[storageType as 'localStorage' | 'sessionStorage'] as Storage).removeItem('token');
-    (window[storageType as 'localStorage' | 'sessionStorage'] as Storage).removeItem('refreshToken');
-  });
-  // Clear rememberMe flag
-  localStorage.removeItem('rememberMe');
-  // Reset store state
-  set({
-    user: null,
-    token: null,
-    refreshToken: null,
-    isLoading: false,
-    error: null,
-  });
-},
       fetchUserById: async (id) => {
         try {
           // Get fresh token from store
@@ -327,58 +294,94 @@ logout: () => {
         set({ user: updatedUser });
       },
 
-      hasRole: (role) => get().user?.member.clubRole === role,
-      hasAnyRole: (roles) => !!get().user && roles.includes(get().user!.member.clubRole),
-      hasDivisionAccess: (division) => {
+      hasRole: (role: UserRole) => {
         const { user } = get();
-        if (!user) return false;
+        if (!user?.member?.clubRole) return false;
+        return user.member.clubRole === role;
+      },
+
+      hasAnyRole: (roles: UserRole[]) => {
+        const { user } = get();
+        if (!user?.member?.clubRole) return false;
+        return roles.includes(user.member.clubRole);
+      },
+
+      hasDivisionAccess: (division: Division) => {
+        const { user } = get();
+        if (!user?.member?.clubRole) return false;
+        
+        // Presidents and Vice Presidents have access to all divisions
         if (isPresidentRole(user.member.clubRole)) return true;
+        
+        // Division heads have access to their own division
         const userDivision = getDivisionFromRole(user.member.clubRole);
         return userDivision === division;
       },
-      isPresident: () => isPresidentRole(get().user?.member.clubRole as UserRole || 'Member'),
-      isDivisionHead: () => isDivisionHeadRole(get().user?.member.clubRole || 'Member'),
-      isAuthenticated: () => {
-        const { token, refreshToken, user } = get();
-        
-        if (!token || !refreshToken || !user) return false;
-        
-        try {
-          const refreshPayload = parseJwt(refreshToken);
-          // Consider 5-minute buffer for token expiration
-          return refreshPayload.exp * 1000 > Date.now() - 300000;
-        } catch {
-          return false;
-        }
+
+      isPresident: () => {
+        const { user } = get();
+        if (!user?.member?.clubRole) return false;
+        return isPresidentRole(user.member.clubRole);
       },
+
+      isDivisionHead: () => {
+        const { user } = get();
+        if (!user?.member?.clubRole) return false;
+        return isDivisionHeadRole(user.member.clubRole);
+      },
+
       getAuthHeader: () => {
         const { token } = get();
         return token ? { Authorization: `Bearer ${token}` } : null;
       },
+
+      refreshSession: async () => {
+        const { refreshToken } = get();
+        try {
+          if (!refreshToken) {
+            throw new Error('No refresh token available');
+          }
+
+          const response = await fetch(`${BASE_URL}/members/refresh`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${refreshToken}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to refresh session');
+          }
+
+          const data = await response.json();
+          if (!data.token || !data.refreshToken) {
+            throw new Error('Invalid refresh response');
+          }
+
+          // Store new tokens
+          set({
+            token: data.token,
+            refreshToken: data.refreshToken,
+            user: data.member
+          });
+
+          // Store tokens in storage
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('refreshToken', data.refreshToken);
+          sessionStorage.setItem('token', data.token);
+          sessionStorage.setItem('refreshToken', data.refreshToken);
+
+        } catch (error) {
+          console.error('Session refresh failed:', error);
+          get().logout();
+          throw error;
+        }
+      },
     }),
     {
-      name: 'auth-storage',
-      storage: createJSONStorage(() => ({
-        getItem: (name) => {
-          const rememberMe = localStorage.getItem('rememberMe') === 'true';
-          return rememberMe ? localStorage.getItem(name) : sessionStorage.getItem(name);
-        },
-        setItem: (name, value) => {
-          const rememberMe = localStorage.getItem('rememberMe') === 'true';
-          const storage = rememberMe ? localStorage : sessionStorage;
-          storage.setItem(name, value);
-        },
-        removeItem: (name) => {
-          localStorage.removeItem(name);
-          sessionStorage.removeItem(name);
-        },
-      })),
-      partialize: (state) => ({
-        user: state.user,
-        token: state.token,
-        refreshToken: state.refreshToken,
-        isInitialized: state.isInitialized,
-      }),
+      name: 'user-storage',
+      storage: createJSONStorage(() => localStorage),
     }
   )
 );

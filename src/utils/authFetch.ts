@@ -1,9 +1,10 @@
 // utils/authFetch.ts
 import { useUserStore } from '@/stores/userStore';
+import { UserRole } from '@/utils/roles';
 
 interface AuthFetchOptions extends RequestInit {
   attemptRefresh?: boolean; // Whether to try refreshing on 401
-  requiredRoles?: string[]; // Roles required to access
+  requiredRoles?: UserRole[]; // Roles required to access
 }
 
 export const authFetch = async <T = any>(
@@ -53,7 +54,7 @@ export const authFetch = async <T = any>(
 
   try {
     // Check authentication first
-    if (!store.isAuthenticated()) {
+    if (!store.isAuthenticated) {
       throw new Error('Not authenticated');
     }
 

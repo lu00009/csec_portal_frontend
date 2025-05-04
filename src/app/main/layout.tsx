@@ -24,7 +24,7 @@ export default function MainLayout({
   }, [isInitialized, initialize]);
 
   useEffect(() => {
-    if (!isCheckingAuth && !isLoading && !isAuthenticated()) {
+    if (!isCheckingAuth && !isLoading && !isAuthenticated) {
       router.push('/auth/login');
     }
   }, [isCheckingAuth, isLoading, isAuthenticated, router]);
@@ -40,20 +40,20 @@ export default function MainLayout({
     );
   }
 
-  if (!isAuthenticated() || !user) return null;
+  if (!isAuthenticated || !user) return null;
 
   return (
     <div className="flex min-h-screen w-full">
       {/* Sidebar */}
-      <div className="fixed h-full w-[250px] dark:border-r dark:border-gray-800">
-        <Sidebar user={user} />
+      <div className="fixed h-full w-64 dark:border-r dark:border-gray-800">
+        <Sidebar />
       </div>
       
       {/* Main Content Area */}
-      <div className="flex-1 ml-[250px]">
+      <div className="flex-1 ml-64">
         {/* Sticky Header */}
-        <div className="sticky top-0 z-10 dark:border-b dark:border-gray-800">
-          <TopHeader user={user} />
+        <div className="sticky top-0 z-10">
+          <TopHeader />
         </div>
         
         {/* Page Content */}

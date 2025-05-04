@@ -52,7 +52,7 @@ const useMembersStore = create<MembersState>((set, get) => ({
   // Permission checks
   canAddMember: () => {
     const { user } = useUserStore.getState();
-    return user ? canAddMembers(user.member.clubRole) : false;
+    return user?.member?.clubRole ? canAddMembers(user.member.clubRole) : false;
   },
   
   // canEditMember: (targetDivision?: string) => {
@@ -65,7 +65,7 @@ const useMembersStore = create<MembersState>((set, get) => ({
   
   canDeleteMember: () => {
     const { user } = useUserStore.getState();
-    return user ? canDeleteMembers(user.member.clubRole) : false;
+    return user?.member?.clubRole ? canDeleteMembers(user.member.clubRole) : false;
   },
 
   // In your members store

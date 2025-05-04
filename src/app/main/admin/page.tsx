@@ -13,12 +13,30 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAdminStore } from "@/stores/adminStore"
+import { useUserStore } from "@/stores/userStore"
 import { BookOpen, Edit, Filter, Plus, Search, ShieldCheck, Table2, Trash2 } from "lucide-react"
-import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
 export default function AdministrationPage() {
+  const router = useRouter();
+  const { user } = useUserStore();
   const { heads, divisions, roles } = useAdminStore();
-console.log({ heads, divisions, roles });
+  
+  // Check if user has admin access
+  useEffect(() => {
+    if (!user?.member?.clubRole || 
+        (user.member.clubRole !== 'President' && user.member.clubRole !== 'Vice President')) {
+      router.push('/unauthorized');
+    }
+  }, [user, router]);
+
+  // If user is not an admin, don't render the page
+  if (!user?.member?.clubRole || 
+      (user.member.clubRole !== 'President' && user.member.clubRole !== 'Vice President')) {
+    return null;
+  }
+
   const [activeTab, setActiveTab] = useState("heads")
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedHeads, setSelectedHeads] = useState<string[]>([])

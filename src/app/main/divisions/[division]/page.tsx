@@ -4,12 +4,13 @@ import { GroupCard } from "@/components/divisions/group-card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Button from "@/components/ui/button"
 import Input from "@/components/ui/input"
+import { canManageGroups } from "@/lib/divisionPermissions"
 import { useDivisionsStore } from "@/stores/DivisionStore"
-import { Search } from "lucide-react"
+import { useUserStore } from "@/stores/userStore"
+import { ChevronRight, Home, Search } from "lucide-react"
+import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
-import { ChevronRight, Home } from "lucide-react"
-import Link from "next/link"
 
 export default function DivisionDetailPage() {
   const router = useRouter()
@@ -18,6 +19,7 @@ export default function DivisionDetailPage() {
   const divisionName = decodeURIComponent(params.division as string)
   const searchQuery = searchParams.get("search") || ""
   const [error, setError] = useState<string | null>(null)
+  const { user } = useUserStore()
 
   const {
     currentDivision,
@@ -53,6 +55,11 @@ export default function DivisionDetailPage() {
   const filteredGroups = currentDivision?.groups?.filter((group) =>
     group.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
+
+  const canManage = user?.member?.clubRole && canManageGroups(user, divisionName);
+  console.log("User role:", user?.member?.clubRole);
+  console.log("Division name:", divisionName);
+  console.log("Can manage:", canManage);
 
   return (
     <div className="flex flex-col h-full">
@@ -92,13 +99,20 @@ export default function DivisionDetailPage() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search groups"
+              placeholder="Search"
               className="w-full pl-8"
               value={searchQuery}
               onChange={handleSearch}
             />
           </div>
-          <Button onClick={() => setShowAddGroupDialog(true)}>Add Group</Button>
+          {user?.member?.clubRole && (
+            <Button 
+              onClick={() => setShowAddGroupDialog(true)}
+              disabled={!canManage}
+            >
+              Add Group
+            </Button>
+          )}
         </div>
 
         {isLoading ? (
@@ -107,13 +121,17 @@ export default function DivisionDetailPage() {
               <div key={i} className="h-64 rounded-lg border animate-pulse bg-muted" />
             ))}
           </div>
-        ) : filteredGroups.memberCount === 0 ? (
+        ) : filteredGroups.length === 0 ? (
           <div className="text-center py-12">
             <h3 className="text-lg font-medium">No groups found</h3>
             <p className="text-muted-foreground mt-2">
               {searchQuery ? "Try a different search term or" : "Get started by"} creating a new group.
             </p>
-            <Button onClick={() => setShowAddGroupDialog(true)} className="mt-4">
+            <Button 
+              onClick={() => setShowAddGroupDialog(true)}
+              disabled={!canManage}
+              className="mt-4"
+            >
               Add Group
             </Button>
           </div>
@@ -124,7 +142,7 @@ export default function DivisionDetailPage() {
                 key={groupName}
                 groupName={groupName}
                 divisionName={divisionName}
-                memberCount={currentDivision?.memberCount}
+                memberCount={currentDivision?.memberCount || 0}
               />
             ))}
           </div>

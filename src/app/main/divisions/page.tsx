@@ -4,18 +4,20 @@ import { DivisionCard } from "@/components/divisions/division-card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Button from "@/components/ui/button"
 import Input from "@/components/ui/input"
+import { canManageDivision } from "@/lib/divisionPermissions"
 import { useDivisionsStore } from "@/stores/DivisionStore"
-import { Search } from "lucide-react"
+import { useUserStore } from "@/stores/userStore"
+import { ChevronRight, Home, Search } from "lucide-react"
+import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
-import { ChevronRight, Home } from "lucide-react"
-import Link from "next/link"
 
 export default function DivisionsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const searchQuery = searchParams.get("search") || ""
   const [error, setError] = useState<string | null>(null)
+  const { user } = useUserStore()
 
   const { divisions, isLoading, fetchDivisions, showAddDivisionDialog, setShowAddDivisionDialog } = useDivisionsStore()
 
@@ -89,7 +91,14 @@ export default function DivisionsPage() {
               onChange={handleSearch}
             />
           </div>
-          <Button onClick={() => setShowAddDivisionDialog(true)}>Add Division</Button>
+          {user?.member?.clubRole && (
+            <Button 
+              onClick={() => setShowAddDivisionDialog(true)}
+              disabled={!canManageDivision(user, 'all')}
+            >
+              Add Division
+            </Button>
+          )}
         </div>
 
         {isLoading ? (

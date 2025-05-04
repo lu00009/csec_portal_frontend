@@ -17,16 +17,16 @@ export default function Dashboard() {
     initialize();
     
     // Redirect if not authenticated after initialization
-    if (isInitialized && !isAuthenticated()) {
+    if (isInitialized && !isAuthenticated) {
       router.replace('/auth/login');
     }
   }, [initialize, isAuthenticated, isInitialized, router]);
 
   // Show loading state while checking authentication
-  if (!isInitialized || !isAuthenticated()) {
+  if (!isInitialized || !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner  />
+        <LoadingSpinner />
         <p className="ml-2 text-gray-600">Verifying session...</p>
       </div>
     );

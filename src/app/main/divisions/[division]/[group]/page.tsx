@@ -8,8 +8,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import Input from "@/components/ui/input"
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { canManageMembers } from "@/lib/divisionPermissions"
 import { useDivisionsStore } from "@/stores/DivisionStore"
-import { ChevronRight, Download, Filter, Home, Pencil, Plus, Search, Trash2 } from "lucide-react"
+import { useUserStore } from "@/stores/userStore"
+import { ChevronRight, Download, Filter, Home, Pencil, Search, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -26,6 +28,7 @@ export default function GroupMembersPage() {
   const page = Number.parseInt(searchParams.get("page") || "1")
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const { user } = useUserStore()
 
   const {
     members,
@@ -105,6 +108,8 @@ export default function GroupMembersPage() {
 
   const totalPages = Math.ceil(totalMembers / 10)
 
+  const canManage = user?.member?.clubRole && canManageMembers(user, divisionName);
+
   return (
     <div className="flex flex-col h-full">
       <div className="border-b">
@@ -146,20 +151,19 @@ export default function GroupMembersPage() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search members"
+              placeholder="Search"
               className="w-full pl-8"
               value={searchQuery}
               onChange={handleSearch}
             />
           </div>
+          {user?.member?.clubRole && canManage && (
+            <Button onClick={() => setShowAddMemberDialog(true)}>Add Member</Button>
+          )}
           <div className="flex gap-2">
             <Button variant="outline" className="gap-2">
               <Download className="h-4 w-4" />
               Import
-            </Button>
-            <Button onClick={() => setShowAddMemberDialog(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Member
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -206,7 +210,7 @@ export default function GroupMembersPage() {
                     <TableHead>Email</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    {canManage && <TableHead className="text-right">Actions</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -230,17 +234,19 @@ export default function GroupMembersPage() {
                         </TableCell>
                         <TableCell>{member.email}</TableCell>
                         <TableCell>{member.clubRole}</TableCell>
-                        <TableCell>{getStatusBadge(member.membershipStatus)}</TableCell> {/* Safely handle status */}
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon">
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
+                        <TableCell>{getStatusBadge(member.membershipStatus)}</TableCell>
+                        {canManage && (
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button variant="ghost" size="icon" disabled>
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" disabled>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                 </TableBody>

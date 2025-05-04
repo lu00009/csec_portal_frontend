@@ -2,6 +2,7 @@
 
 import SessionCard from "@/components/attendance/session-card"
 import LoadingSpinner from "@/components/LoadingSpinner"
+import { AttendanceManagementView } from "@/components/RoleBasedView"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Button from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -9,13 +10,16 @@ import Input from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem } from "@/components/ui/select"
+import { getDivisionFromRole, isDivisionHead } from "@/lib/divisionPermissions"
 import { useAttendanceStore } from "@/stores/attendanceStore"
+import { useUserStore } from "@/stores/userStore"
 import { AlertCircle, ChevronLeft, ChevronRight, Filter, Search } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 export default function AttendancePage() {
   const router = useRouter()
+  const { user } = useUserStore()
   // const { sessions, isLoading, error, fetchSessions, clearError } = useAttendanceStore()
   const [searchQuery, setSearchQuery] = useState("")
   // const [itemsPerPage, setItemsPerPage] = useState("4")
@@ -68,184 +72,194 @@ export default function AttendancePage() {
   const handleDivisionChange = (division: string) => {
     setFilterDivisions((prev) => (prev.includes(division) ? prev.filter((d) => d !== division) : [...prev, division]))
   }
-  {isLoading && (
-    <div className="flex justify-center items-center py-12">
-      <LoadingSpinner  />
-    </div>
-  )}
-  return (
-    
-    <div className="p-4 md:p-6">
-      {error && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-          <Button variant="outline" size="sm" onClick={clearError} className="mt-2">
-            Dismiss
-          </Button>
+
+  if (!user?.member?.clubRole || (user.member.clubRole !== 'President' && user.member.clubRole !== 'Vice President' && !isDivisionHead(user.member.clubRole))) {
+    return (
+      <div className="p-4 md:p-6">
+        <Alert variant="destructive">
+          <AlertTitle>Access Denied</AlertTitle>
+          <AlertDescription>
+            You do not have permission to view this page. Only division heads and administrators can access attendance records.
+          </AlertDescription>
         </Alert>
-      )}
-
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold">Attendance</h1>
-          <div className="flex items-center text-sm text-muted-foreground">
-            <span>All Attendance</span>
-          </div>
-        </div>
       </div>
+    );
+  }
 
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
-        <div className="relative w-full md:max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search"
-            className="pl-10 w-full"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="outline" className="gap-2 w-full md:w-auto">
-              <Filter className="h-4 w-4" />
-              Filter
+  return (
+    <AttendanceManagementView targetDivision={getDivisionFromRole(user.member.clubRole) || 'all'}>
+      <div className="p-4 md:p-6">
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+            <Button variant="outline" size="sm" onClick={clearError} className="mt-2">
+              Dismiss
             </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80" align="end">
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-medium mb-2">Status</h4>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="filter-ended"
-                      checked={filterStatus.includes("Ended")}
-                      onCheckedChange={() => handleStatusChange("Ended")}
-                    />
-                    <Label htmlFor="filter-ended">Ended</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="filter-planned"
-                      checked={filterStatus.includes("Planned")}
-                      onCheckedChange={() => handleStatusChange("Planned")}
-                    />
-                    <Label htmlFor="filter-planned">Planned</Label>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <h4 className="font-medium mb-2">Division</h4>
-                <div className="space-y-2">
-                  {divisions.map((division) => (
-                    <div key={division} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`filter-${division.toLowerCase().replace(/\s+/g, "-")}`}
-                        checked={filterDivisions.includes(division)}
-                        onCheckedChange={() => handleDivisionChange(division)}
-                      />
-                      <Label htmlFor={`filter-${division.toLowerCase().replace(/\s+/g, "-")}`}>{division}</Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setFilterStatus([])
-                    setFilterDivisions([])
-                  }}
-                >
-                  Clear Filters
-                </Button>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-      </div>
+          </Alert>
+        )}
 
-      {isLoading ? (
-        <div className="flex justify-center items-center py-12">
-          <LoadingSpinner />
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-semibold">Attendance</h1>
+            <div className="flex items-center text-sm text-muted-foreground">
+              <span>All Attendance</span>
+            </div>
           </div>
-      ) : (
-        <div className="space-y-4">
-          {currentSessions.length > 0 ? (
-            currentSessions.map((session) => (
-              <SessionCard
-                key={session._id}
-                session={session}
-                onClick={() => router.push(`/main/attendance/${session._id}`)}
-              />
-            ))
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              No sessions found. Try adjusting your search or filters.
-            </div>
-          )}
         </div>
-      )}
 
-      {totalSessions > 0 && (
-        <div className="flex flex-col md:flex-row md:items-center justify-between mt-6 gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Showing</span>
-            <Select value={String(itemsPerPage)} onValueChange={(val) => setPagination(1, Number(val))}>
-              {/* <SelectTrigger className="w-16">
-                <SelectValue placeholder="4" />
-              </SelectTrigger> */}
-              <SelectContent>
-                <SelectItem value="2">2</SelectItem>
-                <SelectItem value="4">4</SelectItem>
-                <SelectItem value="8">8</SelectItem>
-                <SelectItem value="12">12</SelectItem>
-              </SelectContent>
-            </Select>
-            <span className="text-sm text-muted-foreground">
-  Showing {currentPage * itemsPerPage - itemsPerPage + 1} to{" "}
-  {Math.min(currentPage * itemsPerPage, totalSessions)} out of {totalSessions} records
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
+          <div className="relative w-full md:max-w-md">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search"
+              className="pl-10 w-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="gap-2 w-full md:w-auto">
+                <Filter className="h-4 w-4" />
+                Filter
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80" align="end">
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium mb-2">Status</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="filter-ended"
+                        checked={filterStatus.includes("Ended")}
+                        onCheckedChange={() => handleStatusChange("Ended")}
+                      />
+                      <Label htmlFor="filter-ended">Ended</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="filter-planned"
+                        checked={filterStatus.includes("Planned")}
+                        onCheckedChange={() => handleStatusChange("Planned")}
+                      />
+                      <Label htmlFor="filter-planned">Planned</Label>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Division</h4>
+                  <div className="space-y-2">
+                    {divisions.map((division) => (
+                      <div key={division} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`filter-${division.toLowerCase().replace(/\s+/g, "-")}`}
+                          checked={filterDivisions.includes(division)}
+                          onCheckedChange={() => handleDivisionChange(division)}
+                        />
+                        <Label htmlFor={`filter-${division.toLowerCase().replace(/\s+/g, "-")}`}>{division}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setFilterStatus([])
+                      setFilterDivisions([])
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <LoadingSpinner />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {currentSessions.length > 0 ? (
+              currentSessions.map((session) => (
+                <SessionCard
+                  key={session._id}
+                  session={session}
+                  onClick={() => router.push(`/main/attendance/${session._id}`)}
+                />
+              ))
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No sessions found. Try adjusting your search or filters.
+              </div>
+            )}
+          </div>
+        )}
+
+        {totalSessions > 0 && (
+          <div className="flex flex-col md:flex-row md:items-center justify-between mt-6 gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Showing</span>
+              <Select value={String(itemsPerPage)} onValueChange={(val) => setPagination(1, Number(val))}>
+                {/* <SelectTrigger className="w-16">
+                  <SelectValue placeholder="4" />
+                </SelectTrigger> */}
+                <SelectContent>
+                  <SelectItem value="2">2</SelectItem>
+                  <SelectItem value="4">4</SelectItem>
+                  <SelectItem value="8">8</SelectItem>
+                  <SelectItem value="12">12</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-muted-foreground">
+Showing {currentPage * itemsPerPage - itemsPerPage + 1} to{" "}
+{Math.min(currentPage * itemsPerPage, totalSessions)} out of {totalSessions} records
 </span>
 
+            </div>
+
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="icon"
+               onClick={() => setPagination(currentPage - 1, itemsPerPage)}
+              disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                const pageNumber = i + 1
+                return (
+                  <Button
+                    key={pageNumber}
+                    variant={currentPage === pageNumber ? "default" : "outline"}
+                    size="icon"
+                    onClick={() => setPagination(currentPage - 1, itemsPerPage)}
+                    disabled={currentPage === 1}>
+                    {pageNumber}
+                  </Button>
+                )
+              })}
+
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setPagination(currentPage + 1, itemsPerPage)} 
+                disabled={currentPage * itemsPerPage >= totalSessions}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon"
-             onClick={() => setPagination(currentPage - 1, itemsPerPage)}
-            disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-
-            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-              const pageNumber = i + 1
-              return (
-                <Button
-                  key={pageNumber}
-                  variant={currentPage === pageNumber ? "default" : "outline"}
-                  size="icon"
-                  onClick={() => setPagination(currentPage - 1, itemsPerPage)}
-                  disabled={currentPage === 1}>
-                  {pageNumber}
-                </Button>
-              )
-            })}
-
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setPagination(currentPage + 1, itemsPerPage)} 
-              disabled={currentPage * itemsPerPage >= totalSessions}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </AttendanceManagementView>
   )
 }
