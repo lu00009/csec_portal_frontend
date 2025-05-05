@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { useSessionEventStore } from '@/stores/sessionEventstore';
+import { useEffect, useMemo, useState } from 'react';
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 interface Session {
   startDate: string;
@@ -168,7 +168,7 @@ const CalendarSidebar = () => {
           >
             <FiChevronLeft className="text-gray-700 dark:text-gray-300" />
           </button>
-          <span className="font-medium">
+          <span className="font-medium text-sm sm:text-base">
             {monthNames[currentDate.getMonth()]}, {currentDate.getFullYear()}
           </span>
           <button 
@@ -181,7 +181,7 @@ const CalendarSidebar = () => {
         
         <div className="grid grid-cols-7 gap-1 mb-2">
           {dayNames.map(day => (
-            <div key={day} className="text-center text-xs font-medium w-8 text-gray-600 dark:text-gray-400">
+            <div key={day} className="text-center text-xs font-medium text-gray-600 dark:text-gray-400">
               {day}
             </div>
           ))}
@@ -192,74 +192,75 @@ const CalendarSidebar = () => {
         </div>
       </div>
       
-      <div className="mt-6">
-        <h3 className="font-bold mb-2 text-sm">
-          {currentDate.toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            day: 'numeric', 
-            month: 'long', 
-            year: 'numeric' 
-          })}
-        </h3>
-        
-        {currentItems.length > 0 ? (
-          <div className="space-y-3">
-            {currentItems.map((item, index) => (
-              <div 
-                key={index} 
-                className={`border-l-4 pl-3 py-1 ${
-                  item.type === 'session' ? 'border-blue-500' : 'border-green-500'
-                }`}
-              >
-                <div className="font-medium text-sm">
-                  {item.time} <span className={item.type === 'session' ? 'text-blue-500' : 'text-green-500'}>
-                    {item.title}
-                  </span>
-                </div>
-                {item.description && (
-                  <div className="text-xs text-gray-600 dark:text-gray-400">
-                    {item.description}
+      <div className="space-y-4">
+        <div>
+          <h3 className="font-bold mb-2 text-sm">
+            {currentDate.toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              day: 'numeric', 
+              month: 'long', 
+              year: 'numeric' 
+            })}
+          </h3>
+          
+          {currentItems.length > 0 ? (
+            <div className="space-y-3">
+              {currentItems.map((item, index) => (
+                <div 
+                  key={index} 
+                  className={`border-l-4 pl-3 py-1 ${
+                    item.type === 'session' ? 'border-blue-500' : 'border-green-500'
+                  }`}
+                >
+                  <div className="font-medium text-sm">
+                    {item.time} <span className={item.type === 'session' ? 'text-blue-500' : 'text-green-500'}>
+                      {item.title}
+                    </span>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500 dark:text-gray-400 text-sm">No items scheduled</p>
-        )}
-      </div>
+                  {item.description && (
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      {item.description}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 dark:text-gray-400 text-sm">No items scheduled</p>
+          )}
+        </div>
 
-      {/* Upcoming Events Section */}
-      <div className="mt-8 pt-4 border-t border-gray-200 dark:border-gray-700">
-        <h3 className="font-bold mb-3 text-sm">Upcoming in 7 Days</h3>
-        {upcomingItems.length > 0 ? (
-          <div className="space-y-3">
-            {upcomingItems.map((item, index) => (
-              <div 
-                key={index} 
-                className={`border-l-4 pl-3 py-1 ${
-                  item.type === 'session' ? 'border-blue-500' : 'border-green-500'
-                }`}
-              >
-                <div className="font-medium text-sm">
-                  <span className="text-gray-600 dark:text-gray-400 mr-2">
-                    {item.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                  </span>
-                  {item.time} <span className={item.type === 'session' ? 'text-blue-500' : 'text-green-500'}>
-                    {item.title}
-                  </span>
-                </div>
-                {item.description && (
-                  <div className="text-xs text-gray-600 dark:text-gray-400">
-                    {item.description}
+        <div>
+          <h3 className="font-bold mb-3 text-sm">Upcoming in 7 Days</h3>
+          {upcomingItems.length > 0 ? (
+            <div className="space-y-3">
+              {upcomingItems.map((item, index) => (
+                <div 
+                  key={index} 
+                  className={`border-l-4 pl-3 py-1 ${
+                    item.type === 'session' ? 'border-blue-500' : 'border-green-500'
+                  }`}
+                >
+                  <div className="font-medium text-sm">
+                    <span className="text-gray-600 dark:text-gray-400 mr-2">
+                      {item.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </span>
+                    {item.time} <span className={item.type === 'session' ? 'text-blue-500' : 'text-green-500'}>
+                      {item.title}
+                    </span>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500 dark:text-gray-400 text-sm">No upcoming events</p>
-        )}
+                  {item.description && (
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      {item.description}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 dark:text-gray-400 text-sm">No upcoming events</p>
+          )}
+        </div>
       </div>
     </div>
   );

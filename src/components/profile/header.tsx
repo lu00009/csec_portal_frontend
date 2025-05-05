@@ -1,4 +1,4 @@
-import { Avatar } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { FiEdit } from 'react-icons/fi';
@@ -10,7 +10,7 @@ interface ProfileHeaderProps {
   profilePicture?: string;
   lastSeen?: string;
   isOwnProfile: boolean;
-  id: string; // Added userId prop for robohash fallba
+  id: string;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -27,15 +27,27 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     router.push('/main/profile/edit');
   };
 
-  // Debugging log
-  console.log('ProfileHeader render - isOwnProfile:', isOwnProfile);
+  // Get initials for avatar fallback
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  // Generate robohash URL for missing profile pictures
+  const getRobohashUrl = (id: string) => {
+    return `https://robohash.org/${id}?set=set3&size=300x300`;
+  };
 
   return (
     <div className="relative bg-blue-950 dark:bg-gray-900 rounded-lg shadow-sm mb-6 overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0 z-0 opacity-20 blur-sm">
         <Image 
-          src={profilePicture} 
+          src={profilePicture || getRobohashUrl(id)} 
           alt="background" 
           fill
           className="object-cover"
@@ -56,20 +68,26 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       <div className="relative z-10 p-6 flex items-center h-[200px] pb-6">
         <div className="relative flex items-end">
           <Avatar className="border-6 border-white shadow-lg w-32 h-32">
-            <Avatar.Image 
-              src={profilePicture}
-              alt={fullName}
-              className="rounded-full object-cover"
-            />
-            <Avatar.Fallback delayMs={600}>
-              <Image 
-                src={`https://robohash.org/${id}?set=set3&size=300x300`}
-                alt="avatar fallback"
-                width={128}
-                height={128}
-                className="rounded-full"
+            {profilePicture ? (
+              <AvatarImage 
+                src={profilePicture}
+                alt={fullName}
+                className="rounded-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = getRobohashUrl(id);
+                }}
               />
-            </Avatar.Fallback>
+            ) : (
+              <AvatarImage 
+                src={getRobohashUrl(id)}
+                alt={fullName}
+                className="rounded-full object-cover"
+              />
+            )}
+            <AvatarFallback className="bg-gray-100 dark:bg-gray-700">
+              {getInitials(fullName)}
+            </AvatarFallback>
           </Avatar>
           <div className="absolute -bottom-2 right-0 bg-white dark:bg-gray-700 rounded-full p-1 shadow-md">
             {/* Add any status indicator here if needed */}
@@ -89,5 +107,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         </div>
       </div>
     </div>
-  );}
+  );
+};
+
 export default ProfileHeader;

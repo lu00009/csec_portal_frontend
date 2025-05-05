@@ -27,54 +27,42 @@ export function Pagination({
   return (
     <div className="flex items-center justify-between mt-4">
       <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Showing</span>
+        <span className="text-sm text-gray-500 dark:text-gray-400">Showing</span>
         <Select value={itemsPerPage.toString()} onValueChange={(value) => onItemsPerPageChange(Number.parseInt(value))}>
-          <SelectTrigger className="w-16" onClick={() => {}}>
+          <SelectTrigger className="w-16 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
             <SelectValue>{itemsPerPage.toString()}</SelectValue>
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="5">5</SelectItem>
-            <SelectItem value="10">10</SelectItem>
-            <SelectItem value="20">20</SelectItem>
-            <SelectItem value="50">50</SelectItem>
+          <SelectContent className="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+            <SelectItem value="5" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">5</SelectItem>
+            <SelectItem value="10" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">10</SelectItem>
+            <SelectItem value="20" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">20</SelectItem>
+            <SelectItem value="50" className="text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700">50</SelectItem>
           </SelectContent>
         </Select>
-        <span className="text-sm text-muted-foreground">
+        <span className="text-sm text-gray-500 dark:text-gray-400">
           Showing {startIndex} to {endIndex} out of {totalItems} records
         </span>
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
         <Button
           variant="outline"
-          size="icon"
-          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
+          className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
-
-        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-          const pageNumber = i + 1
-          return (
-            <Button
-              key={pageNumber}
-              variant={currentPage === pageNumber ? "default" : "outline"}
-              size="icon"
-              onClick={() => onPageChange(pageNumber)}
-            >
-              {pageNumber}
-            </Button>
-          )
-        })}
-
-        {totalPages > 5 && <span className="mx-1">...</span>}
-
+        <span className="text-sm text-gray-700 dark:text-gray-300">
+          Page {currentPage} of {totalPages}
+        </span>
         <Button
           variant="outline"
-          size="icon"
-          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
+          className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>

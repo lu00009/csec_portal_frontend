@@ -25,6 +25,8 @@ export default function DivisionDetailPage() {
     currentDivision,
     isLoading,
     fetchDivisionGroups,
+    fetchGroupMembers,
+    members,
     showAddGroupDialog,
     setShowAddGroupDialog,
   } = useDivisionsStore()
@@ -43,7 +45,24 @@ export default function DivisionDetailPage() {
     if (divisionName) loadDivisionDetails()
   }, [divisionName])
 
-  console.log("Current Division:", currentDivision);
+  // Fetch members for each group when groups are loaded
+  useEffect(() => {
+    const loadGroupMembers = async () => {
+      if (currentDivision?.groups) {
+        for (const group of currentDivision.groups) {
+          try {
+            await fetchGroupMembers(divisionName, group)
+          } catch (err) {
+            console.error(`Failed to fetch members for group ${group}:`, err)
+          }
+        }
+      }
+    }
+
+    if (currentDivision?.groups) {
+      loadGroupMembers()
+    }
+  }, [currentDivision?.groups, divisionName])
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value
@@ -57,9 +76,6 @@ export default function DivisionDetailPage() {
   ) || [];
 
   const canManage = user?.member?.clubRole && canManageGroups(user, divisionName);
-  console.log("User role:", user?.member?.clubRole);
-  console.log("Division name:", divisionName);
-  console.log("Can manage:", canManage);
 
   return (
     <div className="flex flex-col h-full">
@@ -142,7 +158,8 @@ export default function DivisionDetailPage() {
                 key={groupName}
                 groupName={groupName}
                 divisionName={divisionName}
-                memberCount={currentDivision?.memberCount || 0}
+                memberCount={currentDivision?.groupMemberCounts?.[groupName] || 0}
+                members={members.filter(member => member.group === groupName)}
               />
             ))}
           </div>

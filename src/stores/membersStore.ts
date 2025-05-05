@@ -76,7 +76,7 @@ fetchMembers: async (options: FetchMembersOptions = {}) => {
     
     // Handle API response structure correctly
     set({
-      members: data.updatedProfilePicturemembers || [], // Match API response key
+      members: data.members || [], // Fixed property name
       totalMembers: data.totalMembers,
       currentPage: options.page || 1,
       totalPages: data.totalPages || Math.ceil(data.totalMembers / (options.limit || 10)),
@@ -116,12 +116,14 @@ fetchMembers: async (options: FetchMembersOptions = {}) => {
       const addedMember = await membersApi.addMember(newMember);
       set((state) => ({
         members: [...state.members, addedMember],
-        heads: isPresident(addedMember.clubRole) ||
-               addedMember.clubRole.includes('President')
+        heads: addedMember.clubRole && 
+          (isPresident(addedMember.clubRole) || 
+           (typeof addedMember.clubRole === 'string' && addedMember.clubRole.includes('President')))
           ? [...state.heads, addedMember]
           : state.heads,
         loading: false
       }));
+      return addedMember;
     } catch (err) {
       const error = err instanceof Error ? err.message : 'Failed to add member';
       set({ error, loading: false });

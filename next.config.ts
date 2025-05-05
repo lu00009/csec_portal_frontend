@@ -4,7 +4,11 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ["robohash.org", "csec-portal-backend-1.onrender.com"]
+    domains: [
+      "robohash.org", 
+      "csec-portal-backend-1.onrender.com",
+      "res.cloudinary.com"
+    ]
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {

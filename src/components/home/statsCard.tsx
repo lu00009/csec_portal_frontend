@@ -1,11 +1,11 @@
 'use client';
-import React, { useEffect, useMemo } from 'react';
-import { FiUsers, FiLayers, FiCalendar, FiClock } from 'react-icons/fi';
-import useMembersStore from '@/stores/membersStore';
-import { useDivisionsStore } from '@/stores/DivisionStore';
-import { useSessionEventStore } from '@/stores/sessionEventstore';
 import { useAttendanceStore } from '@/stores/attendanceStore';
+import { useDivisionsStore } from '@/stores/DivisionStore';
+import useMembersStore from '@/stores/membersStore';
+import { useSessionEventStore } from '@/stores/sessionEventstore';
 import { useUserStore } from '@/stores/userStore';
+import React, { useEffect, useMemo } from 'react';
+import { FiCalendar, FiClock, FiLayers, FiUsers } from 'react-icons/fi';
 
 
 interface StatsCardProps {

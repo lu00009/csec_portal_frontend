@@ -132,8 +132,8 @@ const MemberProfilePage = ({ params }: { params: PageParams }) => {
         fullName={`${member?.member.firstName} ${member.member.lastName}`}
         role={member.member.role || 'Member'}
         isOwnProfile={false}
-        profilePicture=''
-        id='' // Pass avatar to ProfileHeader
+        profilePicture={member.member.profilePicture}
+        id={member.member._id}
       />
       <div className="bg-gray-50 dark:bg-gray-900 min-h-screen flex">
         <div className="w-50">

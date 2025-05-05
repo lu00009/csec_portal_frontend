@@ -104,6 +104,9 @@ importers:
       next-auth:
         specifier: ^4.24.11
         version: 4.24.11(next@15.2.4(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      next-theme:
+        specifier: ^0.1.5
+        version: 0.1.5(next@15.2.4(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       next-themes:
         specifier: link:next-themes
         version: link:next-themes
@@ -2900,6 +2903,14 @@ packages:
         optional: true
       nodemailer:
         optional: true
+
+  next-theme@0.1.5:
+    resolution: {integrity: sha512-WR8UCLEFjWvRl+UO2lTM4pGo7R4jzGZqQ6YL3hiL1Ns587Qb91GhJZLPu/Aa4ExtGQ/5wlcDX8zDYZoCN9oDPw==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+    peerDependencies:
+      next: '*'
+      react: '*'
+      react-dom: '*'
 
   next@15.2.4:
     resolution: {integrity: sha512-VwL+LAaPSxEkd3lU2xWbgEOtrM8oedmyhBqaVNmgKB+GvZlCy9rgaEc+y2on0wv+l0oSFqLtYD6dcC1eAedUaQ==}
@@ -7143,6 +7154,12 @@ snapshots:
       react: 19.1.0
       react-dom: 19.1.0(react@19.1.0)
       uuid: 8.3.2
+
+  next-theme@0.1.5(next@15.2.4(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
+    dependencies:
+      next: 15.2.4(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
 
   next@15.2.4(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:

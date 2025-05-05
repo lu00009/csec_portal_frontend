@@ -41,6 +41,7 @@
     "mini-css-extract-plugin": "^2.9.2",
     "next": "15.2.4",
     "next-auth": "^4.24.11",
+    "next-theme": "^0.1.5",
     "next-themes": "link:next-themes",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

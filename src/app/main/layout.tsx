@@ -13,6 +13,7 @@ export default function MainLayout({
 }) {
   const router = useRouter();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, isInitialized, isAuthenticated, isLoading, initialize } = useUserStore();
 
   useEffect(() => {
@@ -29,6 +30,16 @@ export default function MainLayout({
     }
   }, [isCheckingAuth, isLoading, isAuthenticated, router]);
 
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [router]);
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsMobileMenuOpen(false);
+  };
+
   if (isCheckingAuth || (!isInitialized && isLoading)) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen dark:bg-gray-900">
@@ -44,20 +55,31 @@ export default function MainLayout({
 
   return (
     <div className="flex min-h-screen w-full">
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+          onClick={handleOverlayClick}
+        />
+      )}
+
       {/* Sidebar */}
-      <div className="fixed h-full w-64 dark:border-r dark:border-gray-800">
-        <Sidebar />
+      <div className="fixed inset-y-0 left-0 z-30 lg:z-0 pointer-events-auto">
+        <Sidebar 
+          isMobileMenuOpen={isMobileMenuOpen} 
+          onClose={() => setIsMobileMenuOpen(false)}
+        />
       </div>
       
       {/* Main Content Area */}
-      <div className="flex-1 ml-64">
+      <div className="flex-1 w-full lg:ml-64">
         {/* Sticky Header */}
-        <div className="sticky top-0 z-10">
-          <TopHeader />
+        <div className="sticky top-0 z-10 bg-white dark:bg-gray-800">
+          <TopHeader onMenuClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
         </div>
         
         {/* Page Content */}
-        <main className="p-6 dark:bg-gray-900 dark:text-gray-100">
+        <main className="p-4 sm:p-6 dark:bg-gray-900 dark:text-gray-100">
           {children}
         </main>
       </div>

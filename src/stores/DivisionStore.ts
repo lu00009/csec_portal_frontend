@@ -7,6 +7,7 @@ interface Division {
   groups: string[];
   description: string;
   memberCount: number;
+  groupMemberCounts: { [key: string]: number };
 }
 
 interface Group {
@@ -23,6 +24,8 @@ interface Member {
   campusStatus: string;
   lastAttendance: string;
   membershipStatus: string;
+  profilePicture?: string;
+  group?: string;
 }
 
 interface DivisionsState {
@@ -92,12 +95,29 @@ members: [],
       const divisionsWithGroups = await Promise.all(
         divisionNames.map(async (name) => {
           const groups = await divisionsApi.getDivisionGroups(name);
+          
+          // Get member counts for each group
+          const groupMemberCounts: { [key: string]: number } = {};
+          let totalMemberCount = 0;
+          
+          for (const group of groups) {
+            try {
+              const response = await divisionsApi.getGroupMembers(name, group, { limit: 1 });
+              groupMemberCounts[group] = response.totalGroupMembers || 0;
+              totalMemberCount += response.totalGroupMembers || 0;
+            } catch (error) {
+              console.error(`Error fetching members for group ${group}:`, error);
+              groupMemberCounts[group] = 0;
+            }
+          }
+
           return {
             name,
             slug: name.toLowerCase().replace(/\s+/g, "-"),
             groups,
             description: `${name} Division Information`,
-            memberCount: 0 // Implement actual count if available
+            memberCount: totalMemberCount,
+            groupMemberCounts
           };
         })
       );
@@ -123,7 +143,8 @@ members: [],
           slug: newDivisionName.toLowerCase().replace(/\s+/g, "-"),
           groups: [],
           description: `${newDivisionName} Division Information`,
-          memberCount: 0
+          memberCount: 0,
+          groupMemberCounts: {}
         }]
       }));
     } catch (error) {
@@ -144,6 +165,7 @@ members: [],
           groups: response || [], // Map the groups array from the API response
           description: `${divisionName} Division Information`,
           memberCount: response.length || 0, // Use the length property for member count
+          groupMemberCounts: {}
         },
 
       });
@@ -178,17 +200,44 @@ members: [],
     set({ isLoading: true, error: null });
     try {
       const response = await divisionsApi.getGroupMembers(division, group, filters);
-      const membersWithDefaults = response.groupMembers.map((member) => ({
-        ...member,
-        status: member.status || "Unknown", // Provide a default value for missing status
+      const membersWithDefaults = response.groupMembers.map((member: any) => ({
+        _id: member._id,
+        name: member.name || member.email.split('@')[0] || 'Unknown',
+        email: member.email,
+        status: member.status || "Unknown",
+        campusStatus: member.campusStatus || 'unknown',
+        lastAttendance: member.lastAttendance || 'N/A',
+        membershipStatus: member.membershipStatus || 'active',
+        profilePicture: member.profilePicture,
+        group: group // Add group information to each member
       }));
-      set({
-        members: membersWithDefaults,
+      
+      set((state) => ({
+        members: [...state.members.filter(m => m.group !== group), ...membersWithDefaults],
         totalMembers: response.totalGroupMembers || 0,
         currentPage: filters.page || 1,
-      });
+      }));
+
+      // Update the division's group member count in the store
+      set((state) => ({
+        divisions: state.divisions.map(div => 
+          div.name === division
+            ? {
+                ...div,
+                groupMemberCounts: {
+                  ...div.groupMemberCounts,
+                  [group]: response.totalGroupMembers || 0
+                },
+                memberCount: Object.values({
+                  ...div.groupMemberCounts,
+                  [group]: response.totalGroupMembers || 0
+                }).reduce((sum, count) => sum + count, 0)
+              }
+            : div
+        )
+      }));
     } catch (error) {
-      set({ error: "Failed to fetch group members", isLoading: false, members: [] });
+      set({ error: "Failed to fetch group members", isLoading: false });
       console.error(error);
     } finally {
       set({ isLoading: false });
