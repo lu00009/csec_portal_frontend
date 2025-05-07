@@ -6,8 +6,10 @@ import type { Role } from "@/types/admin"
 import { Edit, Trash2 } from "lucide-react"
 import { useState } from "react"
 
-interface RoleCardProps {
-  role: Role
+export interface RoleCardProps {
+  role: Role;
+  onDelete: () => void;
+  onEdit: () => void;
 }
 
 export function RoleCard({ role }: RoleCardProps) {

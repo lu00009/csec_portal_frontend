@@ -9,7 +9,8 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_BASE;
 const apiClient = axios.create({
   baseURL: BASE_URL,
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${localStorage.getItem('token')}`,
   }
 });
 
@@ -89,7 +90,14 @@ export const membersApi = {
           .map(([key, value]) => [key, String(value)])
       ).toString();
 
-      const response = await apiClient.get(`/members?${queryString}`);
+      const response = await apiClient.get(`/members?${queryString}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -102,7 +110,7 @@ export const membersApi = {
   // Fetch heads
   fetchHeads: async (): Promise<Member[]> => {
     try {
-      const response = await apiClient.get('/members');
+      const response = await apiClient.get('/members/heads');
       return response.data.members.filter((member: Member) =>
         ['Vice President', 'CPD President', 'Dev President', 
          'CBD President', 'SEC President', 'DS President']
