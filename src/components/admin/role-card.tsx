@@ -4,16 +4,17 @@ import { Badge } from "@/components/ui/badge"
 import Button from "@/components/ui/button"
 import type { Role } from "@/types/admin"
 import { Edit, Trash2 } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 export interface RoleCardProps {
   role: Role;
-  onDelete: () => void;
-  onEdit: () => void;
 }
 
 export function RoleCard({ role }: RoleCardProps) {
   const [expanded, setExpanded] = useState(false)
+  useEffect(()=>{
+    console.log(role)
+  }),[role]
 
   return (
     <div className="border rounded-lg overflow-hidden">

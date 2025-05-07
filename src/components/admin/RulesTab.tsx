@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "@/components/ui/button";
 import { MembersTable } from "@/components/admin/MembersTable";
 import { RuleCard } from "@/components/admin/RuleCard";
@@ -17,31 +17,34 @@ export const RulesTab = ({
   onBanMembers: (memberIds: string[]) => Promise<void>;
 }) => {
   const [showMembers, setShowMembers] = useState(false);
+  useEffect(() => {
+    console.log(rules);
+  }, [rules]);
 
   return (
     <div className="space-y-4">
       {!showMembers ? (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 gap-4">
             <RuleCard
               title="Max Absences"
               description="Members exceeding this are flagged for review"
-              value={rules.maxAbsences}
+              value={rules.ClubRules.maxAbsences}
             />
             <RuleCard
               title="Warning After"
               description="Members receive a warning notification"
-              value={rules.warningAfter}
+              value={rules.ClubRules.warningAfter}
             />
             <RuleCard
               title="Suspend After"
               description="Member's access suspended"
-              value={rules.suspendAfter}
+              value={rules.ClubRules.suspendAfter}
             />
             <RuleCard
               title="Fire After"
               description="Member removed from division"
-              value={rules.fireAfter}
+              value={rules.ClubRules.fireAfter}
             />
           </div>
 

@@ -143,32 +143,29 @@ export const useAdminStore = create<AdminState>()(
               });
             }
           },
-          addHead: async (head) => {
-            set({ loading: true, error: null });
-            try {
-              const headers = await getAuthHeaders();
-              const response = await axios.post(`${API_BASE_URL}/admin/heads`, {
-                name: head.name,
-                division: head.division||'dev',
-                role: head.role,
-                avatar: head.avatar || "/placeholder.svg"
-              }, { headers });
-              
-              set(state => ({
-                heads: [...state.heads, {
-                  ...head,
-                  id: response.data._id,
-                  email: response.data.email || ""
-                }],
-                loading: false
-              }));
-            } catch (error: any) {
-              set({
-                error: error.message || "Failed to add head",
-                loading: false
-              });
-            }
-          },
+         // In your adminStore.ts
+addHead: async (headData: {
+  division: string;
+  name: string;
+  email: string;
+}) => {
+  try {
+    const headers = await getAuthHeaders();
+    const response = await axios.post(`${API_BASE_URL}/admin/heads`, {
+      division: headData.division,
+      name: headData.name,
+      email: headData.email
+    },{headers}
+  );
+    console.log(headData)
+    return response.data;
+  } catch (error) {
+    console.log(headData)
+
+    console.error('Add head error:', error);
+    throw error;
+  }
+},
 
           addRole: async (role) => {
             set({ loading: true, error: null });

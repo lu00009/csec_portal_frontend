@@ -42,7 +42,7 @@ export const HeadsTable = ({
                 </div>
               </td>
               <td className="p-4">{head.role}</td>
-              <td className="p-4">{head.email}</td>
+              <td className="p-4">{head.division}</td>
               <td className="p-4">
                 <Badge variant={head.permissionStatus === "active" ? "default" : "destructive"}>
                   {head.permissionStatus}

@@ -33,13 +33,7 @@ export const RolesTab = ({
         {roles.map((role) => (
           <RoleCard
             key={role.id}
-            role={role}
-            onEdit={() => {
-              setEditingRole(role);
-              setIsRoleModalOpen(true);
-            }}
-            onDelete={() => onBanRole(role.id)}
-          />
+            role={role}    />
         ))}
       </div>
 

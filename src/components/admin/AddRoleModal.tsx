@@ -22,7 +22,7 @@ export const AddRoleModal = ({
 }) => {
   const [name, setName] = useState(role?.role || "");
   const [permissions, setPermissions] = useState<string[]>(role?.permissions || []);
-  const [status, setStatus] = useState<"active" | "inactive">(role?.permissionStatus || "active");
+  const [permissionStatus, setStatus] = useState<"ACTIVE" | "INACTIVE">(role?.permissionStatus || "ACTIVE");
 
   const availablePermissions = [
     "create-post",
@@ -78,16 +78,16 @@ export const AddRoleModal = ({
           <div>
             <Label>Status</Label>
             <RadioGroup
-              value={status}
-              onValueChange={(value) => setStatus(value as "active" | "inactive")}
+              value={permissionStatus}
+              onValueChange={(value) => setStatus(value as "ACTIVE" | "INACTIVE")}
               className="flex gap-4 mt-2"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="active" id="active" />
+                <RadioGroupItem value="ACTIVE" id="active" />
                 <Label htmlFor="active">Active</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="inactive" id="inactive" />
+                <RadioGroupItem value="INACTIVE" id="inactive" />
                 <Label htmlFor="inactive">Inactive</Label>
               </div>
             </RadioGroup>
@@ -101,7 +101,7 @@ export const AddRoleModal = ({
               Cancel
             </Button>
             <Button
-              onClick={() => onSave({ role, permissions, permissionStatus })}
+              onClick={() => onSave({ role: name, permissions, permissionStatus })}
               disabled={!name.trim()}
             >
               {role ? "Save Changes" : "Add Role"}

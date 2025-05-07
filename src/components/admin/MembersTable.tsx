@@ -37,7 +37,7 @@ export const MembersTable = ({
       member?.clubRole?.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || 
-                         member.status === statusFilter;
+                         member.attendance === statusFilter;
     
     return matchesSearch && matchesStatus;
   }) || [];
@@ -50,6 +50,8 @@ export const MembersTable = ({
 
   useEffect(() => {
     setCurrentPage(1);
+    console.log(totalPages, currentPage)
+    console.log(members)
   }, [searchQuery, statusFilter]);
 
   const toggleMemberSelection = (email: string) => {
@@ -138,22 +140,7 @@ export const MembersTable = ({
         <div className="border rounded-lg p-4 bg-muted/50">
           <h3 className="font-medium mb-2">Filters</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <Label>Status</Label>
-              <Select
-                value={statusFilter}
-                onValueChange={setStatusFilter}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+           
           </div>
         </div>
       )}
@@ -218,8 +205,8 @@ export const MembersTable = ({
                 </td>
                 <td className="p-4">{member.clubRole || ''}</td>
                 <td className="p-4">
-                  <Badge variant={member.status === "active" ? "default" : "destructive"}>
-                    {member.status || 'unknown'}
+                  <Badge variant={member.attendance === "Active" ? "default" : "destructive"}>
+                    {member.attendance || 'unknown'}
                   </Badge>
                 </td>
               </tr>

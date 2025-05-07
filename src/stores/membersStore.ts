@@ -76,7 +76,7 @@ fetchMembers: async (options: FetchMembersOptions = {}) => {
     
     // Handle API response structure correctly
     set({
-      members: data.members || [], // Fixed property name
+      members: data.members , // Fixed property name
       totalMembers: data.totalMembers,
       currentPage: options.page || 1,
       totalPages: data.totalPages || Math.ceil(data.totalMembers / (options.limit || 10)),

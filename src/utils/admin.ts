@@ -4,7 +4,7 @@ export interface Role {
   id: string;
   name: UserRole;
   permissions: string[];
-  status: "active" | "inactive";
+  status: "ACTIVE" | "INACTIVE";
 } 
 export interface Rule {
   id: string;
