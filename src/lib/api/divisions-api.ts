@@ -82,18 +82,57 @@ export const divisionsApi = {
     filters: { search?: string; page?: number; limit?: number; status?: string } = {}
   ): Promise<any> => {
     try {
-      console.log(`[API] Fetching members for group: ${group} in division: ${division}`);
+      console.log(`[API] Starting request for members:`, {
+        division,
+        group,
+        filters,
+        url: `${API_BASE}/groups/getMembers`
+      });
+
       const response = await apiClient.get("/groups/getMembers", {
         params: {
-          division, // Pass division as a query parameter
-          group,    // Pass group as a query parameter
-          ...filters, // Include additional filters like search, page, limit, and status
+          division,
+          group,
+          ...filters
         },
       });
-      console.log(`[API] Members response:`, response.data);
-      return response.data || { members: [], total: 0 };
-    } catch (error) {
-      console.error(`[API] Members fetch error for group "${group}" in division "${division}":`, error);
+
+      console.log(`[API] Full response data:`, {
+        status: response.status,
+        statusText: response.statusText,
+        data: response.data,
+        dataKeys: Object.keys(response.data || {}),
+        dataValues: Object.values(response.data || {}),
+        headers: response.headers
+      });
+      
+      // Ensure the response has the correct structure
+      const data = response.data || {};
+      const members = Array.isArray(data.members) ? data.members : [];
+      const total = data.total || 0;
+
+      console.log(`[API] Processed response:`, {
+        membersCount: members.length,
+        total,
+        hasMembers: members.length > 0,
+        dataKeys: Object.keys(data),
+        firstMember: members[0],
+        rawData: data
+      });
+
+      return {
+        groupMembers: members,
+        totalGroupMembers: total
+      };
+    } catch (error: any) {
+      console.error(`[API] Error fetching members:`, {
+        error: error?.message || 'Unknown error',
+        status: error?.response?.status,
+        data: error?.response?.data,
+        division,
+        group,
+        filters
+      });
       throw error;
     }
   },
@@ -121,13 +160,19 @@ export const divisionsApi = {
     }
   },
 
-  createMember: async (division: string, group: string, member: { email: string; generatedPassword: string }) => {
+  createMember: async (
+    division: string,
+    group: string,
+    member: { firstName: string; lastName: string; email: string; generatedPassword: string }
+  ) => {
     try {
       const response = await apiClient.post("/members/createMember", {
         division,
         group,
         email: member.email,
         generatedPassword: member.generatedPassword,
+        firstName: member.firstName,
+        lastName: member.lastName,
         role: "member"
       });
       return response.data;

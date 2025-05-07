@@ -42,6 +42,14 @@ export default function GroupMembersPage() {
   useEffect(() => {
     const loadGroupMembers = async () => {
       try {
+        console.log(`[Page] Starting to load members:`, {
+          division: divisionName,
+          group: groupName,
+          searchQuery,
+          page,
+          statusFilter
+        });
+
         await fetchGroupMembers(
           divisionName,
           groupName,
@@ -49,14 +57,26 @@ export default function GroupMembersPage() {
             search: searchQuery,
             page,
             limit: 10,
-            status: statusFilter,
+            status: statusFilter || undefined,
           }
         );
-        console.log("Members after fetch:", useDivisionsStore.getState().members); // Log directly from the store
+
+        const storeState = useDivisionsStore.getState();
+        console.log(`[Page] Store state after fetch:`, {
+          membersCount: storeState.members.length,
+          totalMembers: storeState.totalMembers,
+          isLoading: storeState.isLoading,
+          error: storeState.error
+        });
+
         setError(null);
-      } catch (error) {
+      } catch (error: any) {
+        console.error(`[Page] Error loading members:`, {
+          error: error?.message || 'Unknown error',
+          division: divisionName,
+          group: groupName
+        });
         setError("Failed to load group members. Please try again later.");
-        console.error(error);
       }
     };
 
@@ -109,6 +129,18 @@ export default function GroupMembersPage() {
   const totalPages = Math.ceil(totalMembers / 10)
 
   const canManage = user?.member?.clubRole && canManageMembers(user, divisionName);
+
+  // Debug logging for render
+  const debugInfo = {
+    membersCount: members.length,
+    totalMembers,
+    isLoading,
+    error,
+    searchQuery,
+    page,
+    statusFilter
+  };
+  console.log(`[Page] Rendering with state:`, debugInfo);
 
   return (
     <div className="flex flex-col h-full">
@@ -229,11 +261,11 @@ export default function GroupMembersPage() {
                                 {member.email.charAt(0).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
-                            <span>{member.email.split('@')[0]}</span>
+                            <span>{member.name}</span>
                           </div>
                         </TableCell>
                         <TableCell>{member.email}</TableCell>
-                        <TableCell>{member.clubRole}</TableCell>
+                        <TableCell>{member.clubRole || 'member'}</TableCell>
                         <TableCell>{getStatusBadge(member.membershipStatus)}</TableCell>
                         {canManage && (
                           <TableCell className="text-right">
@@ -254,8 +286,6 @@ export default function GroupMembersPage() {
             </div>
           )
         )}
-
-        {console.log("Members in component:", members)}
 
         {members.length > 0 && (
           <div className="flex items-center justify-between">

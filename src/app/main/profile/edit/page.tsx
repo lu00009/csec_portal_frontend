@@ -216,6 +216,8 @@ export default function ProfileEditPage() {
       if (values.profilePicture instanceof File) {
         formData.append('profilePicture', values.profilePicture);
       }
+
+      // First, update the profile details
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_BASE}/members/profileDetails`,
         formData,
@@ -226,18 +228,71 @@ export default function ProfileEditPage() {
           },
         }
       );
-      toast({ title: 'Profile updated successfully!', description: 'Your changes have been saved.' });
-      resetForm();
-      // Refetch user data
-      await useUserStore.getState().initialize();
-      // Redirect to profile page
-      router.push('/main/profile');
+
+      if (!response.data) {
+        throw new Error('No data received from server');
+      }
+
+      // Then, update the user profile in the store
+      try {
+        const updatedUser = {
+          ...response.data,
+          member: {
+            ...response.data.member,
+            profilePicture: response.data.member?.profilePicture || null,
+            firstName: response.data.member?.firstName || values.firstName,
+            lastName: response.data.member?.lastName || values.lastName,
+            email: response.data.member?.email || values.email,
+            phoneNumber: response.data.member?.phoneNumber || values.phoneNumber,
+            birthDate: response.data.member?.birthDate || values.birthDate,
+            github: response.data.member?.github || values.github,
+            gender: response.data.member?.gender || values.gender,
+            telegramHandle: response.data.member?.telegramHandle || values.telegramHandle,
+            graduationYear: response.data.member?.graduationYear || values.graduationYear,
+            specialization: response.data.member?.specialization || values.specialization,
+            department: response.data.member?.department || values.department,
+            mentor: response.data.member?.mentor || values.mentor,
+            universityId: response.data.member?.universityId || values.universityId,
+            cv: response.data.member?.cv || values.cv,
+            bio: response.data.member?.bio || values.bio,
+            instagramHandle: response.data.member?.instagramHandle || values.instagram,
+            linkedinHandle: response.data.member?.linkedinHandle || values.linkedin,
+            codeforcesHandle: response.data.member?.codeforcesHandle || values.codeforces,
+            leetcodeHandle: response.data.member?.leetcodeHandle || values.leetcode,
+            createdAt: response.data.member?.createdAt || values.joiningDate,
+          }
+        };
+
+        await useUserStore.getState().updateUserProfile(updatedUser);
+        
+        toast({ title: 'Profile updated successfully!', description: 'Your changes have been saved.' });
+        resetForm();
+        
+        // Redirect to profile page
+        router.push('/main/profile');
+      } catch (error) {
+        console.error('Failed to update user store:', error);
+        toast({ 
+          title: 'Warning', 
+          description: 'Profile was updated but there was an issue updating the local state. Please refresh the page.', 
+          variant: 'destructive' 
+        });
+        router.push('/main/profile');
+      }
     } catch (error) {
       console.error('Submission failed:', error);
       if (axios.isAxiosError(error)) {
-        toast({ title: 'Error', description: error.response?.data?.message || error.message, variant: 'destructive' });
+        toast({ 
+          title: 'Error', 
+          description: error.response?.data?.message || error.message, 
+          variant: 'destructive' 
+        });
       } else if (error instanceof Error) {
-        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+        toast({ 
+          title: 'Error', 
+          description: error.message, 
+          variant: 'destructive' 
+        });
       }
     } finally {
       setSubmitting(false);

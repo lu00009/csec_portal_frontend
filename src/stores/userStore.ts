@@ -363,18 +363,38 @@ const useUserStore = create<UserStore>()(
         const { user, token } = get();
         if (!user || !token) throw new Error('Not authenticated');
 
-        const response = await fetch(`${BASE_URL}/members/${user.member._id}`, {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(updates),
-        });
+        try {
+          const response = await fetch(`${BASE_URL}/members/${user.member._id}`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updates),
+          });
 
-        if (!response.ok) throw new Error('Failed to update profile');
-        const updatedUser = await response.json();
-        set({ user: updatedUser });
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Failed to update profile: ${response.status} ${response.statusText}`);
+          }
+
+          const updatedUser = await response.json();
+          if (!updatedUser || !updatedUser.member) {
+            throw new Error('Invalid response format from server');
+          }
+
+          // Update the user state
+          set({ user: updatedUser });
+          
+          // Update the stored user data in localStorage/sessionStorage
+          const storage = localStorage.getItem('rememberMe') === 'true' ? localStorage : sessionStorage;
+          storage.setItem('user', JSON.stringify(updatedUser));
+
+          return updatedUser;
+        } catch (error) {
+          console.error('Profile update failed:', error);
+          throw error;
+        }
       },
 
       hasRole: (role: UserRole) => {

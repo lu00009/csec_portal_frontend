@@ -5,6 +5,7 @@ import TopHeader from '@/components/layouts/TopHeader';
 import { useUserStore } from '@/stores/userStore';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Toaster } from 'react-hot-toast';
 
 export default function MainLayout({
   children,
@@ -83,6 +84,7 @@ export default function MainLayout({
           {children}
         </main>
       </div>
+      <Toaster position="top-right" />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { divisionsApi } from "@/lib/api/divisions-api";
+import toast from "react-hot-toast";
 import { create } from "zustand";
 
 interface Division {
@@ -64,7 +65,11 @@ interface DivisionsState {
       status?: string;
     }
   ) => Promise<void>;
-  addMember: (division: string, group: string, member: { email: string; password: string }) => Promise<void>;
+  addMember: (
+    division: string,
+    group: string,
+    member: { email: string; password: string; firstName: string; lastName: string }
+  ) => Promise<void>;
 }
 
 export const useDivisionsStore = create<DivisionsState>((set, get) => ({
@@ -152,8 +157,9 @@ export const useDivisionsStore = create<DivisionsState>((set, get) => ({
           groupMemberCounts: {}
         }]
       }));
+      toast.success("Division added successfully!");
     } catch (error) {
-      set({ error: "Failed to add division" });
+      toast.error("Failed to add division");
       throw error;
     }
   },
@@ -192,7 +198,9 @@ export const useDivisionsStore = create<DivisionsState>((set, get) => ({
             : div
         )
       }));
+      toast.success("Group added successfully!");
     } catch (error) {
+      toast.error("Failed to add group");
       throw error;
     }
   },
@@ -203,56 +211,97 @@ export const useDivisionsStore = create<DivisionsState>((set, get) => ({
     filters: { search?: string; page?: number; limit?: number; status?: string } = {}
   ) => {
     set({ isLoading: true, error: null });
+    
     try {
+      console.log(`[Store] Starting fetch for members:`, {
+        division,
+        group,
+        filters,
+        currentState: {
+          membersCount: get().members.length,
+          totalMembers: get().totalMembers
+        }
+      });
+
       const response = await divisionsApi.getGroupMembers(division, group, filters);
-      const membersWithDefaults = response.groupMembers.map((member: any) => ({
-        _id: member._id,
-        name: member.name || member.email.split('@')[0] || 'Unknown',
-        email: member.email,
-        status: member.status || "Unknown",
+      
+      console.log(`[Store] Received API response:`, {
+        hasResponse: !!response,
+        hasMembers: !!response?.groupMembers,
+        membersCount: response?.groupMembers?.length,
+        total: response?.totalGroupMembers,
+        rawResponse: response
+      });
+
+      if (!response?.groupMembers) {
+        console.warn(`[Store] No members data in response:`, response);
+        set({
+          isLoading: false,
+          error: null,
+          members: [],
+          totalMembers: 0
+        });
+        return;
+      }
+
+      const processedMembers = response.groupMembers.map((member: any) => ({
+        _id: member._id || member.id || `temp-${Date.now()}-${Math.random()}`,
+        name: member.name || member.email?.split('@')[0] || 'Unknown',
+        email: member.email || '',
+        status: member.status || 'unknown',
         campusStatus: member.campusStatus || 'unknown',
-        lastAttendance: member.lastAttendance || 'N/A',
-        membershipStatus: member.membershipStatus || 'active',
-        profilePicture: member.profilePicture,
-        group: group // Add group information to each member
+        lastAttendance: member.lastAttendance || null,
+        membershipStatus: member.membershipStatus || 'unknown',
+        clubRole: member.clubRole || 'member'
       }));
-      // Store per group
-      set((state) => ({
-        groupMembers: {
-          ...state.groupMembers,
-          [division]: {
-            ...(state.groupMembers[division] || {}),
-            [group]: membersWithDefaults
-          }
-        },
-        // Also update the flat members array for current view
-        members: membersWithDefaults,
-        totalMembers: response.totalGroupMembers || 0,
-        currentPage: filters.page || 1,
-      }));
-      // Update the division's group member count in the store
-      set((state) => ({
-        divisions: state.divisions.map(div => 
-          div.name === division
-            ? {
-                ...div,
-                groupMemberCounts: {
-                  ...div.groupMemberCounts,
-                  [group]: response.totalGroupMembers || 0
-                },
-                memberCount: Object.values({
-                  ...div.groupMemberCounts,
-                  [group]: response.totalGroupMembers || 0
-                }).reduce((sum, count) => sum + count, 0)
-              }
-            : div
-        )
-      }));
-    } catch (error) {
-      set({ error: "Failed to fetch group members", isLoading: false });
-      console.error(error);
-    } finally {
-      set({ isLoading: false });
+
+      console.log(`[Store] Processed members:`, {
+        count: processedMembers.length,
+        firstMember: processedMembers[0],
+        lastMember: processedMembers[processedMembers.length - 1],
+        rawMembers: response.groupMembers
+      });
+
+      set((state) => {
+        const newState = {
+          groupMembers: {
+            ...state.groupMembers,
+            [division]: {
+              ...state.groupMembers[division],
+              [group]: processedMembers
+            }
+          },
+          members: processedMembers,
+          totalMembers: response.totalGroupMembers || 0,
+          currentPage: filters.page || 1,
+          isLoading: false,
+          error: null
+        };
+
+        console.log(`[Store] Updated state:`, {
+          membersCount: newState.members.length,
+          totalMembers: newState.totalMembers,
+          groupMembersCount: Object.keys(newState.groupMembers).length,
+          newState
+        });
+
+        return newState;
+      });
+
+    } catch (error: any) {
+      console.error(`[Store] Error in fetchGroupMembers:`, {
+        error: error?.message || 'Unknown error',
+        division,
+        group,
+        filters
+      });
+
+      set({
+        isLoading: false,
+        error: error?.message || 'Failed to fetch members',
+        members: [],
+        totalMembers: 0
+      });
     }
   },
 
@@ -260,21 +309,26 @@ export const useDivisionsStore = create<DivisionsState>((set, get) => ({
     try {
       await divisionsApi.createMember(division, group, {
         email: member.email,
-        generatedPassword: member.password
+        generatedPassword: member.password,
+        firstName: member.firstName,
+        lastName: member.lastName
       });
       set((state) => ({
         members: [...state.members, {
           _id: Date.now().toString(),
-          name: member.email.split('@')[0] || 'Unknown',
+          name: `${member.firstName} ${member.lastName}`,
           email: member.email,
           status: 'active',
           campusStatus: 'unknown',
           lastAttendance: 'N/A',
-          membershipStatus: 'active'
+          membershipStatus: 'active',
+          clubRole: 'member'
         }]
       }));
+      toast.success("Member added successfully!");
       console.log("Updated members:", get().members);
     } catch (error) {
+      toast.error("Failed to add member");
       throw error;
     }
   },

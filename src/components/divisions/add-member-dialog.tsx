@@ -16,22 +16,31 @@ interface AddMemberDialogProps {
 }
 
 export function AddMemberDialog({ open, onOpenChange, divisionId, groupId }: AddMemberDialogProps) {
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [division, setDivision] = useState(divisionId)
   const [group, setGroup] = useState(groupId)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const { addMember, divisions } = useDivisionsStore()
 
   const handleSubmit = async () => {
-    if (!email || !division || !group) return
+    if (!email || !division || !group || !firstName || !lastName) return
 
     setIsSubmitting(true)
     try {
-      await addMember(division, group, { email, password })
+      await addMember(division, group, { 
+        email, 
+        password,
+        firstName,
+        lastName
+      })
       setEmail("")
       setPassword("")
+      setFirstName("")
+      setLastName("")
       onOpenChange(false)
     } catch (error) {
       console.error("Failed to add member:", error)
@@ -58,10 +67,30 @@ export function AddMemberDialog({ open, onOpenChange, divisionId, groupId }: Add
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="select-division">Select Division</Label>
+            <Label htmlFor="first-name">First Name</Label>
+            <Input
+              id="first-name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="First Name"
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="last-name">Last Name</Label>
+            <Input
+              id="last-name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Last Name"
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Select Division</Label>
             <Select value={division} onValueChange={setDivision}>
-              <SelectTrigger id="select-division">
-                <SelectValue placeholder="Select Division" />
+              <SelectTrigger onClick={() => {}}>
+                <SelectValue>Select Division</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {divisions.map((div) => (
@@ -74,10 +103,10 @@ export function AddMemberDialog({ open, onOpenChange, divisionId, groupId }: Add
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="select-group">Select Group</Label>
+            <Label>Select Group</Label>
             <Select value={group} onValueChange={setGroup}>
-              <SelectTrigger id="select-group">
-                <SelectValue placeholder="Select Group" />
+              <SelectTrigger onClick={() => {}}>
+                <SelectValue>Select Group</SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {divisions
@@ -125,7 +154,7 @@ export function AddMemberDialog({ open, onOpenChange, divisionId, groupId }: Add
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!email || !division || !group || !password || isSubmitting}
+            disabled={!email || !division || !group || !password || !firstName || !lastName || isSubmitting}
             className="sm:order-2"
           >
             Invite
