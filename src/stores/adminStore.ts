@@ -19,9 +19,9 @@ interface Rule {
 
 interface Role {
   id: string;
-  name: string;
+  role: string;
   permissions: string[];
-  status: "active" | "inactive";
+  permissionStatus: "active" | "inactive";
 }
 
 interface Head {
@@ -149,7 +149,7 @@ export const useAdminStore = create<AdminState>()(
               const headers = await getAuthHeaders();
               const response = await axios.post(`${API_BASE_URL}/admin/heads`, {
                 name: head.name,
-                division: head.division,
+                division: head.division||'dev',
                 role: head.role,
                 avatar: head.avatar || "/placeholder.svg"
               }, { headers });
@@ -173,8 +173,14 @@ export const useAdminStore = create<AdminState>()(
           addRole: async (role) => {
             set({ loading: true, error: null });
             try {
+              console.log('role', role)
+
               const headers = await getAuthHeaders();
-              const response = await axios.post(`${API_BASE_URL}/admin/roles`, role, { headers });
+              const response = await axios.post(`${API_BASE_URL}/admin/permissions`, {
+                role: role.role,
+                permissions: role.permissions,
+                permissionStatus: role.permissionStatus
+              }, { headers: headers });
               
               set(state => ({
                 roles: [...state.roles, {
@@ -184,28 +190,28 @@ export const useAdminStore = create<AdminState>()(
                 loading: false
               }));
             } catch (error: any) {
+              console.log('role', role)
               set({
                 error: error.message || "Failed to add role",
                 loading: false
               });
             }
           },
-
-          banMember: async (id) => {
-            set({ loading: true, error: null });
+          banMember: async (emails: string[]) => {
             try {
+              const payload = { emails }; // Creates { emails: ["a@b.com", "c@d.com"] }
               const headers = await getAuthHeaders();
-              await axios.post(`${API_BASE_URL}/admin/banMembers`, { memberId: id }, { headers });
-              
-              set(state => ({
-                heads: state.heads.filter(head => head.id !== id),
-                loading: false
-              }));
-            } catch (error: any) {
-              set({
-                error: error.message || "Failed to ban member",
-                loading: false
-              });
+
+              const response = await axios.post(`${API_BASE_URL}/admin/banMembers`, payload, {headers});
+              console.log('Ban payload:', payload);
+              return response.data;
+            } catch (error) {
+              console.error('Ban error:', error);
+              if (axios.isAxiosError(error)) {
+                console.error('Error details:', error.response?.data);
+                throw new Error(error.response?.data?.message || 'Ban failed');
+              }
+              throw new Error('Ban failed');
             }
           },
           updateHead: async (id, updates) => {

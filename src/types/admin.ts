@@ -13,8 +13,8 @@ export interface Head {
   
   export interface Role {
     id: string
-    name: string
-    status: "active" | "inactive"
+    role: string
+    permissionStatus: "active" | "inactive"
     permissions: string[]
   }
   

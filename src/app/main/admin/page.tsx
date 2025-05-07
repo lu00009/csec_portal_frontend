@@ -94,20 +94,15 @@ export default function AdministrationPage() {
         </TabsContent>
 
         <TabsContent value="rules" className="space-y-4">
-          <RulesTab
-            rules={rules?.ClubRules || {
-              maxAbsences: 3,
-              warningAfter: 1,
-              suspendAfter: 3,
-              fireAfter: 5
-            }}
-            members={members}
-            onUpdateRule={updateRule}
-            onBanMembers={async (memberIds) => {
-              await Promise.all(memberIds.map(id => banMember(id)));
-              fetchMembers();
-            }}
-          />
+        <RulesTab
+  rules={rules}
+  members={members}
+  onUpdateRule={updateRule}
+  onBanMembers={async (memberIds) => {
+    await Promise.all(memberIds.map(id => banMember(id)));
+    fetchMembers();
+  }}
+/>
         </TabsContent>
       </Tabs>
     </div>

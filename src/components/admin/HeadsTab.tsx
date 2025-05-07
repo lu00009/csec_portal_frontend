@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import Button from "@/components/ui/button";
-import Input from "@/components/ui/input";
-import { Search } from "lucide-react";
-import { Pagination } from "@/components/admin/pagination";
 import { AddHeadModal } from "@/components/admin/AddHeadModal";
 import { HeadsTable } from "@/components/admin/HeadsTable";
 import type { Head } from "@/types/admin";
+import { toast } from "sonner";
 
 export const HeadsTab = ({
   heads,
@@ -20,80 +18,43 @@ export const HeadsTab = ({
   onUpdateHead: (id: string, head: Head) => Promise<void>;
   onBanHead: (id: string) => void;
 }) => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
   const [isAddHeadModalOpen, setIsAddHeadModalOpen] = useState(false);
-  const [editingHead, setEditingHead] = useState<Head | null>(null);
-  const itemsPerPage = 10;
+  
+  // Extract unique roles from existing heads
+  const roles = Array.from(new Set(heads.map(head => head.role)));
 
-  const filteredHeads = heads.filter(
-    (head) =>
-      head.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      head.role.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const totalPages = Math.ceil(filteredHeads.length / itemsPerPage);
-  const paginatedHeads = filteredHeads.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const handleAddHead = async (head: Omit<Head, "id">) => {
+    try {
+      await onAddHead(head);
+      toast.success("Head added successfully");
+      setIsAddHeadModalOpen(false);
+    } catch (error) {
+      toast.error("Failed to add head");
+      console.error("Add head error:", error);
+    }
+  };
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div className="relative w-64">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search heads..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8"
-          />
-        </div>
+      <div className="flex justify-end">
         <Button onClick={() => setIsAddHeadModalOpen(true)}>
           Add Head
         </Button>
       </div>
 
       <HeadsTable 
-        heads={paginatedHeads} 
-        onEdit={(head: Head) => {
-          setEditingHead(head);
-          setIsAddHeadModalOpen(true);
+        heads={heads} 
+        onEdit={(head) => {
+          // Implement edit functionality if needed
         }} 
-        onBan={(id: string) => onBanHead(id)}
-      />
-
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={(page: number) => setCurrentPage(page)}
-        totalItems={filteredHeads.length}
-        itemsPerPage={itemsPerPage}
-        onItemsPerPageChange={() => {
-          setCurrentPage(1); // Reset to the first page
-          // Update itemsPerPage if needed
-        }}
+        onBan={onBanHead}
       />
 
       <AddHeadModal
         open={isAddHeadModalOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsAddHeadModalOpen(false);
-            setEditingHead(null);
-          }
-        }}
-        head={editingHead}
-        onSave={async (head) => {
-          if (editingHead) {
-            await onUpdateHead(editingHead.id, head as Head);
-          } else {
-            await onAddHead(head);
-          }
-          setIsAddHeadModalOpen(false);
-          setEditingHead(null);
-        }}
+        onOpenChange={setIsAddHeadModalOpen}
+        onSave={handleAddHead}
+        roles={roles}
       />
     </div>
   );

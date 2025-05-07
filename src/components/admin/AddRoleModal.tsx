@@ -20,9 +20,9 @@ export const AddRoleModal = ({
   role?: Role | null;
   onSave: (role: Omit<Role, "id">) => Promise<void>;
 }) => {
-  const [name, setName] = useState(role?.name || "");
+  const [name, setName] = useState(role?.role || "");
   const [permissions, setPermissions] = useState<string[]>(role?.permissions || []);
-  const [status, setStatus] = useState<"active" | "inactive">(role?.status || "active");
+  const [status, setStatus] = useState<"active" | "inactive">(role?.permissionStatus || "active");
 
   const availablePermissions = [
     "create-post",
@@ -101,7 +101,7 @@ export const AddRoleModal = ({
               Cancel
             </Button>
             <Button
-              onClick={() => onSave({ name, permissions, status })}
+              onClick={() => onSave({ role, permissions, permissionStatus })}
               disabled={!name.trim()}
             >
               {role ? "Save Changes" : "Add Role"}
