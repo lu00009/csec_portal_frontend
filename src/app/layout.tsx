@@ -1,4 +1,5 @@
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { Toaster } from '@/components/ui/toaster';
 import { Roboto } from "next/font/google";
 import "../styles/globals.css";
 
@@ -21,13 +22,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={roboto.className} suppressHydrationWarning>
       <body className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <ThemeProvider>
           {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

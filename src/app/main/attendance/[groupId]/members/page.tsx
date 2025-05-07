@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/components/ui/use-toast"
 import { getDivisionFromRole, isDivisionHead } from "@/lib/divisionPermissions"
 import { cn } from "@/lib/utils"
 import { useAttendanceStore } from "@/stores/attendanceStore"
@@ -36,6 +37,7 @@ export default function MembersAttendancePage() {
     saveAttendance,
     clearError,
   } = useAttendanceStore()
+  const { toast } = useToast()
 
   const [searchQuery, setSearchQuery] = useState("")
   const [itemsPerPage, setItemsPerPage] = useState("10")
@@ -79,6 +81,11 @@ export default function MembersAttendancePage() {
   const endIndex = Math.min(startIndex + Number(itemsPerPage), totalMembers)
   const currentMembers = filteredMembers.slice(startIndex, endIndex)
 
+  // Helper: check if attendance can be taken
+  const isToday = currentSession && currentSession.startDate && currentSession.startDate.slice(0, 10) === new Date().toISOString().slice(0, 10);
+  const isAttendanceTaken = useAttendanceStore.getState().attendanceTakenSessions.includes(currentSession?._id || "");
+  const canTakeAttendance = isToday && currentSession?.status !== "Ended" && !isAttendanceTaken;
+
   const handleAttendanceChange = (memberId: string, status: "present" | "absent") => {
     updateMemberAttendance(memberId, status)
   }
@@ -102,12 +109,45 @@ export default function MembersAttendancePage() {
   }
 
   const handleSave = async () => {
-    if (!currentSession?._id) return
-
-    setIsSaving(true)
-    await saveAttendance(currentSession._id)
-    setIsSaving(false)
-  }
+    if (!currentSession?._id) return;
+    if (!canTakeAttendance) {
+      toast({
+        title: "Attendance Not Allowed",
+        description: isAttendanceTaken
+          ? "Attendance has already been taken for this session."
+          : "Attendance can only be taken for today's session and not for ended/planned sessions.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setIsSaving(true);
+    const result = await saveAttendance(currentSession._id);
+    setIsSaving(false);
+    if (result.status === "success") {
+      toast({
+        title: "Attendance Saved",
+        description: "Attendance has been saved successfully!",
+      });
+    } else if (result.status === "already_taken") {
+      toast({
+        title: "Already Taken",
+        description: "Attendance has already been taken for this session.",
+        variant: "destructive",
+      });
+    } else if (result.status === "not_allowed") {
+      toast({
+        title: "Attendance Not Allowed",
+        description: "Attendance can only be taken for today's session and not for ended/planned sessions.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: result.error || "Failed to save attendance.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Handle attendance filter change
   const handleAttendanceFilterChange = (status: string) => {
@@ -172,9 +212,9 @@ export default function MembersAttendancePage() {
             <Button
               onClick={handleSave}
               className="bg-blue-700 hover:bg-blue-800 text-white w-full md:w-auto"
-              disabled={isSaving || isLoading}
+              disabled={isSaving || isLoading || !canTakeAttendance}
             >
-              {isSaving ? "Saving..." : "Save"}
+              {isSaving ? "Saving..." : isAttendanceTaken ? "Attendance Taken" : "Save"}
             </Button>
             <Popover>
               <PopoverTrigger asChild>

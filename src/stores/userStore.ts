@@ -1,3 +1,4 @@
+import { Member } from '@/types/member';
 import { UserRole } from '@/utils/roles';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
@@ -7,17 +8,7 @@ type Division = 'CPD' | 'Dev' | 'CBD' | 'SEC' | 'DS';
 interface User {
   _id: string;
   email: string;
-  member: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-    clubRole: UserRole;
-    division?: string;
-    profilePicture?: string;
-    banned?: boolean;
-    membershipStatus?: string;
-    // Add other member fields as needed
-  };
+  member: Member;
 }
 
 interface UserStore {
@@ -33,6 +24,7 @@ interface UserStore {
   login: (email: string, password: string, rememberMe: boolean) => Promise<boolean>;
   logout: () => void;
   refreshSession: () => Promise<void>;
+  updateLastSeen: () => Promise<void>;
 
   fetchUserById: (id: string) => Promise<User>;
   updateUserProfile: (updates: Partial<User>) => Promise<void>;
@@ -73,6 +65,44 @@ const parseJwt = (token: string | null) => {
   }
 };
 
+const updateLastSeen = async (user: User | null, token: string | null, set: any) => {
+  if (!user || !token) return;
+
+  try {
+    const response = await fetch(`${BASE_URL}/members/${user.member._id}/lastSeen`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ lastSeen: new Date().toISOString() }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.message || `Failed to update last seen: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    if (!data || !data.member) {
+      throw new Error('Invalid response format from server');
+    }
+
+    set((state: UserStore) => ({
+      user: {
+        ...state.user!,
+        member: {
+          ...state.user!.member,
+          lastSeen: data.member.lastSeen
+        }
+      }
+    }));
+  } catch (error) {
+    console.error('Failed to update last seen:', error);
+    // Don't throw the error, just log it to avoid breaking the app
+  }
+};
+
 const useUserStore = create<UserStore>()(
   persist(
     (set, get) => ({
@@ -83,6 +113,71 @@ const useUserStore = create<UserStore>()(
       error: null,
       token: null,
       isAuthenticated: false,
+
+      initialize: async () => {
+        if (get().isInitialized) return;
+
+        set({ isLoading: true });
+        try {
+          // Try to get token from storage
+          const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+          const refreshToken = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
+          const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+
+          if (token && refreshToken && storedUser) {
+            try {
+              // Parse stored user data
+              const user = JSON.parse(storedUser);
+              
+              // Validate user data structure
+              if (!user.member?.clubRole) {
+                throw new Error('Invalid stored user data');
+              }
+
+              // Set initial state with stored data
+              set({
+                token,
+                refreshToken,
+                user,
+                isInitialized: true,
+                isAuthenticated: true
+              });
+
+              // Try to refresh user data from server
+              try {
+                const response = await fetch(`${BASE_URL}/members/me`, {
+                  headers: {
+                    'Authorization': `Bearer ${token}`
+                  }
+                });
+
+                if (response.ok) {
+                  const data = await response.json();
+                  if (data.member?.clubRole) {
+                    set({ user: data });
+                  }
+                }
+              } catch (error) {
+                console.warn('Failed to refresh user data:', error);
+                // Continue with stored data
+              }
+            } catch (error) {
+              console.error('Failed to parse stored user data:', error);
+              // Clear invalid data
+              localStorage.removeItem('user');
+              sessionStorage.removeItem('user');
+              set({ isInitialized: true });
+            }
+          } else {
+            set({ isInitialized: true });
+          }
+        } catch (error) {
+          console.error('Initialization error:', error);
+          set({ error: 'Failed to initialize session' });
+        } finally {
+          set({ isLoading: false });
+        }
+      },
 
       login: async (email: string, password: string, rememberMe: boolean) => {
         try {
@@ -159,71 +254,6 @@ const useUserStore = create<UserStore>()(
         }
       },
 
-      initialize: async () => {
-        if (get().isInitialized) return;
-
-        set({ isLoading: true });
-        try {
-          // Try to get token from storage
-          const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-          const refreshToken = localStorage.getItem('refreshToken') || sessionStorage.getItem('refreshToken');
-          const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
-
-          if (token && refreshToken && storedUser) {
-            try {
-              // Parse stored user data
-              const user = JSON.parse(storedUser);
-              
-              // Validate user data structure
-              if (!user.member?.clubRole) {
-                throw new Error('Invalid stored user data');
-              }
-
-              // Set initial state with stored data
-              set({
-                token,
-                refreshToken,
-                user,
-                isInitialized: true,
-                isAuthenticated: true
-              });
-
-              // Try to refresh user data from server
-              try {
-                const response = await fetch(`${BASE_URL}/members/me`, {
-                  headers: {
-                    'Authorization': `Bearer ${token}`
-                  }
-                });
-
-                if (response.ok) {
-                  const data = await response.json();
-                  if (data.member?.clubRole) {
-                    set({ user: data });
-                  }
-                }
-              } catch (error) {
-                console.warn('Failed to refresh user data:', error);
-                // Continue with stored data
-              }
-            } catch (error) {
-              console.error('Failed to parse stored user data:', error);
-              // Clear invalid data
-              localStorage.removeItem('user');
-              sessionStorage.removeItem('user');
-              set({ isInitialized: true });
-            }
-          } else {
-            set({ isInitialized: true });
-          }
-        } catch (error) {
-          console.error('Initialization error:', error);
-          set({ error: 'Failed to initialize session' });
-        } finally {
-          set({ isLoading: false });
-        }
-      },
-
       logout: () => {
         // Clear all storage
         ['localStorage', 'sessionStorage'].forEach(storageType => {
@@ -245,6 +275,59 @@ const useUserStore = create<UserStore>()(
           isAuthenticated: false,
           error: null,
         });
+      },
+
+      refreshSession: async () => {
+        const { refreshToken } = get();
+        try {
+          if (!refreshToken) {
+            throw new Error('No refresh token available');
+          }
+
+          const response = await fetch(`${BASE_URL}/members/refresh`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${refreshToken}`,
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to refresh session');
+          }
+
+          const data = await response.json();
+          if (!data.token || !data.refreshToken) {
+            throw new Error('Invalid refresh response');
+          }
+
+          // Store new tokens
+          set({
+            token: data.token,
+            refreshToken: data.refreshToken,
+            user: data.member
+          });
+
+          // Store tokens in storage
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('refreshToken', data.refreshToken);
+          sessionStorage.setItem('token', data.token);
+          sessionStorage.setItem('refreshToken', data.refreshToken);
+
+        } catch (error) {
+          console.error('Session refresh failed:', error);
+          get().logout();
+          throw error;
+        }
+      },
+
+      updateLastSeen: async () => {
+        const { user, token } = get();
+        if (!user || !token) {
+          console.warn('Cannot update last seen: user or token is missing');
+          return;
+        }
+        await updateLastSeen(user, token, set);
       },
 
       fetchUserById: async (id) => {
@@ -334,50 +417,6 @@ const useUserStore = create<UserStore>()(
         const { token } = get();
         return token ? { Authorization: `Bearer ${token}` } : null;
       },
-
-      refreshSession: async () => {
-        const { refreshToken } = get();
-        try {
-          if (!refreshToken) {
-            throw new Error('No refresh token available');
-          }
-
-          const response = await fetch(`${BASE_URL}/members/refresh`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${refreshToken}`,
-            },
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to refresh session');
-          }
-
-          const data = await response.json();
-          if (!data.token || !data.refreshToken) {
-            throw new Error('Invalid refresh response');
-          }
-
-          // Store new tokens
-          set({
-            token: data.token,
-            refreshToken: data.refreshToken,
-            user: data.member
-          });
-
-          // Store tokens in storage
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('refreshToken', data.refreshToken);
-          sessionStorage.setItem('token', data.token);
-          sessionStorage.setItem('refreshToken', data.refreshToken);
-
-        } catch (error) {
-          console.error('Session refresh failed:', error);
-          get().logout();
-          throw error;
-        }
-      },
     }),
     {
       name: 'user-storage',
@@ -385,6 +424,16 @@ const useUserStore = create<UserStore>()(
     }
   )
 );
+
+// Set up periodic last seen updates
+if (typeof window !== 'undefined') {
+  setInterval(() => {
+    const { isAuthenticated, updateLastSeen } = useUserStore.getState();
+    if (isAuthenticated) {
+      updateLastSeen();
+    }
+  }, 60000); // Update every minute
+}
 
 export { useUserStore };
 export type { Division, UserRole };

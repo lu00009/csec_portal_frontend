@@ -1,12 +1,14 @@
 'use client';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
+import { toast } from '@/components/ui/use-toast';
 import useFormStore from '@/stores/formStore';
 import { useUserStore } from '@/stores/userStore';
 import axios from 'axios';
 import { Form, Formik, FormikHelpers, useFormikContext } from 'formik';
+import { useRouter } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react';
-import { FiBook, FiInfo, FiUser } from 'react-icons/fi';
+import { FiInfo, FiUser } from 'react-icons/fi';
 import * as Yup from 'yup';
 
 const Select = React.forwardRef<HTMLSelectElement, {
@@ -54,7 +56,6 @@ const validationSchema = Yup.object({
     .required('Telegram handle is required')
     .matches(/^@/, 'Must start with @'),
   graduationYear: Yup.number()
-    .required('Graduation year is required')
     .integer('Must be a whole number')
     .min(new Date().getFullYear(), `Year must be at least ${new Date().getFullYear()}`)
     .max(new Date().getFullYear() + 10, `Year must be within 10 years`),
@@ -69,7 +70,6 @@ const validationSchema = Yup.object({
   leetcode: Yup.string(),
   joiningDate: Yup.string(),
   bio: Yup.string().max(500, 'Bio must be 500 characters or less'),
-  // resources: Yup.string()
 });
 
 const ProfilePicUpload = () => {
@@ -162,6 +162,7 @@ const ProfilePicUpload = () => {
 
 export default function ProfileEditPage() {
   const { user } = useUserStore();
+  const router = useRouter();
   const {
     step,
     setStep,
@@ -186,36 +187,35 @@ export default function ProfileEditPage() {
     universityId: formData.universityId || user?.member?.universityId || '',
     cv: formData.cv || user?.member?.cv || '',
     bio: formData.bio || user?.member?.bio || '',
-    instagramHandle: formData.instagram || '' || user?.member?.instagramHandle,
-    leetcodeHandle: formData.leetcode || '' || user?.member?.leetcodeHandle,
-    linkedinHandle: formData.linkedin || '' || user?.member?.linkedinHandle,
-    codeforcesHandle: formData.codeforces || '' || user?.member?.codeforcesHandle,
-    // resources: formData.resources || '' || user?.member?.resource
+    instagram: formData.instagram || user?.member?.instagramHandle || '',
+    linkedin: formData.linkedin || user?.member?.linkedinHandle || '',
+    codeforces: formData.codeforces || user?.member?.codeforcesHandle || '',
+    leetcode: formData.leetcode || user?.member?.leetcodeHandle || '',
+    profilePicture: formData.profilePicture || user?.member?.profilePicture || '',
+    joiningDate: formData.joiningDate || user?.member?.createdAt || '',
   };
 
   useEffect(() => {
     if (user && !formData.firstName) {
-      updateFormData(initialFormValues);
+      updateFormData({
+        ...initialFormValues,
+        graduationYear: initialFormValues.graduationYear ? Number(initialFormValues.graduationYear) : null,
+      });
     }
   }, [user]);
 
   const handleSubmit = async (values: any, { setSubmitting }: FormikHelpers<any>) => {
     try {
       await validationSchema.validate(values, { abortEarly: false });
-  
       const formData = new FormData();
-  
-      // Append all fields
       Object.keys(values).forEach(key => {
-        if (key !== 'profilePicture' && values[key] !== undefined && values[key] !== null) {
+        if (key !== 'profilePicture' && values[key] !== undefined && values[key] !== null && values[key] !== '') {
           formData.append(key, values[key]);
         }
       });
-  
       if (values.profilePicture instanceof File) {
         formData.append('profilePicture', values.profilePicture);
       }
-  
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_BASE}/members/profileDetails`,
         formData,
@@ -226,16 +226,18 @@ export default function ProfileEditPage() {
           },
         }
       );
-  
-      console.log("Success:", response.data);
-      alert("Profile updated successfully!");
+      toast({ title: 'Profile updated successfully!', description: 'Your changes have been saved.' });
       resetForm();
+      // Refetch user data
+      await useUserStore.getState().initialize();
+      // Redirect to profile page
+      router.push('/main/profile');
     } catch (error) {
-      console.error("Submission failed:", error);
+      console.error('Submission failed:', error);
       if (axios.isAxiosError(error)) {
-        alert(`Error: ${error.response?.data?.message || error.message}`);
-      } else {
-        alert(`Error: ${error.message}`);
+        toast({ title: 'Error', description: error.response?.data?.message || error.message, variant: 'destructive' });
+      } else if (error instanceof Error) {
+        toast({ title: 'Error', description: error.message, variant: 'destructive' });
       }
     } finally {
       setSubmitting(false);
@@ -254,20 +256,12 @@ export default function ProfileEditPage() {
           'github',
           'gender',
         ]).validate(values, { abortEarly: false });
-      } else if (step === 2) {
-        await validationSchema.pick([
-          'telegramHandle',
-          'graduationYear',
-          'specialization',
-          'department',
-          'mentor',
-        ]).validate(values, { abortEarly: false });
+        setStep(step + 1);
       }
-      setStep(step + 1);
     } catch (error) {
       if (error instanceof Yup.ValidationError) {
         const errorMessages = error.inner.map(err => `${err.path}: ${err.message}`).join('\n');
-        alert(`Please fix the following errors:\n\n${errorMessages}`);
+        toast({ title: 'Validation Error', description: errorMessages, variant: 'destructive' });
       }
     }
   };
@@ -296,15 +290,6 @@ export default function ProfileEditPage() {
         >
           <FiInfo className={`w-6 h-6 ${step === 2 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-300'}`} />
           <span className="mt-2 text-sm font-medium">Optional Information</span>
-        </div>
-        <div 
-          className={`flex flex-col items-center cursor-pointer ${
-            step === 3 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-300'
-          }`}
-          onClick={() => setStep(3)}
-        >
-          <FiBook className={`w-6 h-6 ${step === 3 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 dark:text-gray-300'}`} />
-          <span className="mt-2 text-sm font-medium">Resources</span>
         </div>
       </div>
   
@@ -456,28 +441,28 @@ export default function ProfileEditPage() {
                 />
                 <Input
                   label="Instagram Handle"
-                  name="instagramHandle"
+                  name="instagram"
                   onChange={handleChange}
-                  value={values.instagramHandle || ''}
-                  error={touched.instagramHandle && errors.instagramHandle}
+                  value={values.instagram || ''}
+                  error={touched.instagram && errors.instagram}
                   className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                   placeholder="@username"
                 />
                 <Input
                   label="LinkedIn Account"
-                  name="linkedinHandle"
+                  name="linkedin"
                   onChange={handleChange}
-                  value={values.linkedinHandle || ''}
-                  error={touched.linkedinHandle && errors.linkedinHandle}
+                  value={values.linkedin || ''}
+                  error={touched.linkedin && errors.linkedin}
                   className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                   placeholder="https://linkedin.com/in/username"
                 />
                 <Input
                   label="Codeforces Handle"
-                  name="codeforcesHandle"
+                  name="codeforces"
                   onChange={handleChange}
-                  value={values.codeforcesHandle || ''}
-                  error={touched.codeforcesHandle && errors.codeforcesHandle}
+                  value={values.codeforces || ''}
+                  error={touched.codeforces && errors.codeforces}
                   className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                 />
                 <Input
@@ -491,10 +476,10 @@ export default function ProfileEditPage() {
                 />
                 <Input
                   label="Leetcode Handle"
-                  name="leetcodeHandle"
+                  name="leetcode"
                   onChange={handleChange}
-                  value={values.leetcodeHandle || ''}
-                  error={touched.leetcodeHandle && errors.leetcodeHandle}
+                  value={values.leetcode || ''}
+                  error={touched.leetcode && errors.leetcode}
                   className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                 />
                 <Input
@@ -532,71 +517,35 @@ export default function ProfileEditPage() {
               </div>
             )}
   
-            {step === 3 && (
-              <div className="grid grid-cols-2 gap-6 w-200">
-                {/* <div className="col-span-2">
-                  <div className="flex flex-col">
-                    <label className="block text-sm font-medium text-gray-500 dark:text-gray-300 mb-1">
-                      Resources
-                    </label>
-                    <textarea
-                      name="resources"
-                      onChange={handleChange}
-                      value={values.resources}
-                      className={`form-textarea mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 ${
-                        touched.resources && errors.resources ? 'border-red-500 dark:border-red-400' : ''
-                      }`}
-                      rows={6}
-                      placeholder="Add any resources or links you'd like to share (one per line)"
-                    />
-                    {touched.resources && errors.resources && (
-                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.resources}</p>
-                    )}
-                  </div>
-                </div> */}
-              </div>
-            )}
-  
-            <div className="flex justify-between mt-8">
-              <div>
-                {step > 1 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handlePrevious}
-                    className="px-6 py-2 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700"
-                  >
-                    Back
-                  </Button>
-                )}
-              </div>
-              <div className="flex gap-4">
+            <div className="mt-8 flex justify-end space-x-4">
+              {step === 2 && (
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={resetForm}
-                  className="px-6 py-2 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700"
+                  onClick={() => setStep(1)}
+                  className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                 >
-                  Reset Form
+                  Back
                 </Button>
-                {step <= 2 ? (
-                  <Button
-                    type="button" 
-                    onClick={() => handleNext(values)}
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white"
-                  >
-                    Next
-                  </Button>
-                ) : (
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white"
-                  >
-                    {isSubmitting ? 'Updating...' : 'Update Profile'}
-                  </Button>
-                )}
-              </div>
+              )}
+              {step === 1 ? (
+                <Button
+                  type="button"
+                  disabled={isSubmitting}
+                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
+                  onClick={() => handleNext(values)}
+                >
+                  Next
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
+                >
+                  Save Changes
+                </Button>
+              )}
             </div>
           </Form>
         )}

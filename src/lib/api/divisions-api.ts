@@ -98,10 +98,10 @@ export const divisionsApi = {
     }
   },
 
-  createDivision: async (payload: { name: string; head: string; email: string }) => {
+  createDivision: async (payload: { divisionName: string; headName: string; email: string }) => {
     try {
       await apiClient.post("/divisions/createDivision", payload);
-      return payload.name;
+      return payload.divisionName;
     } catch (error) {
       console.error("Error creating division:", error);
       throw error;
@@ -112,7 +112,7 @@ export const divisionsApi = {
     try {
       await apiClient.post("/groups/createGroup", {
         division: divisionName,
-        name: groupName
+        group: groupName
       });
       return groupName;
     } catch (error) {
@@ -121,13 +121,13 @@ export const divisionsApi = {
     }
   },
 
-  createMember: async (division: string, group: string, member: { email: string; password: string }) => {
+  createMember: async (division: string, group: string, member: { email: string; generatedPassword: string }) => {
     try {
       const response = await apiClient.post("/members/createMember", {
         division,
         group,
         email: member.email,
-        password: member.password,
+        generatedPassword: member.generatedPassword,
         role: "member"
       });
       return response.data;

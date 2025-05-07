@@ -1,4 +1,6 @@
 // components/profile/requiredinfo.tsx
+import { useSettingsStore } from '@/stores/settingsStore';
+
 interface RequiredInfoProps {
   member: {
     firstName: string;
@@ -15,6 +17,7 @@ interface RequiredInfoProps {
 }
 
 const RequiredInfo = ({ member }: RequiredInfoProps) => {
+  const { phonePublic } = useSettingsStore();
   const formatDate = (dateString: string) => {
     if (!dateString) return 'Not provided';
     return new Date(dateString).toLocaleDateString();
@@ -34,7 +37,9 @@ const RequiredInfo = ({ member }: RequiredInfoProps) => {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Mobile Number</label>
-          <p className="font-medium dark:text-gray-200">{member.phoneNumber}</p>
+          <p className="font-medium dark:text-gray-200">
+            {phonePublic ? member.phoneNumber : 'Private'}
+          </p>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Email Address</label>

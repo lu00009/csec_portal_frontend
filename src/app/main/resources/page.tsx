@@ -1,86 +1,84 @@
 "use client"
 
 import ResourceModal from "@/components/resources/ResourceModal"
-import { useResourceStore } from "@/stores/resourceStore"
+import Button from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Resource, useResourceStore } from "@/stores/resourceStore"
 import { useEffect, useState } from "react"
-import { FiChevronDown, FiChevronLeft, FiChevronRight, FiChevronUp, FiEdit, FiExternalLink, FiPlus, FiTrash2 } from "react-icons/fi"
-import { toast } from "react-toastify"
+import { FiChevronDown, FiChevronUp, FiEdit, FiExternalLink, FiPlus, FiTrash2 } from "react-icons/fi"
 
 export default function ResourcesPage() {
   const {
     resources,
     divisions,
+    isLoading,
     fetchResources,
+    fetchDivisions,
     addResource,
     updateResource,
-    deleteResource
+    deleteResource,
+    currentPage,
+    setCurrentPage,
+    itemsPerPage,
   } = useResourceStore()
 
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const resourcesPerPage = 10
-
-  // Initialize pagination state
-  const [currentPages, setCurrentPages] = useState<Record<string, number>>(
-    divisions.reduce((acc, division) => ({ ...acc, [division]: 1 }), {})
-  )
-
-  // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [currentResource, setCurrentResource] = useState<Resource | null>(null)
   const [currentDivision, setCurrentDivision] = useState<string | null>(null)
-  const [expandedDivisions, setExpandedDivisions] = useState<Record<string, boolean>>(
-    divisions.reduce((acc, division) => ({ ...acc, [division]: true }), {})
-  )
+  const [expandedDivisions, setExpandedDivisions] = useState<Record<string, boolean>>({})
+  const [totalPages, setTotalPages] = useState(1)
 
-  // Load data on mount
+  // Load data on mount and when currentPage changes
   useEffect(() => {
     const loadData = async () => {
       try {
-        setLoading(true)
         setError(null)
-        await fetchResources()
+        await Promise.all([fetchResources(), fetchDivisions()])
       } catch (err) {
         setError('Failed to load resources. Please try again later.')
         console.error("Error loading resources:", err)
-      } finally {
-        setLoading(false)
       }
     }
     loadData()
-  }, [fetchResources])
+  }, [fetchResources, fetchDivisions, currentPage])
+
+  // Keep divisionPages and expandedDivisions in sync with divisions
+  useEffect(() => {
+    if (divisions.length > 0) {
+      setExpandedDivisions(divisions.reduce((acc, division) => ({ ...acc, [division]: expandedDivisions[division] ?? true }), {}))
+    }
+  }, [divisions])
+
+  // Calculate total pages for global pagination
+  useEffect(() => {
+    // Assume all resources are fetched for the current page
+    // If you have totalCount from the backend, use it here
+    // For now, estimate based on resources length
+    const total = Math.ceil(resources.length / itemsPerPage) || 1
+    setTotalPages(total)
+  }, [resources, itemsPerPage])
 
   // Handle resource submission (add/update)
-  const handleSubmit = async (resourceData: Omit<Resource , '_id' | '__v'>) => {
+  const handleSubmit = async (resourceData: Omit<Resource, '_id' | '__v'>) => {
     try {
-
       if (currentResource) {
-
-        // Update existing resource
         await updateResource(currentResource._id, resourceData)
-        toast.success('Resource updated successfully!')
       } else {
-        // Add new resource
         await addResource(resourceData)
-        toast.success('Resource added successfully!')
       }
       closeModal()
     } catch (error) {
-      toast.error(`Failed to ${currentResource ? 'update' : 'add'} resource`)
       console.error('Submission error:', error)
-      console.log('Submitting resource:', resourceData)
-
     }
   }
 
   // Handle resource deletion
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this resource?')) {
+    if (window.confirm('Are you sure you want to delete this resource?')) {
       try {
         await deleteResource(id)
-        toast.success('Resource deleted successfully!')
       } catch (error) {
-        toast.error('Failed to delete resource')
         console.error('Deletion error:', error)
       }
     }
@@ -99,164 +97,136 @@ export default function ResourcesPage() {
     }))
   }
 
-  const goToPage = (division: string, page: number) => {
-    setCurrentPages(prev => ({
-      ...prev,
-      [division]: Math.max(1, Math.min(page, getTotalPages(division)))
-    }))
+  if (error) {
+    return (
+      <div className="container mx-auto py-6 px-4 md:px-6">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-600 dark:text-red-400">
+          {error}
+        </div>
+      </div>
+    )
   }
-
-  const getPaginatedResources = (division: string) => {
-    const divisionResources = resources.filter(r => r.division === division)
-    const currentPage = currentPages[division] || 1
-    const startIndex = (currentPage - 1) * resourcesPerPage
-    return divisionResources.slice(startIndex, startIndex + resourcesPerPage)
-  }
-
-  const getTotalPages = (division: string) => {
-    const divisionResources = resources.filter(r => r.division === division)
-    return Math.ceil(divisionResources.length / resourcesPerPage)
-  }
-
-  if (loading) return <div className="container mx-auto py-6 px-4 md:px-6">Loading resources...</div>
-  if (error) return <div className="container mx-auto py-6 px-4 md:px-6 text-red-500">{error}</div>
 
   return (
     <div className="container mx-auto py-6 px-4 md:px-6 space-y-8 dark:bg-gray-900 dark:text-white">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold dark:text-gray-100">Resources</h1>
-        <button
+        <Button
           onClick={() => {
             setCurrentResource(null)
             setCurrentDivision(divisions[0] || null)
             setIsModalOpen(true)
           }}
-          className="flex items-center bg-blue-800 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
+          className="bg-blue-800 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
+          disabled={isLoading || divisions.length === 0}
         >
           <FiPlus className="mr-2" />
           Add Resource
-        </button>
+        </Button>
       </div>
 
-      {divisions.map((division) => {
-        const currentPage = currentPages[division] || 1
-        const totalPages = getTotalPages(division)
-        const paginatedResources = getPaginatedResources(division)
-        const totalResources = resources.filter(r => r.division === division).length
-
-        return (
-          <div key={division} className="border rounded-lg shadow-sm bg-white dark:bg-gray-800 dark:border-gray-700 overflow-hidden">
-            <div className="p-4 md:p-6">
-              <h2 className="text-xl font-bold dark:text-gray-200">{division}</h2>
-              <p className="text-gray-500 dark:text-gray-400 mt-1">
-                Showing {(currentPage - 1) * resourcesPerPage + 1}-{Math.min(currentPage * resourcesPerPage, totalResources)} of {totalResources} resources
-              </p>
+      {isLoading ? (
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="border rounded-lg shadow-sm bg-white dark:bg-gray-800 dark:border-gray-700 p-4">
+              <Skeleton className="h-8 w-1/4 mb-4" />
+              <Skeleton className="h-24 w-full" />
             </div>
+          ))}
+        </div>
+      ) : divisions.length === 0 ? (
+        <div className="text-center py-12">
+          <h3 className="text-lg font-medium dark:text-gray-200">No divisions found</h3>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">
+            Please add a division first before adding resources.
+          </p>
+        </div>
+      ) : (
+        divisions.map((division) => {
+          const totalDivisionResources = resources.filter(r => r.division === division).length
 
-            <div className="px-4 md:px-6 pb-4 md:pb-6">
-              <button
-                onClick={() => toggleDivision(division)}
-                className="flex w-full justify-between items-center py-2 font-medium dark:text-gray-200"
-              >
-                <span>{division} Resources</span>
-                {expandedDivisions[division] ? (
-                  <FiChevronUp className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                ) : (
-                  <FiChevronDown className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                )}
-              </button>
+          return (
+            <div key={division} className="border rounded-lg shadow-sm bg-white dark:bg-gray-800 dark:border-gray-700 overflow-hidden">
+              <div className="p-4 md:p-6">
+                <h2 className="text-xl font-bold dark:text-gray-200">{division}</h2>
+                <p className="text-gray-500 dark:text-gray-400 mt-1">
+                  Showing {totalDivisionResources} resources
+                </p>
+              </div>
 
-              {expandedDivisions[division] && (
-                <div className="space-y-4 mt-2">
-                  {paginatedResources.map(resource => (
-                    <div key={resource._id} className="flex items-start justify-between p-4 border rounded-md dark:bg-gray-700 dark:border-gray-600">
-                      <div className="flex items-start space-x-3">
-                        <FiExternalLink className="h-5 w-5 mt-1 flex-shrink-0 text-gray-500 dark:text-gray-400" />
-                        <div>
-                          <h3 className="font-medium dark:text-gray-200">{resource.resourceName}</h3>
-                          <a
-                            href={resource.resourceLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 break-all"
+              <div className="px-4 md:px-6 pb-4 md:pb-6">
+                <button
+                  onClick={() => toggleDivision(division)}
+                  className="flex w-full justify-between items-center py-2 font-medium dark:text-gray-200"
+                >
+                  <span>{division} Resources</span>
+                  {expandedDivisions[division] ? (
+                    <FiChevronUp className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                  ) : (
+                    <FiChevronDown className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                  )}
+                </button>
+
+                {expandedDivisions[division] && (
+                  <div className="space-y-4 mt-2">
+                    {resources.filter(r => r.division === division).map(resource => (
+                      <div key={resource._id} className="flex items-start justify-between p-4 border rounded-md dark:bg-gray-700 dark:border-gray-600">
+                        <div className="flex items-start space-x-3">
+                          <FiExternalLink className="h-5 w-5 mt-1 flex-shrink-0 text-gray-500 dark:text-gray-400" />
+                          <div>
+                            <h3 className="font-medium dark:text-gray-200">{resource.resourceName}</h3>
+                            <a
+                              href={resource.resourceLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 break-all"
+                            >
+                              {resource.resourceLink}
+                            </a>
+                          </div>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setCurrentResource(resource)
+                              setIsModalOpen(true)
+                            }}
+                            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                           >
-                            {resource.resourceLink}
-                          </a>
+                            <FiEdit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(resource._id)}
+                            className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                          >
+                            <FiTrash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => {
-                            setCurrentResource(resource)
-                            setIsModalOpen(true)
-                          }}
-                          className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                        >
-                          <FiEdit className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(resource._id)}
-                          className="p-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 rounded-full hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
-                        >
-                          <FiTrash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
 
-                  {paginatedResources.length === 0 && (
-                    <div className="text-center py-4 text-gray-500 dark:text-gray-400">No resources found</div>
-                  )}
-
-                  {totalPages > 1 && (
-                    <div className="flex justify-between items-center mt-4">
-                      <button
-                        onClick={() => goToPage(division, currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className="flex items-center px-3 py-1 border rounded-md dark:border-gray-600 dark:text-gray-300 disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                      >
-                        <FiChevronLeft className="mr-1" />
-                        Previous
-                      </button>
-                      <span className="text-sm dark:text-gray-400">
-                        Page {currentPage} of {totalPages}
-                      </span>
-                      <button
-                        onClick={() => goToPage(division, currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className="flex items-center px-3 py-1 border rounded-md dark:border-gray-600 dark:text-gray-300 disabled:opacity-50 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                      >
-                        Next
-                        <FiChevronRight className="ml-1" />
-                      </button>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={() => {
-                      setCurrentResource(null)
-                      setCurrentDivision(division)
-                      setIsModalOpen(true)
-                    }}
-                    className="w-full mt-4 flex items-center justify-center py-2 px-4 border border-gray-300 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 dark:text-gray-200 transition-colors"
-                  >
-                    <FiPlus className="mr-2" />
-                    Add Resource to {division}
-                  </button>
-                </div>
-              )}
+                    {resources.filter(r => r.division === division).length === 0 && (
+                      <div className="text-center py-4 text-gray-500 dark:text-gray-400">No resources found</div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )
-      })}
+          )
+        })
+      )}
 
       <ResourceModal
         isOpen={isModalOpen}
         onClose={closeModal}
         onSubmit={handleSubmit}
-        resource={currentResource}
-        division={currentDivision}
         divisions={divisions}
+        currentResource={currentResource}
+        currentDivision={currentDivision}
       />
     </div>
   )

@@ -60,11 +60,13 @@ const protectedRoutes = {
 
 // Map of division presidents to their respective divisions
 const divisionPresidentMap = {
-  'Competitive Programming Division President': 'CPD',
-  'Development Division President': 'Dev',
-  'Capacity Building Division President': 'CBD',
-  'Cybersecurity Division President': 'SEC',
-  'Data Science Division President': 'DS',
+  'Competitive Programming Division President': 'Competitive Programming Division',
+  'Development Division President': 'Development Division',
+  'Capacity Building Division President': 'Capacity Building Division',
+  'Cybersecurity Division President': 'Cybersecurity Division',
+  'Data Science Division President': 'Data Science Division',
+
+  
 };
 
 export async function middleware(request: NextRequest) {
@@ -84,11 +86,11 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/admin/:path*',
-    '/cpd/:path*',
-    '/dev/:path*',
-    '/cbd/:path*',
-    '/sec/:path*',
-    '/ds/:path*',
+    '/Competitive Programming Division /:path*',
+    '/Development Division/:path*',
+    '/Capacity Building Division/:path*',
+    '/Cybersecurity Division/:path*',
+    '/Data Science Division/:path*',
     '/attendance/:path*',
     '/sessions/:path*',
     '/events/:path*',

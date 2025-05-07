@@ -1,47 +1,40 @@
 'use client';
 
+import { Resource } from '@/types/resource';
 import { useFormik } from 'formik';
 import { FiX } from 'react-icons/fi';
 import * as Yup from 'yup';
-
-// Define Resource type
-type Resource = {
-  resourceName: string;
-  resourceLink: string;
-  division: string;
-};
 
 // Props for ResourceModal component
 type ResourceModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: Resource) => void;
-  resource: Resource | null;
-  division: string | null;
+  onSubmit: (data: Omit<Resource, '_id' | '__v'>) => void;
+  currentResource: Resource | null;
+  currentDivision: string | null;
   divisions: string[];
 };
 
-// Define validation schema (optional, as per your latest request)
+// Define validation schema
 const validationSchema = Yup.object({
   resourceName: Yup.string().required('Resource name is required'),
   resourceLink: Yup.string().url('Enter a valid URL').required('Resource link is required'),
   division: Yup.string().required('Division is required'),
 });
 
-const ResourceModal = ({ isOpen, onClose, onSubmit, resource, division, divisions }: ResourceModalProps) => {
-  // Initialize Formik with validation turned off
+const ResourceModal = ({ isOpen, onClose, onSubmit, currentResource, currentDivision, divisions }: ResourceModalProps) => {
+  // Initialize Formik with validation
   const formik = useFormik({
     initialValues: {
-      resourceName: resource?.resourceName || '',
-      resourceLink: resource?.resourceLink || '',
-      division: resource?.division || division || '',
+      resourceName: currentResource?.resourceName || '',
+      resourceLink: currentResource?.resourceLink || '',
+      division: currentResource?.division || currentDivision || '',
     },
     enableReinitialize: true,
     validationSchema,  
     onSubmit: (values) => {
-      console.log('Submitting resource:', values); // Log values before submission for debugging
       onSubmit(values);
-      onClose(); // Close modal after submitting
+      onClose();
     },
   });
 
@@ -53,7 +46,7 @@ const ResourceModal = ({ isOpen, onClose, onSubmit, resource, division, division
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm dark:bg-black/50"></div>
       <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md z-10 transition-colors">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold dark:text-white">{resource ? 'Edit Resource' : 'Add Resource'}</h2>
+          <h2 className="text-xl font-bold dark:text-white">{currentResource ? 'Edit Resource' : 'Add Resource'}</h2>
           <button 
             onClick={onClose} 
             className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 transition-colors"
@@ -122,7 +115,7 @@ const ResourceModal = ({ isOpen, onClose, onSubmit, resource, division, division
               type="submit" 
               className="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
             >
-              {resource ? 'Update' : 'Add'}
+              {currentResource ? 'Update' : 'Add'}
             </button>
           </div>
         </form>

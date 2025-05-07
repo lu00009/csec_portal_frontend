@@ -11,6 +11,7 @@ import Input from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/components/ui/use-toast";
 import useMembersStore from "@/stores/membersStore";
+import { useUserStore } from "@/stores/userStore";
 import type { Member } from "@/types/member";
 import { ChevronLeft, ChevronRight, Filter, Search, Trash2, User } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -50,6 +51,8 @@ export default function MembersPage() {
   } = useMembersStore();
 
   const totalPages = Math.ceil(totalMembers / itemsPerPage);
+
+  const userStore = useUserStore();
 
   useEffect(() => {
     fetchMembers({
@@ -104,6 +107,13 @@ export default function MembersPage() {
   const handleAddMember = async (memberData: Omit<Member, "_id" | "createdAt">) => {
     try {
       await addMember(memberData);
+      // Refresh the members list
+      await fetchMembers({
+        search: searchQuery,
+        ...filterOptions,
+        page: currentPage,
+        limit: itemsPerPage,
+      });
       setIsAddDialogOpen(false);
       toast({
         title: "Success",
@@ -118,7 +128,22 @@ export default function MembersPage() {
     }
   };
   const router = useRouter();
-  const handleProfileClick = (memberId: string) => {
+  const handleProfileClick = async (memberId: string) => {
+    // Update lastSeen for the clicked member
+    if (memberId !== userStore.user?.member?._id) {
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/members/${memberId}/lastSeen`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userStore.token}`,
+          },
+          body: JSON.stringify({ lastSeen: new Date().toISOString() }),
+        });
+      } catch (error) {
+        console.error('Failed to update last seen:', error);
+      }
+    }
     router.push(`/main/members/${memberId}`);
   };
   const handleDeleteMember = async () => {
@@ -126,6 +151,13 @@ export default function MembersPage() {
 
     try {
       await deleteMember(selectedMember._id);
+      // Refresh the members list
+      await fetchMembers({
+        search: searchQuery,
+        ...filterOptions,
+        page: currentPage,
+        limit: itemsPerPage,
+      });
       setIsDeleteDialogOpen(false);
       setSelectedMember(null);
       toast({
@@ -148,7 +180,10 @@ export default function MembersPage() {
         <div className="flex items-center space-x-2">
           {canAddMember() && (
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                <MemberForm onSubmit={handleAddMember} />
+                <MemberForm 
+                  onSubmit={handleAddMember} 
+                  onClose={() => setIsAddDialogOpen(false)}
+                />
             </Dialog>
           )}
         </div>
@@ -257,10 +292,18 @@ export default function MembersPage() {
                     <TableCell className="font-medium flex items-center gap-2 dark:text-white">
                       <Avatar>
                         <AvatarImage 
-                          src={member.url || `https://robohash.org/${member._id}?set=set3`} 
+                          src={member.profilePicture ? 
+                            (member.profilePicture.startsWith('https://res.cloudinary.com') ? 
+                              member.profilePicture : 
+                              `https://res.cloudinary.com/dqgzhdegr/image/upload/${member.profilePicture}`)
+                            : `https://robohash.org/${member._id}?set=set3`}
                           alt={member.firstName || 'Member'} 
                           onClick={() => handleProfileClick(member._id)}
                           className="cursor-pointer"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = `https://robohash.org/${member._id}?set=set3`;
+                          }}
                         />
                         <AvatarFallback className="dark:bg-gray-700 dark:text-white">
                           {getInitials(member.firstName)}

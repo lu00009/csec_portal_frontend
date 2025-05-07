@@ -1,21 +1,30 @@
 'use client';
 
-import { useAttendanceStore } from '@/stores/profileAttendancsStore';
+import { useProfileAttendanceStore } from '@/stores/profileAttendanceStore';
 import React, { useEffect } from 'react';
 
 type AttendanceProps = {
   id: string;
 };
 
+type RecordItem = {
+  _id: string;
+  date: string;
+  status: 'Present' | 'Absent' | 'Excused';
+  sessionTitle: string;
+  startTime: string;
+  endTime: string;
+};
+
 const Attendance: React.FC<AttendanceProps> = ({ id }) => {
-  const { records, loading, fetchRecords } = useAttendanceStore();
+  const { records, loading, fetchRecords } = useProfileAttendanceStore();
 
   useEffect(() => {
     if (id) fetchRecords(id);
   }, [id, fetchRecords]);
 
   const uniqueRecords = records.filter(
-    (record, index, self) => index === self.findIndex((r) => r._id === record._id)
+    (record: RecordItem, index: number, self: RecordItem[]) => index === self.findIndex((r) => r._id === record._id)
   );
 
   const formatDate = (dateString: string) => {
@@ -47,7 +56,7 @@ const Attendance: React.FC<AttendanceProps> = ({ id }) => {
           </tr>
         </thead>
         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-          {uniqueRecords.map((record) => (
+          {uniqueRecords.map((record: RecordItem) => (
             <tr key={record._id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                 {formatDate(record.date)}

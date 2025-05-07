@@ -44,6 +44,7 @@ interface DivisionsState {
   itemsPerPage: number;
   showAddGroupDialog: boolean;
   showAddMemberDialog: boolean;
+  groupMembers: { [division: string]: { [group: string]: Member[] } };
 
   setShowAddGroupDialog: (show: boolean) => void;
   setShowAddMemberDialog: (show: boolean) => void;
@@ -58,14 +59,13 @@ interface DivisionsState {
     group: string,
     filters?: {
       search?: string;
-            page?: number;
+      page?: number;
       limit?: number;
       status?: string;
     }
   ) => Promise<void>;
-
-    addMember: (division: string, group: string, member: { email: string; password: string }) => Promise<void>;
-  }
+  addMember: (division: string, group: string, member: { email: string; password: string }) => Promise<void>;
+}
 
 export const useDivisionsStore = create<DivisionsState>((set, get) => ({
   divisions: [],
@@ -76,13 +76,14 @@ export const useDivisionsStore = create<DivisionsState>((set, get) => ({
   showAddMemberDialog: false,
   currentDivision: null,
   currentDivisionGroups: [],
-members: [],
+  members: [],
   totalMembers: 0,
   isLoadingGroups: false,
   groupsError: null,
   searchTerm: '',
   currentPage: 1,
   itemsPerPage: 10,
+  groupMembers: {},
   
   setShowAddGroupDialog: (show) => set({ showAddGroupDialog: show }),
   setShowAddMemberDialog: (show) => set({ showAddMemberDialog: show }),
@@ -136,7 +137,11 @@ members: [],
 
   addDivision: async (payload) => {
     try {
-      const newDivisionName = await divisionsApi.createDivision(payload);
+      const newDivisionName = await divisionsApi.createDivision({
+        divisionName: payload.name,
+        headName: payload.head,
+        email: payload.email
+      });
       set((state) => ({
         divisions: [...state.divisions, {
           name: newDivisionName,
@@ -211,13 +216,20 @@ members: [],
         profilePicture: member.profilePicture,
         group: group // Add group information to each member
       }));
-      
+      // Store per group
       set((state) => ({
-        members: [...state.members.filter(m => m.group !== group), ...membersWithDefaults],
+        groupMembers: {
+          ...state.groupMembers,
+          [division]: {
+            ...(state.groupMembers[division] || {}),
+            [group]: membersWithDefaults
+          }
+        },
+        // Also update the flat members array for current view
+        members: membersWithDefaults,
         totalMembers: response.totalGroupMembers || 0,
         currentPage: filters.page || 1,
       }));
-
       // Update the division's group member count in the store
       set((state) => ({
         divisions: state.divisions.map(div => 
@@ -246,7 +258,10 @@ members: [],
 
   addMember: async (division, group, member) => {
     try {
-      await divisionsApi.createMember(division, group, member);
+      await divisionsApi.createMember(division, group, {
+        email: member.email,
+        generatedPassword: member.password
+      });
       set((state) => ({
         members: [...state.members, {
           _id: Date.now().toString(),
@@ -258,7 +273,7 @@ members: [],
           membershipStatus: 'active'
         }]
       }));
-console.log("Updated members:", get().members);
+      console.log("Updated members:", get().members);
     } catch (error) {
       throw error;
     }

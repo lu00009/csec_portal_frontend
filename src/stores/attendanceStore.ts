@@ -22,6 +22,7 @@ interface AttendanceState {
   totalSessions: number;
   currentPage: number;
   itemsPerPage: number;
+  attendanceTakenSessions: string[];
 
   // Actions
   fetchSessions: (page?: number, limit?: number) => Promise<void>;
@@ -32,7 +33,7 @@ interface AttendanceState {
   updateMemberAttendance: (memberId: string, status: "present" | "absent" | "excused") => void;
   updateMemberExcused: (memberId: string, excused: boolean) => void;
   addHeadsUpNote: (memberId: string, note: string) => void;
-  saveAttendance: (sessionId: string) => Promise<void>;
+  saveAttendance: (sessionId: string) => Promise<{ status: string; error?: string }>;
   setSelectedMember: (memberId: string | null) => void;
   clearError: () => void;
   clearSuccess: () => void;
@@ -54,6 +55,7 @@ export const useAttendanceStore = create<AttendanceState>()(
         totalSessions: 0,
         currentPage: 1,
         itemsPerPage: 4,
+        attendanceTakenSessions: [],
 
         fetchSessions: async (page = get().currentPage, limit = get().itemsPerPage) => {
           set({ isLoading: true, error: null });
@@ -168,9 +170,24 @@ export const useAttendanceStore = create<AttendanceState>()(
         saveAttendance: async (sessionId) => {
           set({ isLoading: true, error: null, success: null });
           try {
-            const { members } = get();
+            const { members, attendanceTakenSessions, sessions } = get();
+            // Prevent duplicate attendance
+            if (attendanceTakenSessions.includes(sessionId)) {
+              set({ isLoading: false });
+              return { status: 'already_taken' };
+            }
+            // Find session and check if it's ongoing
+            const session = sessions.find(s => s._id === sessionId);
+            if (!session) {
+              set({ isLoading: false });
+              return { status: 'invalid_session' };
+            }
+            // Only allow if session is ongoing
+            if (session.status.toLowerCase() !== 'ongoing') {
+              set({ isLoading: false });
+              return { status: 'not_allowed' };
+            }
             const membersWithAttendance = members.filter((member) => member.attendance !== null);
-
             const payload = {
               sessionId,
               records: membersWithAttendance.map((member) => ({
@@ -180,14 +197,19 @@ export const useAttendanceStore = create<AttendanceState>()(
                 ...(member.headsUpNote && { headsUp: member.headsUpNote })
               })),
             };
-
             await apiSubmitAttendance(payload);
-            set({ isLoading: false, success: "Attendance saved successfully!" });
+            set(state => ({
+              isLoading: false,
+              success: 'Attendance saved successfully!',
+              attendanceTakenSessions: [...state.attendanceTakenSessions, sessionId],
+            }));
+            return { status: 'success' };
           } catch (error) {
             set({
-              error: error instanceof Error ? error.message : "Failed to save attendance",
+              error: error instanceof Error ? error.message : 'Failed to save attendance',
               isLoading: false,
             });
+            return { status: 'error', error };
           }
         },
 

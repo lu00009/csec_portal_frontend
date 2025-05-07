@@ -1,4 +1,7 @@
+import Button from '@/components/ui/button';
 import { calculateStatus, getTimeLeft, Status } from '@/utils/date';
+import { format, parse } from 'date-fns';
+import { useRouter } from 'next/navigation';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 
 type SessionItemProps = {
@@ -12,28 +15,58 @@ type SessionItemProps = {
     venue: string;
     groups?: string[];
     id: string;
+    _id?: string;
     date: string;
   };
   onEdit: (item: SessionItemProps['item']) => void;
   onDelete: (id: string) => void;
+  allowAttendance?: boolean;
 };
 
-const SessionItem = ({ item, onEdit, onDelete }: SessionItemProps) => {
-  // Calculate status based on current time
-  const status = calculateStatus(item.startDate, item.endDate) as keyof typeof statusColors;
-  const timeRemaining = getTimeLeft(item.startDate, item.endDate);
+// Helper to parse both 'YYYY-MM-DD' and 'YY/MM/DD'
+const parseFlexibleDate = (dateString: string | undefined) => {
+  if (!dateString) return null;
+  let parsed: Date | null = null;
+  try {
+    parsed = parse(dateString, 'yyyy-MM-dd', new Date());
+    if (isNaN(parsed.getTime())) {
+      parsed = parse(dateString, 'yy/MM/dd', new Date());
+    }
+  } catch {
+    parsed = null;
+  }
+  return parsed && !isNaN(parsed.getTime()) ? parsed : null;
+};
+
+const SessionItem = ({ item, onEdit, onDelete, allowAttendance }: SessionItemProps) => {
+  const router = useRouter();
   
+  // Calculate status and time using parsed dates
+  const start = parseFlexibleDate(item.startDate);
+  const end = parseFlexibleDate(item.endDate);
+  const status = calculateStatus(start, end) as keyof typeof statusColors;
+  const timeRemaining = getTimeLeft(start, end);
+  
+  const handleAttendanceClick = () => {
+    const sessionId = item._id || item.id;
+    if (sessionId) {
+      router.push(`/main/attendance/${sessionId}`);
+    }
+  };
+
   const statusColors = {
     planned: 'bg-yellow-50 text-yellow-400',
     ongoing: 'bg-blue-50 text-blue-400',
     ended: 'bg-red-50 text-red-400'
   };
   const statusColorsDark = {
-    active: 'bg-green-900 text-green-100',
-    upcoming: 'bg-blue-900 text-blue-100',
+    planned: 'bg-blue-900 text-blue-100',
+    ongoing: 'bg-green-900 text-green-100',
     ended: 'bg-gray-700 text-gray-200',
-    // ... other status variants
   };
+
+  // Only show attendance button for ongoing sessions
+  const showAttendanceButton = status === 'ongoing' && (typeof allowAttendance === 'undefined' || allowAttendance);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6 dark:shadow-lg dark:border dark:border-gray-700">
@@ -50,7 +83,9 @@ const SessionItem = ({ item, onEdit, onDelete }: SessionItemProps) => {
             </div>
           </div>
           <p className="font-medium mt-2 text-gray-800 dark:text-gray-100">{item.sessionTitle}</p>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{item.date}</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{
+            start ? format(start, 'MMM d, yyyy') : 'Date not specified'
+          }</p>
           <div className="mt-2">
             <span className={`text-xs px-2 py-1 rounded ${
               item.visibility === 'public' 
@@ -88,11 +123,19 @@ const SessionItem = ({ item, onEdit, onDelete }: SessionItemProps) => {
             <FiEdit2 size={18} />
           </button>
           <button 
-            onClick={() => onDelete(item.id)}
+            onClick={() => onDelete(item._id || item.id)}
             className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200"
           >
             <FiTrash2 size={18} />
           </button>
+          {showAttendanceButton && (
+            <Button 
+              className="bg-blue-700 hover:bg-blue-800 text-white" 
+              onClick={handleAttendanceClick}
+            >
+              Attendance
+            </Button>
+          )}
         </div>
       </div>
     </div>

@@ -5,7 +5,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import Input from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useDivisionsStore } from "@/stores/DivisionStore"
-import { useState } from "react"
+import useMembersStore from "@/stores/membersStore"
+import { useEffect, useState } from "react"
 
 interface AddDivisionDialogProps {
   open: boolean
@@ -18,6 +19,11 @@ export function AddDivisionDialog({ open, onOpenChange }: AddDivisionDialogProps
   const [email, setEmail] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { addDivision } = useDivisionsStore()
+  const { members, fetchMembers, loading: membersLoading } = useMembersStore()
+
+  useEffect(() => {
+    fetchMembers()
+  }, [fetchMembers])
 
   const handleSubmit = async () => {
     if (!name || !head || !email) return
@@ -63,14 +69,24 @@ export function AddDivisionDialog({ open, onOpenChange }: AddDivisionDialogProps
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="division-head">Add Head</Label>
-            <Input
-              id="head"
-              type="head"
+            <Label htmlFor="division-head">Division Head</Label>
+            <select
+              id="division-head"
               value={head}
               onChange={(e) => setHead(e.target.value)}
-              placeholder="Head Name"
-            />
+              className="border rounded px-2 py-1"
+              disabled={membersLoading}
+            >
+              <option value="">Select Head</option>
+              {Array.isArray(members) && members.map((m) => {
+                if (!m || !m.member) return null;
+                return (
+                  <option key={m.member._id} value={`${m.member.firstName} ${m.member.lastName}`.trim()}>
+                    {m.member.firstName} {m.member.lastName} ({m.member.email})
+                  </option>
+                );
+              })}
+            </select>
           </div>
         </div>
         <DialogFooter>

@@ -4,7 +4,7 @@ import { immer } from 'zustand/middleware/immer';
 
 
 interface FormData {
-  // profilePicture: File | string | null;
+  profilePicture: File | string | null;
   firstName: string;
   lastName: string;
   phoneNumber: string;
@@ -60,7 +60,7 @@ const initialState: FormData = {
   instagram: "",
   joiningDate: "",
   resources: [],
-  // profilePicture: 'http://csec-portal-backend-1.onrender.com/uploads/1745141572956-684074600.png',
+  profilePicture: null,
 };
 
 const useFormStore = create<FormState>()(
@@ -72,7 +72,7 @@ const useFormStore = create<FormState>()(
       set((state) => {
         Object.assign(state.formData, data);
       }),
-    resetForm: () => set({ formData: { ...initialState }, step: 1 }),
+    resetForm: () => set((state) => ({ formData: { ...initialState } })),
     setProfilePicture: (file) =>
       set((state) => {
         state.formData.profilePicture = file;

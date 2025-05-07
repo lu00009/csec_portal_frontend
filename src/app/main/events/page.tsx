@@ -10,7 +10,7 @@ import SessionsTable from '@/components/sessions&events/SessionsTable';
 import ViewToggle from '@/components/sessions&events/ViewToggle';
 import { useSessionEventStore } from '@/stores/sessionEventstore';
 import { Event, Session } from '@/types/eventSession';
-import { formatDisplayDate } from '@/utils/date';
+import { calculateStatus, formatDisplayDate } from '@/utils/date';
 import { useEffect, useState } from 'react';
 import { FiArrowLeft, FiChevronDown, FiPlus } from 'react-icons/fi';
 
@@ -28,6 +28,8 @@ const SessionsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [navigationStack, setNavigationStack] = useState<NavigationState[]>([]);
   const [currentStackIndex, setCurrentStackIndex] = useState(-1);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const itemsPerPage = 8;
 
@@ -83,7 +85,26 @@ const SessionsPage = () => {
     }
   }, [contentType, currentPage]);
 
-  const items: (Session | Event)[] = contentType === 'sessions' ? sessions : events;
+  const mappedSessions = sessions.map((s) => ({
+    ...s,
+    id: s._id || s.id,
+    _id: s._id || s.id,
+    date: s.startDate ? formatDisplayDate(s.startDate) : 'Date not specified',
+    venue: (s as any).venue || 'N/A',
+    visibility: (s as any).visibility || 'public',
+    status: calculateStatus(s.startDate, s.endDate),
+  }));
+  const mappedEvents = events.map((e) => ({
+    ...e,
+    id: e._id || e.id,
+    _id: e._id || e.id,
+    date: e.eventDate ? formatDisplayDate(e.eventDate) : 'Date not specified',
+    venue: (e as any).venue || 'N/A',
+    visibility: (e as any).visibility || 'public',
+    status: calculateStatus(e.eventDate, e.eventDate),
+  }));
+
+  const items: (Session | Event)[] = contentType === 'sessions' ? mappedSessions : mappedEvents;
   const totalCount = contentType === 'sessions' ? sessionsTotalCount : eventsTotalCount;
   const totalPages = Math.ceil((typeof totalCount === 'number' ? totalCount : 0) / itemsPerPage);
 
@@ -97,15 +118,26 @@ const SessionsPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this item?')) {
-      if (contentType === 'sessions') {
-        await deleteSession(id);
-        await fetchSessions(currentPage, itemsPerPage);
-      } else {
-        await deleteEvent(id);
-        await fetchEvents(currentPage, itemsPerPage);
-      }
+    setDeleteId(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    if (contentType === 'sessions') {
+      await deleteSession(deleteId);
+      await fetchSessions(currentPage, itemsPerPage);
+    } else {
+      await deleteEvent(deleteId);
+      await fetchEvents(currentPage, itemsPerPage);
     }
+    setShowDeleteModal(false);
+    setDeleteId(null);
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setDeleteId(null);
   };
 
   const handleEdit = (item: Session | Event) => {
@@ -215,8 +247,9 @@ const SessionsPage = () => {
                   item={item}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
-                  date={formatDisplayDate(item.startDate)}
+                  date={item.date}
                   className="dark:bg-gray-800 dark:hover:bg-gray-700"
+                  allowAttendance={item.status === 'ongoing'}
                 />
               ) : (
                 <EventItem
@@ -287,6 +320,31 @@ const SessionsPage = () => {
         overlayClassName="dark:bg-gray-900/80"
         contentClassName="dark:bg-gray-800"
       />
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm dark:bg-black/50"></div>
+          <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md z-10">
+            <h2 className="text-xl font-bold mb-4 dark:text-white">Confirm Deletion</h2>
+            <p className="mb-6 dark:text-gray-200">Are you sure you want to delete this item?</p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={cancelDelete}
+                className="px-4 py-2 border rounded dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

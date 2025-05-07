@@ -1,5 +1,7 @@
 'use client';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAttendanceStore } from '@/stores/progressStore';
+import { AlertCircle } from "lucide-react";
 import { useEffect } from 'react';
 
 interface AttendanceProgressProps {
@@ -7,44 +9,51 @@ interface AttendanceProgressProps {
 }
 
 export default function AttendanceProgress({ id }: AttendanceProgressProps) {
-  const { attendanceData, loading, fetchAttendanceData } = useAttendanceStore();
+  const { attendanceData, loading, error, fetchAttendanceData } = useAttendanceStore();
 
   useEffect(() => {
-    console.log('AttendanceProgress component mounted with id:', id);
-    if (id) {
-      fetchAttendanceData(id);
-    }
+    if (id) fetchAttendanceData(id);
   }, [id, fetchAttendanceData]);
 
   if (loading) {
     return <div className='w-160'>Loading attendance data...</div>;
   }
 
+  if (error) {
+    return (
+      <Alert variant="destructive" className="w-160">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
   const overallPercentage = attendanceData
     ? Math.round(((attendanceData?.lastWeek || 0) + (attendanceData?.lastMonth || 0)) / 2)
     : 75;
 
-  const presentPercentage = attendanceData?.overall?.percentage || 0;
+  const presentPercentage = attendanceData?.overall || 0;
   const absentPercentage = 100 - presentPercentage;
 
-  const progressData = [
+  const progressData = attendanceData?.progressData || [
     {
       label: 'Heads Up',
-      percent: attendanceData?.overall?.headsUp?.percentage || 50,
+      percent: 50,
       color: '#003087',
-      par: `${attendanceData?.overall?.headsUp?.count || 1} notifications`,
+      par: `1 notifications`,
     },
     {
       label: 'Present',
       percent: presentPercentage,
       color: '#003087',
-      par: `${attendanceData?.overall?.present || 0}/${attendanceData?.overall?.total || 2} sessions`,
+      par: `0/2 sessions`,
     },
     {
       label: 'Absent',
       percent: absentPercentage,
       color: '#003087',
-      par: `${(attendanceData?.overall?.total || 2) - (attendanceData?.overall?.present || 0)} sessions`,
+      par: `2 sessions`,
     },
   ];
 

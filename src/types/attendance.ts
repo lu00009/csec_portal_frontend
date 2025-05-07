@@ -24,7 +24,7 @@ export interface Member {
   lastName?: string;
   division: string;
   group: string;
-  attendance?: "present" | "absent" | null;
+  attendance?: "Present" | "Absent" | "Excused" | null;
   excused?: boolean;
   headsUpNote?: string;
 }
@@ -63,8 +63,10 @@ export interface MemberAttendanceRecords {
 // Submission used when updating attendance
 export interface AttendanceSubmission {
   sessionId: string;
-  memberId: string;
-  status: "present" | "absent" | "excused";
-  excused: boolean;
-  headsUp?: string;
+  records: {
+    memberId: string;
+    status: "Present" | "Absent" | "Excused";
+    excused: boolean;
+    headsUp?: string;
+  }[];
 }

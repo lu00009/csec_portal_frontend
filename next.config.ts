@@ -7,7 +7,31 @@ const nextConfig: NextConfig = {
     domains: [
       "robohash.org", 
       "csec-portal-backend-1.onrender.com",
-      "res.cloudinary.com"
+      "res.cloudinary.com",
+      "localhost"
+    ],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'robohash.org',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'csec-portal-backend-1.onrender.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '5000',
+        pathname: '/uploads/**',
+      }
     ]
   },
   webpack: (config, { isServer }) => {

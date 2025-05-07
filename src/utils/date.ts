@@ -10,8 +10,13 @@ export const calculateStatus = (
 
   if (!start || !end) return 'planned';
   
-  if (currentDate > end) return 'ended';
-  if (currentDate >= start && currentDate <= end) return 'ongoing';
+  // Convert to timestamps for accurate comparison
+  const current = currentDate.getTime();
+  const startTime = start.getTime();
+  const endTime = end.getTime();
+  
+  if (current > endTime) return 'ended';
+  if (current >= startTime && current <= endTime) return 'ongoing';
   return 'planned';
 };
 

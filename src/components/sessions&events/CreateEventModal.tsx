@@ -1,7 +1,8 @@
 'use client';
 
+import { toast } from '@/components/ui/use-toast';
 import { useFormik } from 'formik';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { FiX } from 'react-icons/fi';
 
 type CreateEventModalProps = {
@@ -30,6 +31,8 @@ type CreateEventModalProps = {
 };
 
 const CreateEventModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateEventModalProps) => {
+  const [loading, setLoading] = useState(false);
+
   // Handle form reset when modal is closed
   const formik = useFormik({
     initialValues: {
@@ -47,11 +50,33 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateEven
       attendance: editingItem?.attendance || 'optional',
     },
     enableReinitialize: true, // This ensures the form will reinitialize when `editingItem` changes
-    onSubmit: (values) => {
-      const eventData = { ...values };
-      console.log('Event Data:', eventData);
-      onSubmit(eventData);
-      onClose();
+    onSubmit: async (values) => {
+      // Ensure groups is always an array
+      const groups = Array.isArray(values.groups) ? values.groups : [values.groups];
+      // Ensure eventDate is in YYYY-MM-DD format
+      const formatDate = (date: string) => date ? new Date(date).toISOString().slice(0, 10) : '';
+      const eventData: any = {
+        eventTitle: values.eventTitle,
+        division: values.division,
+        groups,
+        eventDate: formatDate(values.eventDate),
+        startTime: values.startTime,
+        endTime: values.endTime,
+        visibility: values.visibility,
+      };
+      // Only include attendance if present and not empty
+      if (values.attendance) {
+        eventData.attendance = values.attendance;
+      }
+      try {
+        await onSubmit(eventData);
+        toast({ title: 'Success', description: 'Event created successfully!', variant: 'default' });
+        onClose();
+      } catch (err) {
+        toast({ title: 'Error', description: 'Failed to create event. Please try again.', variant: 'destructive' });
+      } finally {
+        setLoading(false);
+      }
     }
   });
 
@@ -204,8 +229,9 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateEven
             <button 
               type="submit" 
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
+              disabled={loading}
             >
-              {editingItem ? 'Update' : 'Create'}
+              {loading ? 'Creating...' : (editingItem ? 'Update' : 'Create')}
             </button>
           </div>
         </form>

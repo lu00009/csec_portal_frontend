@@ -1,12 +1,18 @@
 "use client"
 
+import { useToast } from "@/components/ui/use-toast"
 import useMembersStore from "@/stores/membersStore"
 import { useEffect, useRef, useState } from "react"
-import { toast } from "react-hot-toast"
 import { FiPlusCircle } from "react-icons/fi"
 
-export function MemberForm() {
+interface MemberFormProps {
+  onSubmit?: (memberData: any) => Promise<void>;
+  onClose?: () => void;
+}
+
+export function MemberForm({ onSubmit, onClose }: MemberFormProps) {
   const { addMember } = useMembersStore()
+  const { toast } = useToast()
   const [isOpen, setIsOpen] = useState(false)
   const [email, setEmail] = useState("")
   const [firstName, setFirstName] = useState("")
@@ -33,28 +39,89 @@ export function MemberForm() {
     setGeneratedPassword(result)
   }
 
+  const validateForm = () => {
+    if (!email) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Email is required"
+      })
+      return false
+    }
+    if (!firstName) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "First name is required"
+      })
+      return false
+    }
+    if (!lastName) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Last name is required"
+      })
+      return false
+    }
+    if (!division) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Division is required"
+      })
+      return false
+    }
+    if (!generatedPassword) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please generate a password"
+      })
+      return false
+    }
+    return true
+  }
+
   const handleInvite = async () => {
-    if (!email || !division || !generatedPassword) {
-      toast.error("Please fill all required fields and generate a password")
+    if (!validateForm()) {
       return
     }
 
     setIsSubmitting(true)
     try {
-      await addMember({
+      const memberData = {
         firstName,
         lastName,
         email,
         division,
         group,
         generatedPassword
+      }
+
+      if (onSubmit) {
+        await onSubmit(memberData)
+      } else {
+        await addMember(memberData)
+      }
+      
+      toast({
+        title: "Success",
+        description: "Member invited successfully! An email has been sent."
       })
       
-      toast.success("Member invited successfully! An email has been sent.")
+      // Close modal and reset form
       setIsOpen(false)
       resetForm()
+      if (onClose) {
+        onClose()
+      }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to invite member")
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to invite member"
+      })
     } finally {
       setIsSubmitting(false)
     }
