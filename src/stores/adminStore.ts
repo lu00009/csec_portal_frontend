@@ -2,38 +2,61 @@ import { useUserStore } from "@/stores/userStore";
 import axios from "axios";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
+import { Member } from "@/types/member";
 
-const dummyRules = [
-  { id: "1", name: "New Absences", description: "Head must approve this for request for review", value: 1 },
-  { id: "2", name: "Warning After", description: "Send warning notification after this many absences", value: 3 },
-  { id: "3", name: "Suspend After", description: "Suspend member automatically", value: 5 },
-  { id: "4", name: "Fire After", description: "Remove member from the team after this many absences", value: 7 },
-];
+interface ClubRules {
+  _id: string;
+  fireAfter: number;
+  maxAbsences: number;
+  suspendAfter: number;
+  warningAfter: number;
+  updatedAt: string;
+  __v: number;
+}
+interface Rule {
+  ClubRules: ClubRules;
+}
 
-const dummyDivisions = ["CPO", "Development", "Cyber", "Data Science", "Design", "Marketing", "HR"];
+interface Role {
+  id: string;
+  role: string;
+  permissions: string[];
+  permissionStatus: "active" | "inactive";
+}
+
+interface Head {
+  id: string;
+  name: string;
+  role: string;
+  email: string;
+  avatar?: string;
+  permissions?: string[];
+  permissionStatus?: "active" | "inactive";
+}
 
 interface AdminState {
-  roles: Array<{ id: string; name: string; permissions: string[]; status: string }>;
-  rules: Array<{ id: string; name: string; description: string; value: number }>;
+  members: Member[];
+  roles: Role[];
+  rules: Rule | null  
   divisions: string[];
   loading: boolean;
   error: string | null;
-  heads: Array<{
-    id: string;
-    name: string;
-    division: string;
-    role: string;
-    email: string;
-  }>;
+  heads: Head[];
+  updateHead: (id: string, updates: Partial<Head>) => Promise<void>;
+  updateRole: (id: string, updates: Partial<Role>) => Promise<void>;
+  getActiveMembers: () => Member[];
 
   // Actions
   fetchHeads: () => Promise<void>;
   fetchRoles: () => Promise<void>;
   fetchRules: () => Promise<void>;
   updateRule: (id: string, value: number) => Promise<void>;
-  addHead: (head: { name: string; division: string; role: string; avatar?: string }) => Promise<void>;
-  addRole: (role: { name: string; permissions: string[]; status: "active" | "inactive" }) => Promise<void>;
+  addHead: (head: Omit<Head, "id">) => Promise<void>;
+  addRole: (role: Omit<Role, "id">) => Promise<void>;
+  banMember: (id: string) => Promise<void>;
 }
+
+const API_BASE_URL = "https://csec-portal-backend-1.onrender.com/api";
 
 export const useAdminStore = create<AdminState>()(
   devtools(
@@ -41,180 +64,194 @@ export const useAdminStore = create<AdminState>()(
       (set, get) => {
         const { getAuthHeader, refreshSession } = useUserStore.getState();
 
-        const fetchWithAuth = async (url: string, options: any = {}) => {
-          console.debug(`Attempting request to: ${url}`);
-          try {
-            let headers = getAuthHeader();
-            if (!headers) {
-              console.debug("No auth headers found, refreshing session");
-              await refreshSession();
-              headers = getAuthHeader();
-              if (!headers) throw new Error("Authentication failed after refresh");
-            }
-
-            const response = await axios({
-              url,
-              headers,
-              ...options,
-            });
-
-            if (response.status < 200 || response.status >= 300) {
-              throw new Error(`API responded with status ${response.status}`);
-            }
-
-            console.debug(`Request to ${url} succeeded`, response.data);
-            return response;
-          } catch (error) {
-            console.error(`Request to ${url} failed:`, error);
-            throw error;
+        const getAuthHeaders = async () => {
+          let headers = getAuthHeader();
+          if (!headers) {
+            await refreshSession();
+            headers = getAuthHeader();
+            if (!headers) throw new Error("Authentication failed");
           }
-        };
-
-        const processClubRole = (clubRole: string) => {
-          const divisionMatch = clubRole.match(/(.+?) Division/);
-          const roleMatch = clubRole.match(/Division (.+)/);
-          return {
-            division: divisionMatch ? divisionMatch[1] : "Unknown Division",
-            role: roleMatch ? roleMatch[1] : "Unknown Role",
-          };
+          return headers;
         };
 
         return {
           heads: [],
           roles: [],
-          rules: dummyRules,
-          divisions: dummyDivisions,
+          rules: [
+            { id: "1", name: "New Absences", description: "Head must approve this for request for review", value: 1 },
+            { id: "2", name: "Warning After", description: "Send warning notification after this many absences", value: 3 },
+            { id: "3", name: "Suspend After", description: "Suspend member automatically", value: 5 },
+            { id: "4", name: "Fire After", description: "Remove member from the team after this many absences", value: 7 },
+          ],
+          divisions: ["CPO", "Development", "Cyber", "Data Science", "Design", "Marketing", "HR"],
           loading: false,
           error: null,
 
-         // Update the fetchHeads function:
-fetchHeads: async () => {
-  console.debug("Starting to fetch heads");
-  set({ loading: true, error: null });
-  try {
-    const response = await fetchWithAuth("https://csec-portal-backend-1.onrender.com/api/members/heads");
-    
-    // Validate API response structure
-    if (!response.data || !Array.isArray(response.data.heads)) {
-      throw new Error("Invalid API response format - expected array");
-    }
-
-    const rawHeads = response.data.heads;
-    const processedHeads = rawHeads.map((head: any) => ({
-      id: head._id,
-      name: `${head.firstName} ${head.lastName}`,
-      ...processClubRole(head.clubRole),
-      email: head.email
-    }));
-
-    set({ heads: processedHeads, loading: false });
-  } catch (error) {
-    console.error("Failed to fetch heads:", error);
-    set({
-      heads: [], // Force reset to empty array
-      error: error instanceof Error ? error.message : "Failed to fetch heads",
-      loading: false
-    });
-  }
-},
-          fetchRoles: async () => {
-            console.debug("Starting to fetch roles");
+          fetchHeads: async () => {
             set({ loading: true, error: null });
             try {
-              const response = await fetchWithAuth("https://csec-portal-backend-1.onrender.com/api/admin/permissions");
-              set({ roles: response.data, loading: false });
-            } catch (error) {
-              console.error("Failed to fetch roles:", error);
+              const headers = await getAuthHeaders();
+              const response = await axios.get(`${API_BASE_URL}/members/heads`, { headers },);
+              
+              const processedHeads = response.data.heads.map((head: any) => ({
+                id: head._id,
+                name: `${head.firstName} ${head.lastName}`,
+                division: head.division || "Unknown Division",
+                role: head.clubRole || "Unknown Role",
+                email: head.email,
+                avatar: head.profilePicture,
+                permissions: head.permissions || [],
+                permissionStatus: head.permissionStatus || "inactive",
+              }));
+
+              set({ heads: processedHeads, loading: false });
+            } catch (error: any) {
               set({
-                error: error instanceof Error ? error.message : "Failed to fetch roles",
+                error: error.message || "Failed to fetch heads",
                 loading: false,
-                roles: [],
+                heads: []
               });
             }
           },
+
+          // fetchRoles: async () => {
+          //   set({ loading: true, error: null });
+          //   try {
+          //     const headers = await getAuthHeaders();
+          //     const response = await axios.get(`${API_BASE_URL}/admin/permissions`, { headers });
+          //     set({ roles: response.data, loading: false });
+          //   } catch (error: any) {
+          //     set({
+          //       error: error.message || "Failed to fetch roles",
+          //       loading: false,
+          //       roles: []
+          //     });
+          //   }
+          // },
 
           fetchRules: async () => {
-            console.debug("Starting to fetch rules");
             set({ loading: true, error: null });
             try {
-              const response = await fetchWithAuth("https://csec-portal-backend-1.onrender.com/api/admin/rules");
+              const headers = await getAuthHeaders();
+              const response = await axios.get(`${API_BASE_URL}/rules`, { headers });
               set({ rules: response.data, loading: false });
-            } catch (error) {
-              console.error("Failed to fetch rules:", error);
+            } catch (error: any) {
               set({
-                error: error instanceof Error ? error.message : "Failed to fetch rules",
+                error: error.message || "Failed to fetch rules",
                 loading: false,
-                rules: dummyRules,
+                rules: []
               });
             }
           },
+         // In your adminStore.ts
+addHead: async (headData: {
+  division: string;
+  name: string;
+  email: string;
+}) => {
+  try {
+    const headers = await getAuthHeaders();
+    const response = await axios.post(`${API_BASE_URL}/admin/heads`, {
+      division: headData.division,
+      name: headData.name,
+      email: headData.email
+    },{headers}
+  );
+    console.log(headData)
+    return response.data;
+  } catch (error) {
+    console.log(headData)
 
-          updateRule: async (id, value) => {
-            console.debug(`Updating rule ${id} to value ${value}`);
-            set({ loading: true, error: null });
-            try {
-              await fetchWithAuth(`https://csec-portal-backend-1.onrender.com/api/admin/rules/${id}`, {
-                method: "PUT",
-                data: { value },
-              });
-
-              set((state) => ({
-                rules: state.rules.map((rule) =>
-                  rule.id === id ? { ...rule, value } : rule
-                ),
-                loading: false,
-              }));
-            } catch (error) {
-              console.error("Failed to update rule:", error);
-              set({
-                error: error instanceof Error ? error.message : "Failed to update rule",
-                loading: false,
-              });
-            }
-          },
-
-          addHead: async (head) => {
-            console.debug("Adding new head:", head);
-            set({ loading: true, error: null });
-            try {
-              await fetchWithAuth("https://csec-portal-backend-1.onrender.com/api/admin/heads", {
-                method: "POST",
-                data: {
-                  name: head.name,
-                  division: head.division,
-                  role: head.role,
-                  avatar: head.avatar || "/placeholder.svg",
-                },
-              });
-              await get().fetchHeads(); // Refresh heads list
-            } catch (error) {
-              console.error("Failed to add head:", error);
-              set({
-                error: error instanceof Error ? error.message : "Failed to add head",
-                loading: false,
-              });
-              throw error;
-            }
-          },
+    console.error('Add head error:', error);
+    throw error;
+  }
+},
 
           addRole: async (role) => {
-            console.debug("Adding new role:", role);
             set({ loading: true, error: null });
             try {
-              await fetchWithAuth("https://csec-portal-backend-1.onrender.com/api/admin/roles", {
-                method: "POST",
-                data: role,
-              });
-              await get().fetchRoles(); // Refresh roles list
-            } catch (error) {
-              console.error("Failed to add role:", error);
+              console.log('role', role)
+
+              const headers = await getAuthHeaders();
+              const response = await axios.post(`${API_BASE_URL}/admin/permissions`, {
+                role: role.role,
+                permissions: role.permissions,
+                permissionStatus: role.permissionStatus
+              }, { headers: headers });
+              
+              set(state => ({
+                roles: [...state.roles, {
+                  ...role,
+                  id: response.data._id
+                }],
+                loading: false
+              }));
+            } catch (error: any) {
+              console.log('role', role)
               set({
-                error: error instanceof Error ? error.message : "Failed to add role",
-                loading: false,
+                error: error.message || "Failed to add role",
+                loading: false
               });
-              throw error;
             }
           },
+          banMember: async (emails: string[]) => {
+            try {
+              const payload = { emails }; // Creates { emails: ["a@b.com", "c@d.com"] }
+              const headers = await getAuthHeaders();
+
+              const response = await axios.post(`${API_BASE_URL}/admin/banMembers`, payload, {headers});
+              console.log('Ban payload:', payload);
+              return response.data;
+            } catch (error) {
+              console.error('Ban error:', error);
+              if (axios.isAxiosError(error)) {
+                console.error('Error details:', error.response?.data);
+                throw new Error(error.response?.data?.message || 'Ban failed');
+              }
+              throw new Error('Ban failed');
+            }
+          },
+          updateHead: async (id, updates) => {
+            set({ loading: true, error: null });
+            try {
+              const headers = await getAuthHeaders();
+              await axios.patch(`${API_BASE_URL}/admin/heads/${id}`, updates, { headers });
+              set(state => ({
+                heads: state.heads.map(head => 
+                  head.id === id ? { ...head, ...updates } : head
+                ),
+                loading: false
+              }));
+            } catch (error: any) {
+              set({
+                error: error.message || "Failed to update head",
+                loading: false
+              });
+            }
+          },
+          
+          updateRole: async (id, updates) => {
+            set({ loading: true, error: null });
+            try {
+              const headers = await getAuthHeaders();
+              await axios.patch(`${API_BASE_URL}/admin/roles/${id}`, updates, { headers });
+              set(state => ({
+                roles: state.roles.map(role => 
+                  role.id === id ? { ...role, ...updates } : role
+                ),
+                loading: false
+              }));
+            } catch (error: any) {
+              set({
+                error: error.message || "Failed to update role",
+                loading: false
+              });
+            }
+          },
+          
+          getActiveMembers: () => {
+            return members.filter(member => member.status === 'active');
+          }
         };
       },
       {
