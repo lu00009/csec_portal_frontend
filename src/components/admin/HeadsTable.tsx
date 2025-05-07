@@ -22,9 +22,7 @@ export const HeadsTable = ({
           <tr>
             <th className="p-4 text-left">Name</th>
             <th className="p-4 text-left">Role</th>
-            <th className="p-4 text-left">Email</th>
             <th className="p-4 text-left">Status</th>
-            <th className="p-4 text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -42,29 +40,12 @@ export const HeadsTable = ({
                 </div>
               </td>
               <td className="p-4">{head.role}</td>
-              <td className="p-4">{head.division}</td>
               <td className="p-4">
                 <Badge variant={head.permissionStatus === "active" ? "default" : "destructive"}>
                   {head.permissionStatus}
                 </Badge>
               </td>
-              <td className="p-4 text-right">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onEdit(head)}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onBan(head.id)}
-                  className="text-red-600 hover:text-red-800"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </td>
+             
             </tr>
           ))}
         </tbody>
