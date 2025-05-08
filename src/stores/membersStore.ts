@@ -1,9 +1,9 @@
 import { membersApi } from '@/lib/api/membersApi';
 import { Member } from '@/types/member';
 import {
-  canAddMembers,
-  canDeleteMembers,
-  isPresident
+    canAddMembers,
+    canDeleteMembers,
+    isPresident
 } from '@/utils/roles';
 import { create } from 'zustand';
 import { useUserStore } from './userStore';
@@ -30,11 +30,11 @@ interface MembersState {
   totalPages: number;
   fetchMembers: (options?: FetchMembersOptions) => Promise<void>;
   fetchHeads: () => Promise<void>;
-  addMember: (member: Omit<Member, '_id' | 'createdAt'>) => Promise<void>;
+  addMember: (member: Omit<Member, '_id' | 'createdAt'>) => Promise<Member>;
   updateMember: (id: string, updates: Partial<Member>) => Promise<void>;
   deleteMember: (id: string) => Promise<void>;
   canAddMember: () => boolean;
-  // canEditMember: (targetDivision?: string) => boolean;
+  canEditMember: (targetDivision?: string) => boolean;
   canDeleteMember: () => boolean;
   deleteHead: (id: string) => Promise<void>;
   resetError: () => void;
@@ -55,13 +55,12 @@ const useMembersStore = create<MembersState>((set, get) => ({
     return user?.member?.clubRole ? canAddMembers(user.member.clubRole) : false;
   },
   
-  // canEditMember: (targetDivision?: string) => {
-  //   const { user } = useUserStore.getState();
-  //   if (!user) return false;
-  //   return canEditMembers(user.member.clubRole) &&
-  //          (isPresident(user.member.clubRole) ||
-  //           canManageDivision(user.member.clubRole, user.member.division ?? '', targetDivision));
-  // },
+  canEditMember: (targetDivision?: string) => {
+    const { user } = useUserStore.getState();
+    if (!user?.member?.clubRole) return false;
+    return isPresident(user.member.clubRole) || 
+           (user.member.division === targetDivision && user.member.clubRole.includes('President'));
+  },
   
   canDeleteMember: () => {
     const { user } = useUserStore.getState();
@@ -76,7 +75,7 @@ fetchMembers: async (options: FetchMembersOptions = {}) => {
     
     // Handle API response structure correctly
     set({
-      members: data.members , // Fixed property name
+      members: data.members || [], // Fixed property name
       totalMembers: data.totalMembers,
       currentPage: options.page || 1,
       totalPages: data.totalPages || Math.ceil(data.totalMembers / (options.limit || 10)),
@@ -105,7 +104,7 @@ fetchMembers: async (options: FetchMembersOptions = {}) => {
     }
   },
 
-  addMember: async (newMember) => {
+  addMember: async (newMember: Omit<Member, "createdAt" | "_id">): Promise<Member> => {
     const { user } = useUserStore.getState();
     if (!user || !get().canAddMember()) {
       throw new Error('Unauthorized: You do not have permission to add members');

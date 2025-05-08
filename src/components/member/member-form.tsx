@@ -2,6 +2,7 @@
 
 import { useToast } from "@/components/ui/use-toast"
 import useMembersStore from "@/stores/membersStore"
+import { UserRole } from "@/types/member"
 import { useEffect, useRef, useState } from "react"
 import { FiPlusCircle } from "react-icons/fi"
 
@@ -96,7 +97,8 @@ export function MemberForm({ onSubmit, onClose }: MemberFormProps) {
         email,
         division,
         group,
-        generatedPassword
+        generatedPassword,
+        clubRole: 'Member' as UserRole
       }
 
       if (onSubmit) {

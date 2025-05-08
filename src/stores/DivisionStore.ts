@@ -1,339 +1,337 @@
-import { divisionsApi } from "@/lib/api/divisions-api";
-import toast from "react-hot-toast";
-import { create } from "zustand";
+import { Member } from '@/types/member';
+import { create } from 'zustand';
+import { useUserStore } from './userStore';
 
 interface Division {
+  _id?: string;
   name: string;
+  description?: string;
+  members: Member[];
   slug: string;
   groups: string[];
-  description: string;
   memberCount: number;
   groupMemberCounts: { [key: string]: number };
-}
-
-interface Group {
-  id: string;
-  name: string;
-  members: any[];
-}
-
-interface Member {
-  _id: string;
-  name: string;
-  email: string;
-  status: string;
-  campusStatus: string;
-  lastAttendance: string;
-  membershipStatus: string;
-  profilePicture?: string;
-  group?: string;
+  groupMembers?: { [group: string]: Member[] };
 }
 
 interface DivisionsState {
   divisions: Division[];
-  isLoading: boolean;
-  error: string | null;
-  showAddDivisionDialog: boolean;
   currentDivision: Division | null;
-  currentDivisionGroups: Group[];
-  isLoadingGroups: boolean;
-  groupsError: string | null;
-  searchTerm: string;
   members: Member[];
   totalMembers: number;
-  currentPage: number;
-  itemsPerPage: number;
+  loading: boolean;
+  error: string | null;
+  showAddDivisionDialog: boolean;
   showAddGroupDialog: boolean;
   showAddMemberDialog: boolean;
-  groupMembers: { [division: string]: { [group: string]: Member[] } };
-
+  setShowAddDivisionDialog: (show: boolean) => void;
   setShowAddGroupDialog: (show: boolean) => void;
   setShowAddMemberDialog: (show: boolean) => void;
-  fetchDivisions: (search?: string) => Promise<void>;
-  addDivision: (payload: { name: string; head: string; email: string }) => Promise<void>;
-  setShowAddDivisionDialog: (show: boolean) => void;
+  fetchDivisions: () => Promise<void>;
   fetchDivisionGroups: (divisionName: string) => Promise<void>;
-  setSearchTerm: (term: string) => void;
-  addGroup: (divisionName: string, groupName: string) => Promise<void>;
-  fetchGroupMembers: (
-    division: string,
-    group: string,
-    filters?: {
-      search?: string;
-      page?: number;
-      limit?: number;
-      status?: string;
-    }
-  ) => Promise<void>;
-  addMember: (
-    division: string,
-    group: string,
-    member: { email: string; password: string; firstName: string; lastName: string }
-  ) => Promise<void>;
+  fetchGroupMembers: (division: string, group: string, query?: { search?: string; page?: number; limit?: number; status?: string }) => Promise<void>;
+  addDivision: (division: Omit<Division, '_id'>) => Promise<void>;
+  updateDivision: (id: string, updates: Partial<Division>) => Promise<void>;
+  deleteDivision: (id: string) => Promise<void>;
+  addMemberToDivision: (division: string, member: Omit<Member, '_id'>) => Promise<void>;
+  addMember: (division: string, group: string, member: Omit<Member, '_id'>) => Promise<void>;
+  addGroup: (division: string, groupName: string) => Promise<void>;
 }
 
-export const useDivisionsStore = create<DivisionsState>((set, get) => ({
+const useDivisionsStore = create<DivisionsState>((set, get) => ({
   divisions: [],
-  isLoading: false,
+  currentDivision: null,
+  members: [],
+  totalMembers: 0,
+  loading: false,
   error: null,
   showAddDivisionDialog: false,
   showAddGroupDialog: false,
   showAddMemberDialog: false,
-  currentDivision: null,
-  currentDivisionGroups: [],
-  members: [],
-  totalMembers: 0,
-  isLoadingGroups: false,
-  groupsError: null,
-  searchTerm: '',
-  currentPage: 1,
-  itemsPerPage: 10,
-  groupMembers: {},
-  
+
+  setShowAddDivisionDialog: (show) => set({ showAddDivisionDialog: show }),
   setShowAddGroupDialog: (show) => set({ showAddGroupDialog: show }),
   setShowAddMemberDialog: (show) => set({ showAddMemberDialog: show }),
 
-  fetchDivisions: async (search = '') => {
-    set({ isLoading: true, error: null });
+  fetchDivisions: async () => {
+    set({ loading: true, error: null });
     try {
-      const divisionNames = await divisionsApi.getAllDivisions();
-      
-      const divisionsWithGroups = await Promise.all(
-        divisionNames.map(async (name) => {
-          const groups = await divisionsApi.getDivisionGroups(name);
-          
-          // Get member counts for each group
-          const groupMemberCounts: { [key: string]: number } = {};
-          let totalMemberCount = 0;
-          
-          for (const group of groups) {
-            try {
-              const response = await divisionsApi.getGroupMembers(name, group, { limit: 1 });
-              groupMemberCounts[group] = response.totalGroupMembers || 0;
-              totalMemberCount += response.totalGroupMembers || 0;
-            } catch (error) {
-              console.error(`Error fetching members for group ${group}:`, error);
-              groupMemberCounts[group] = 0;
-            }
-          }
-
-          return {
-            name,
-            slug: name.toLowerCase().replace(/\s+/g, "-"),
-            groups,
-            description: `${name} Division Information`,
-            memberCount: totalMemberCount,
-            groupMemberCounts
-          };
-        })
-      );
-
+      const token = useUserStore.getState().token;
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/divisions/allDivisions`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch divisions');
+      const data = await response.json();
       set({ 
-        divisions: divisionsWithGroups.filter(div => 
-          div.name.toLowerCase().includes(search.toLowerCase())
-        )
-      });
-    } catch (error) {
-      set({ error: error instanceof Error ? error.message : "Failed to load divisions" });
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
-  addDivision: async (payload) => {
-    try {
-      const newDivisionName = await divisionsApi.createDivision({
-        divisionName: payload.name,
-        headName: payload.head,
-        email: payload.email
-      });
-      set((state) => ({
-        divisions: [...state.divisions, {
-          name: newDivisionName,
-          slug: newDivisionName.toLowerCase().replace(/\s+/g, "-"),
+        divisions: (data.divisions || []).map((name: string) => ({
+          name,
+          slug: name.toLowerCase().replace(/\s+/g, "-"),
           groups: [],
-          description: `${newDivisionName} Division Information`,
+          members: [],
           memberCount: 0,
-          groupMemberCounts: {}
-        }]
-      }));
-      toast.success("Division added successfully!");
+          groupMemberCounts: {},
+        })),
+        loading: false 
+      });
     } catch (error) {
-      toast.error("Failed to add division");
-      throw error;
+      set({ error: error instanceof Error ? error.message : 'Failed to fetch divisions', loading: false });
     }
   },
 
   fetchDivisionGroups: async (divisionName) => {
-    set({ isLoading: true, error: null });
+    set({ loading: true, error: null });
     try {
-      const response = await divisionsApi.getDivisionGroups(divisionName);
-      console.log("Fetched division groupsdeeeeeeeeeeeee:", response); // Debug log
-      set({
+      const token = useUserStore.getState().token;
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/divisions/getGroups/${encodeURIComponent(divisionName)}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch division groups');
+      const data = await response.json();
+      set((state) => ({
         currentDivision: {
           name: divisionName,
           slug: divisionName.toLowerCase().replace(/\s+/g, "-"),
-          groups: response || [], // Map the groups array from the API response
-          description: `${divisionName} Division Information`,
-          memberCount: response.length || 0, // Use the length property for member count
-          groupMemberCounts: {}
+          groups: data.groups || [],
+          members: [],
+          memberCount: 0,
+          groupMemberCounts: {},
         },
-
-      });
-    } catch (error) {
-      set({ error: "Failed to fetch division groups", isLoading: false });
-      console.error(error);
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
-  addGroup: async (divisionName, groupName) => {
-    try {
-      await divisionsApi.createGroup(divisionName, groupName);
-      set((state) => ({
-        divisions: state.divisions.map(div => 
-          div.name === divisionName 
-            ? { ...div, groups: [...div.groups, groupName] }
-            : div
-        )
+        loading: false
       }));
-      toast.success("Group added successfully!");
     } catch (error) {
-      toast.error("Failed to add group");
-      throw error;
+      set({ error: error instanceof Error ? error.message : 'Failed to fetch division groups', loading: false });
     }
   },
 
-  fetchGroupMembers: async (
-    division: string,
-    group: string,
-    filters: { search?: string; page?: number; limit?: number; status?: string } = {}
-  ) => {
-    set({ isLoading: true, error: null });
-    
+  fetchGroupMembers: async (division, group, query) => {
+    set({ loading: true, error: null });
     try {
-      console.log(`[Store] Starting fetch for members:`, {
-        division,
-        group,
-        filters,
-        currentState: {
-          membersCount: get().members.length,
-          totalMembers: get().totalMembers
+      const token = useUserStore.getState().token;
+      const queryParams = query ? new URLSearchParams({
+        ...(query.search && { search: query.search }),
+        ...(query.page && { page: query.page.toString() }),
+        ...(query.limit && { limit: query.limit.toString() }),
+        ...(query.status && { status: query.status })
+      }).toString() : '';
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/groups/getMembers?division=${encodeURIComponent(division)}&group=${encodeURIComponent(group)}${queryParams ? `&${queryParams}` : ''}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
+      if (!response.ok) throw new Error('Failed to fetch group members');
+      const data = await response.json();
+      set((state) => {
+        const groupMembers = { ...(state.currentDivision?.groupMembers || {}) };
+        groupMembers[group] = data.groupMembers || [];
+        const groupMemberCounts = { ...(state.currentDivision?.groupMemberCounts || {}) };
+        groupMemberCounts[group] = (data.groupMembers || []).length;
+        return {
+          members: data.groupMembers || [],
+          totalMembers: data.totalGroupMembers || 0,
+          loading: false,
+          currentDivision: state.currentDivision
+            ? {
+                ...state.currentDivision,
+                groupMembers,
+                groupMemberCounts,
+              }
+            : state.currentDivision,
+        };
+      });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to fetch group members', loading: false });
+    }
+  },
 
-      const response = await divisionsApi.getGroupMembers(division, group, filters);
-      
-      console.log(`[Store] Received API response:`, {
-        hasResponse: !!response,
-        hasMembers: !!response?.groupMembers,
-        membersCount: response?.groupMembers?.length,
-        total: response?.totalGroupMembers,
-        rawResponse: response
+  addDivision: async (division) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/divisions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(division),
+      });
+      if (!response.ok) throw new Error('Failed to add division');
+      const newDivision = await response.json();
+      set((state) => ({ 
+        divisions: [...state.divisions, {
+          _id: newDivision._id,
+          name: newDivision.name,
+          description: newDivision.description,
+          members: newDivision.members || [],
+          slug: newDivision.name.toLowerCase().replace(/\s+/g, "-"),
+          groups: newDivision.groups || [],
+          memberCount: newDivision.members?.length || 0,
+          groupMemberCounts: newDivision.groupMemberCounts || {}
+        }],
+        loading: false 
+      }));
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to add division', loading: false });
+    }
+  },
+
+  updateDivision: async (id, updates) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/divisions/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      if (!response.ok) throw new Error('Failed to update division');
+      const updatedDivision = await response.json();
+      set((state) => ({
+        divisions: state.divisions.map((div) => 
+          div._id === id ? {
+            _id: div._id,
+            name: updatedDivision.name || div.name,
+            description: updatedDivision.description || div.description,
+            members: updatedDivision.members || div.members,
+            slug: (updatedDivision.name || div.name).toLowerCase().replace(/\s+/g, "-"),
+            groups: updatedDivision.groups || div.groups,
+            memberCount: updatedDivision.members?.length || div.memberCount,
+            groupMemberCounts: updatedDivision.groupMemberCounts || div.groupMemberCounts
+          } : div
+        ),
+        loading: false,
+      }));
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to update division', loading: false });
+    }
+  },
+
+  deleteDivision: async (id) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/divisions/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete division');
+      set((state) => ({
+        divisions: state.divisions.filter((div) => div._id !== id),
+        loading: false,
+      }));
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to delete division', loading: false });
+    }
+  },
+
+  addMemberToDivision: async (division, member) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/divisions/${encodeURIComponent(division)}/members`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(member),
       });
 
-      if (!response?.groupMembers) {
-        console.warn(`[Store] No members data in response:`, response);
-        set({
-          isLoading: false,
-          error: null,
-          members: [],
-          totalMembers: 0
-        });
-        return;
+      if (!response.ok) {
+        throw new Error('Failed to add member');
       }
 
-      const processedMembers = response.groupMembers.map((member: any) => ({
-        _id: member._id || member.id || `temp-${Date.now()}-${Math.random()}`,
-        name: member.name || member.email?.split('@')[0] || 'Unknown',
-        email: member.email || '',
-        status: member.status || 'unknown',
-        campusStatus: member.campusStatus || 'unknown',
-        lastAttendance: member.lastAttendance || null,
-        membershipStatus: member.membershipStatus || 'unknown',
-        clubRole: member.clubRole || 'member'
-      }));
-
-      console.log(`[Store] Processed members:`, {
-        count: processedMembers.length,
-        firstMember: processedMembers[0],
-        lastMember: processedMembers[processedMembers.length - 1],
-        rawMembers: response.groupMembers
-      });
-
-      set((state) => {
-        const newState = {
-          groupMembers: {
-            ...state.groupMembers,
-            [division]: {
-              ...state.groupMembers[division],
-              [group]: processedMembers
+      const newMember = await response.json();
+      const state = get();
+      const updatedDivisions = state.divisions.map(d => {
+        if (d._id === division) {
+          const groupName = member.group || 'default';
+          return {
+            ...d,
+            members: [...d.members, newMember],
+            memberCount: d.memberCount + 1,
+            groupMemberCounts: {
+              ...d.groupMemberCounts,
+              [groupName]: (d.groupMemberCounts[groupName] || 0) + 1
             }
-          },
-          members: processedMembers,
-          totalMembers: response.totalGroupMembers || 0,
-          currentPage: filters.page || 1,
-          isLoading: false,
-          error: null
-        };
-
-        console.log(`[Store] Updated state:`, {
-          membersCount: newState.members.length,
-          totalMembers: newState.totalMembers,
-          groupMembersCount: Object.keys(newState.groupMembers).length,
-          newState
-        });
-
-        return newState;
+          };
+        }
+        return d;
       });
 
-    } catch (error: any) {
-      console.error(`[Store] Error in fetchGroupMembers:`, {
-        error: error?.message || 'Unknown error',
-        division,
-        group,
-        filters
-      });
-
-      set({
-        isLoading: false,
-        error: error?.message || 'Failed to fetch members',
-        members: [],
-        totalMembers: 0
-      });
+      set({ divisions: updatedDivisions, loading: false });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to add member', loading: false });
     }
   },
 
   addMember: async (division, group, member) => {
+    set({ loading: true, error: null });
     try {
-      await divisionsApi.createMember(division, group, {
-        email: member.email,
-        generatedPassword: member.password,
-        firstName: member.firstName,
-        lastName: member.lastName
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/divisions/${encodeURIComponent(division)}/groups/${encodeURIComponent(group)}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(member),
       });
+      if (!response.ok) throw new Error('Failed to add member to group');
+      const updatedDivision = await response.json();
       set((state) => ({
-        members: [...state.members, {
-          _id: Date.now().toString(),
-          name: `${member.firstName} ${member.lastName}`,
-          email: member.email,
-          status: 'active',
-          campusStatus: 'unknown',
-          lastAttendance: 'N/A',
-          membershipStatus: 'active',
-          clubRole: 'member'
-        }]
+        divisions: state.divisions.map((div) => 
+          div._id === division ? {
+            _id: div._id,
+            name: div.name,
+            description: div.description,
+            members: [...div.members.filter(m => m.group !== group), updatedDivision.members || []],
+            slug: div.name.toLowerCase().replace(/\s+/g, "-"),
+            groups: [...div.groups.filter(g => g !== group), group],
+            memberCount: updatedDivision.members?.length || 0,
+            groupMemberCounts: {
+              ...div.groupMemberCounts,
+              [group]: updatedDivision.members?.length || 0
+            }
+          } : div
+        ),
+        loading: false,
       }));
-      toast.success("Member added successfully!");
-      console.log("Updated members:", get().members);
     } catch (error) {
-      toast.error("Failed to add member");
-      throw error;
+      set({ error: error instanceof Error ? error.message : 'Failed to add member to group', loading: false });
     }
   },
 
-  setSearchTerm: (term) => set({ searchTerm: term }),
-  setShowAddDivisionDialog: (show) => set({ showAddDivisionDialog: show }),
+  addGroup: async (division, groupName) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/divisions/${encodeURIComponent(division)}/groups`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: groupName }),
+      });
+      if (!response.ok) throw new Error('Failed to add group');
+      const updatedDivision = await response.json();
+      set((state) => ({
+        divisions: state.divisions.map((div) => 
+          div.name === division ? {
+            ...div,
+            groups: [...div.groups, groupName],
+            groupMemberCounts: {
+              ...div.groupMemberCounts,
+              [groupName]: 0
+            }
+          } : div
+        ),
+        currentDivision: state.currentDivision?.name === division ? {
+          ...state.currentDivision,
+          groups: [...state.currentDivision.groups, groupName],
+          groupMemberCounts: {
+            ...state.currentDivision.groupMemberCounts,
+            [groupName]: 0
+          }
+        } : state.currentDivision,
+        loading: false
+      }));
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to add group', loading: false });
+    }
+  },
 }));
+
+export { useDivisionsStore };
 

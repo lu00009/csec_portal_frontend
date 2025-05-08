@@ -293,9 +293,9 @@ export default function MembersPage() {
                       <Avatar>
                         <AvatarImage 
                           src={member.profilePicture ? 
-                            (member.profilePicture.startsWith('https://res.cloudinary.com') ? 
-                              member.profilePicture : 
-                              `https://res.cloudinary.com/dqgzhdegr/image/upload/${member.profilePicture}`)
+                            (String(member.profilePicture).startsWith('https://res.cloudinary.com') ? 
+                              String(member.profilePicture) : 
+                              `https://res.cloudinary.com/dqgzhdegr/image/upload/${String(member.profilePicture)}`)
                             : `https://robohash.org/${member._id}?set=set3`}
                           alt={member.firstName || 'Member'} 
                           onClick={() => handleProfileClick(member._id)}

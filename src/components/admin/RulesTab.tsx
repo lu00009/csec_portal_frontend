@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Button from "@/components/ui/button";
 import { MembersTable } from "@/components/admin/MembersTable";
 import { RuleCard } from "@/components/admin/RuleCard";
+import Button from "@/components/ui/button";
 import type { ClubRules, Member } from "@/types/admin";
+import { useEffect, useState } from "react";
 
 export const RulesTab = ({
   rules,
   members,
+  onUpdateRule,
   onBanMembers,
 }: {
   rules: ClubRules;
@@ -29,22 +30,30 @@ export const RulesTab = ({
             <RuleCard
               title="Max Absences"
               description="Members exceeding this are flagged for review"
-              value={rules.ClubRules.maxAbsences}
+              value={rules.maxAbsences}
+              options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+              onChange={(value) => onUpdateRule('maxAbsences', value)}
             />
             <RuleCard
               title="Warning After"
               description="Members receive a warning notification"
-              value={rules.ClubRules.warningAfter}
+              value={rules.warningAfter}
+              options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+              onChange={(value) => onUpdateRule('warningAfter', value)}
             />
             <RuleCard
               title="Suspend After"
               description="Member's access suspended"
-              value={rules.ClubRules.suspendAfter}
+              value={rules.suspendAfter}
+              options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+              onChange={(value) => onUpdateRule('suspendAfter', value)}
             />
             <RuleCard
               title="Fire After"
               description="Member removed from division"
-              value={rules.ClubRules.fireAfter}
+              value={rules.fireAfter}
+              options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+              onChange={(value) => onUpdateRule('fireAfter', value)}
             />
           </div>
 
@@ -59,8 +68,6 @@ export const RulesTab = ({
         </>
       ) : (
         <MembersTable 
-          members={members} 
-          onBanMembers={onBanMembers}
           onBack={() => setShowMembers(false)}
         />
       )}

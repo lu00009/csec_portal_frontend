@@ -16,6 +16,14 @@ import { AlertCircle, ChevronRight, Filter, Search } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
+interface Member {
+  _id: string;
+  firstName?: string;
+  lastName?: string;
+  group?: string;
+  division?: string;
+}
+
 export default function GroupAttendancePage() {
   const router = useRouter()
   const params = useParams()
@@ -35,7 +43,7 @@ export default function GroupAttendancePage() {
   }, [groupId, fetchSessionMembers])
 
   // Get unique groups
-  const groups = [...new Set(members.map((m) => m.group))]
+  const groups = Array.from(new Set(members.map((m) => m.group)))
 
   // Filter members based on search query and group filter
   const filteredMembers = members.filter((member) => {
@@ -55,7 +63,7 @@ export default function GroupAttendancePage() {
       acc[group] = filteredMembers.filter((m) => m.group === group)
       return acc
     },
-    {} as Record<string, typeof members>
+    {} as Record<string, Member[]>
   )
 
   const handleMemberClick = (memberId: string) => {

@@ -6,6 +6,7 @@ import Input from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useDivisionsStore } from "@/stores/DivisionStore"
+import { UserRole } from "@/types/member"
 import { useState } from "react"
 
 interface AddMemberDialogProps {
@@ -24,18 +25,21 @@ export function AddMemberDialog({ open, onOpenChange, divisionId, groupId }: Add
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const { addMember, divisions } = useDivisionsStore()
+  const { addMemberToDivision, divisions } = useDivisionsStore()
 
   const handleSubmit = async () => {
     if (!email || !division || !group || !firstName || !lastName) return
 
     setIsSubmitting(true)
     try {
-      await addMember(division, group, { 
-        email, 
-        password,
+      await addMemberToDivision(division, {
+        email,
         firstName,
-        lastName
+        lastName,
+        division,
+        group,
+        clubRole: 'Member' as UserRole,
+        membershipStatus: 'Active'
       })
       setEmail("")
       setPassword("")

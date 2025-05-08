@@ -279,6 +279,8 @@ const useUserStore = create<UserStore>()(
 
       refreshSession: async () => {
         const { refreshToken } = get();
+        const storage = localStorage.getItem('rememberMe') === 'true' ? localStorage : sessionStorage;
+        
         try {
           if (!refreshToken) {
             throw new Error('No refresh token available');
@@ -301,22 +303,24 @@ const useUserStore = create<UserStore>()(
             throw new Error('Invalid refresh response');
           }
 
-          // Store new tokens
+          // Store new tokens in the appropriate storage
+          storage.setItem('token', data.token);
+          storage.setItem('refreshToken', data.refreshToken);
+
+          // Update store state
           set({
             token: data.token,
             refreshToken: data.refreshToken,
-            user: data.member
+            isAuthenticated: true
           });
 
-          // Store tokens in storage
-          localStorage.setItem('token', data.token);
-          localStorage.setItem('refreshToken', data.refreshToken);
-          sessionStorage.setItem('token', data.token);
-          sessionStorage.setItem('refreshToken', data.refreshToken);
-
+          return data;
         } catch (error) {
           console.error('Session refresh failed:', error);
-          get().logout();
+          // Only logout if it's not a network error
+          if (error instanceof Error && !error.message.includes('network')) {
+            get().logout();
+          }
           throw error;
         }
       },
@@ -440,7 +444,13 @@ const useUserStore = create<UserStore>()(
     }),
     {
       name: 'user-storage',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => {
+        if (typeof window !== 'undefined') {
+          const rememberMe = localStorage.getItem('rememberMe') === 'true';
+          return rememberMe ? localStorage : sessionStorage;
+        }
+        return localStorage;
+      }),
     }
   )
 );

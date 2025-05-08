@@ -1,12 +1,12 @@
 "use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, BookOpen } from "lucide-react";
-import { useAdminStore } from "@/stores/adminStore";
-import useMembersStore from "@/stores/membersStore";
-import { useEffect, useState } from "react";
 import { HeadsTab } from "@/components/admin/HeadsTab";
 import { RulesTab } from "@/components/admin/RulesTab";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAdminStore } from "@/stores/adminStore";
+import useMembersStore from "@/stores/membersStore";
+import { BookOpen, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function AdministrationPage() {
   const {
@@ -62,20 +62,21 @@ export default function AdministrationPage() {
         <TabsContent value="heads" className="space-y-4">
           <HeadsTab
             heads={heads}
-            onAddHead={addHead}
+            onUpdateHead={async () => {}}
             onBanHead={(id) => banMember(id).then(fetchHeads)}
           />
         </TabsContent>
 
         <TabsContent value="rules" className="space-y-4">
         <RulesTab
-  rules={rules}
-  members={members}
-  onBanMembers={async (memberIds) => {
-    await Promise.all(memberIds.map(id => banMember(id)));
-    fetchMembers({limit: 200});
-  }}
-/>
+          rules={rules && (rules as any).ClubRules ? (rules as any) : { ClubRules: { maxAbsences: 0, warningAfter: 0, suspendAfter: 0, fireAfter: 0 } }}
+          members={members}
+          onUpdateRule={async () => {}}
+          onBanMembers={async (memberIds) => {
+            await Promise.all(memberIds.map(id => banMember(id)));
+            fetchMembers({limit: 200});
+          }}
+        />
         </TabsContent>
       </Tabs>
     </div>

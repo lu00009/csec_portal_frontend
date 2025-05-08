@@ -5,30 +5,52 @@ import { useEffect, useState } from 'react';
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [mounted, setMounted] = useState(false);
-  const theme = useSettingsStore((state) => state.theme);
+  const { theme, setTheme } = useSettingsStore();
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
     const root = document.documentElement;
     const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
-    const isDark = theme === 'system' ? systemDark : theme === 'dark';
-    root.classList.toggle('dark', isDark);
+    // Remove any existing theme classes
+    root.classList.remove('light', 'dark');
+    
+    // Apply the appropriate theme
+    if (theme === 'system') {
+      root.classList.add(systemDark ? 'dark' : 'light');
+    } else {
+      root.classList.add(theme);
+    }
 
+    // Listen for system theme changes
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = () => {
+    const handler = (e: MediaQueryListEvent) => {
       if (theme === 'system') {
-        root.classList.toggle('dark', mediaQuery.matches);
+        root.classList.remove('light', 'dark');
+        root.classList.add(e.matches ? 'dark' : 'light');
       }
     };
-    mediaQuery.addEventListener('change', handler);
 
+    mediaQuery.addEventListener('change', handler);
     return () => mediaQuery.removeEventListener('change', handler);
-  }, [theme]);
+  }, [theme, mounted]);
 
   if (!mounted) {
-    return null;
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        {children}
+      </div>
+    );
   }
 
-  return <>{children}</>;
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      {children}
+    </div>
+  );
 };

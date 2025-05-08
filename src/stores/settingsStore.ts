@@ -10,14 +10,6 @@ export const useSettingsStore = create<SettingsState>()(
       autoAddEvents: false,
       phonePublic: false,
       setTheme: (theme: ThemeMode) => {
-        if (theme === 'system') {
-          const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches 
-            ? 'dark' 
-            : 'light';
-          document.documentElement.className = systemTheme;
-        } else {
-          document.documentElement.className = theme;
-        }
         set({ theme });
       },
       toggleAutoAddEvents: () => set((state) => ({ autoAddEvents: !state.autoAddEvents })),
@@ -26,18 +18,6 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'app-settings',
       getStorage: () => localStorage,
-      onRehydrateStorage: () => (state) => {
-        if (state) {
-          if (state.theme === 'system') {
-            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches 
-              ? 'dark' 
-              : 'light';
-            document.documentElement.className = systemTheme;
-          } else {
-            document.documentElement.className = state.theme;
-          }
-        }
-      },
     }
   )
 );

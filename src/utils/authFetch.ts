@@ -30,6 +30,7 @@ export const authFetch = async <T = any>(
 
     const response = await fetch(url, { 
       ...options, 
+      credentials: 'include', // This ensures cookies are sent with the request
       headers,
     });
 

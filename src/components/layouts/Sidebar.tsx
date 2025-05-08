@@ -8,10 +8,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
-  FiLayers,
-  FiSettings,
-  FiSun,
-  FiUsers,
+    FiLayers,
+    FiSettings,
+    FiSun,
+    FiUsers,
 } from 'react-icons/fi';
 import { GoMoon } from 'react-icons/go';
 import { HiOutlineUsers } from "react-icons/hi2";
@@ -21,6 +21,7 @@ import { MdOutlineDashboard } from 'react-icons/md';
 
 interface SidebarProps {
   isMobileMenuOpen: boolean;
+  onClose: () => void;
 }
 
 const navItems = [
@@ -45,7 +46,7 @@ const navItems = [
   { name: 'Settings', href: '/main/settings', icon: <FiSettings className="mr-3" /> },
 ];
 
-export default function Sidebar({ isMobileMenuOpen }: SidebarProps) {
+export default function Sidebar({ isMobileMenuOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useUserStore();
   const { theme, setTheme } = useSettingsStore();

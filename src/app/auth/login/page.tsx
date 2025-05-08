@@ -3,10 +3,10 @@
 import LoginForm from '@/components/form/LoginForm';
 import { useUserStore } from '@/stores/userStore';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import toast from 'react-hot-toast';
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, isLoading, error, isAuthenticated } = useUserStore();
@@ -72,5 +72,13 @@ export default function LoginPage() {
         <LoginForm onSubmit={handleSubmit} isLoading={isLoading} />
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

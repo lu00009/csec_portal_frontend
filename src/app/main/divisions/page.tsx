@@ -19,16 +19,22 @@ export default function DivisionsPage() {
   const [error, setError] = useState<string | null>(null)
   const { user } = useUserStore()
 
-  const { divisions, isLoading, fetchDivisions, showAddDivisionDialog, setShowAddDivisionDialog } = useDivisionsStore()
+  const { divisions, loading, fetchDivisions, showAddDivisionDialog, setShowAddDivisionDialog } = useDivisionsStore()
+
+  const [divisionStats, setDivisionStats] = useState<{
+    [divisionName: string]: {
+      memberCount: number
+      groupMemberCounts: { [group: string]: number }
+      groups: string[]
+    }
+  }>({})
 
   useEffect(() => {
     const loadDivisions = async () => {
       try {
-        await fetchDivisions(searchQuery)
+        await fetchDivisions()
         setError(null)
         console.log("Divisions loaded successfully:", divisions)
-
-
       } catch (err) {
         setError("Failed to load divisions. Please try again later.")
         console.error(err)
@@ -36,7 +42,43 @@ export default function DivisionsPage() {
     }
 
     loadDivisions()
-  }, [fetchDivisions, searchQuery])
+  }, [fetchDivisions])
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const token = useUserStore.getState().token
+      const stats: typeof divisionStats = {}
+      for (const division of divisions) {
+        const groupsRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/divisions/getGroups/${encodeURIComponent(division.name)}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+        const groupsData = await groupsRes.json()
+        const groups: string[] = groupsData.groups || []
+        let memberCount = 0
+        const groupMemberCounts: { [group: string]: number } = {}
+        for (const group of groups) {
+          const membersRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/groups/getMembers?division=${encodeURIComponent(division.name)}&group=${encodeURIComponent(group)}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          })
+          const membersData = await membersRes.json()
+          const count = (membersData.groupMembers || []).length
+          groupMemberCounts[group] = count
+          memberCount += count
+        }
+        stats[division.name] = { memberCount, groupMemberCounts, groups }
+      }
+      setDivisionStats(stats)
+    }
+    if (divisions.length > 0) {
+      fetchStats()
+    }
+  }, [divisions])
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value
@@ -94,14 +136,14 @@ export default function DivisionsPage() {
           {user?.member?.clubRole && (
             <Button 
               onClick={() => setShowAddDivisionDialog(true)}
-              disabled={!canManageDivision(user, 'all')}
+              disabled={!canManageDivision(user?.member?.clubRole, 'all')}
             >
               Add Division
             </Button>
           )}
         </div>
 
-        {isLoading ? (
+        {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="h-64 rounded-lg border animate-pulse bg-muted" />
@@ -120,7 +162,15 @@ export default function DivisionsPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {divisions.map((division) => (
-              <DivisionCard key={division.name} division={division}/>
+              <DivisionCard
+                key={division.name}
+                division={{
+                  ...division,
+                  memberCount: divisionStats[division.name]?.memberCount || 0,
+                  groupMemberCounts: divisionStats[division.name]?.groupMemberCounts || {},
+                  groups: divisionStats[division.name]?.groups || [],
+                }}
+              />
             ))}
           </div>
         )}

@@ -17,6 +17,7 @@ import { getDivisionFromRole, isDivisionHead } from "@/lib/divisionPermissions"
 import { cn } from "@/lib/utils"
 import { useAttendanceStore } from "@/stores/attendanceStore"
 import { useUserStore } from "@/stores/userStore"
+import { UserRole } from "@/types/member"
 import { AlertCircle, ChevronLeft, ChevronRight, Filter, Search } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -86,7 +87,7 @@ export default function MembersAttendancePage() {
   const isAttendanceTaken = useAttendanceStore.getState().attendanceTakenSessions.includes(currentSession?._id || "");
   const canTakeAttendance = isToday && currentSession?.status !== "Ended" && !isAttendanceTaken;
 
-  const handleAttendanceChange = (memberId: string, status: "present" | "absent") => {
+  const handleAttendanceChange = (memberId: string, status: "Present" | "Absent") => {
     updateMemberAttendance(memberId, status)
   }
 
@@ -159,7 +160,7 @@ export default function MembersAttendancePage() {
     setFilterExcused((prev) => (prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]))
   }
 
-  if (!user?.member?.clubRole || (user.member.clubRole !== 'President' && user.member.clubRole !== 'Vice President' && !isDivisionHead(user.member.clubRole))) {
+  if (!user?.member?.clubRole || (user.member.clubRole !== 'President' && user.member.clubRole !== 'Vice President' && !isDivisionHead(user.member.clubRole as UserRole))) {
     return (
       <div className="p-4 md:p-6">
         <Alert variant="destructive">
@@ -173,7 +174,7 @@ export default function MembersAttendancePage() {
   }
 
   return (
-    <AttendanceManagementView targetDivision={getDivisionFromRole(user.member.clubRole) || 'all'}>
+    <AttendanceManagementView targetDivision={getDivisionFromRole(user.member.clubRole as UserRole) || 'all'}>
       <div className="p-4 md:p-6">
         {error && (
           <Alert variant="destructive" className="mb-4">
@@ -333,22 +334,22 @@ export default function MembersAttendancePage() {
                             <Badge
                               className={cn(
                                 "cursor-pointer px-4 py-1 rounded-full",
-                                member.attendance === "present"
+                                member.attendance === "Present"
                                   ? "bg-green-500 hover:bg-green-600 text-white"
                                   : "bg-muted hover:bg-muted/80",
                               )}
-                              onClick={() => handleAttendanceChange(member._id, "present")}
+                              onClick={() => handleAttendanceChange(member._id, "Present")}
                             >
                               Present
                             </Badge>
                             <Badge
                               className={cn(
                                 "cursor-pointer px-4 py-1 rounded-full",
-                                member.attendance === "absent"
+                                member.attendance === "Absent"
                                   ? "bg-red-500 hover:bg-red-600 text-white"
                                   : "bg-muted hover:bg-muted/80",
                               )}
-                              onClick={() => handleAttendanceChange(member._id, "absent")}
+                              onClick={() => handleAttendanceChange(member._id, "Absent")}
                             >
                               Absent
                             </Badge>

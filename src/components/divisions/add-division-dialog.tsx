@@ -22,7 +22,15 @@ export function AddDivisionDialog({ open, onOpenChange }: AddDivisionDialogProps
 
     setIsSubmitting(true)
     try {
-      await addDivision({ name, head: "", email: "" })
+      await addDivision({
+        name,
+        description: "",
+        members: [],
+        slug: name.toLowerCase().replace(/\s+/g, "-"),
+        groups: [],
+        memberCount: 0,
+        groupMemberCounts: {}
+      })
       setName("")
       onOpenChange(false)
     } catch (error) {

@@ -1,5 +1,6 @@
-import { canAddMembersToDivision, getDivisionFromRole } from '@/lib/divisionPermissions';
+import { canAddMembersToDivision, canManageDivision, getDivisionFromRole } from '@/lib/divisionPermissions';
 import { useUserStore } from '@/stores/userStore';
+import { UserRole } from "@/utils/roles";
 import { ReactNode } from 'react';
 
 interface RoleBasedViewProps {
@@ -12,6 +13,32 @@ interface DivisionBasedViewProps {
   children: ReactNode;
   targetDivision: string;
   fallback?: ReactNode;
+}
+
+interface MemberManagementViewProps extends DivisionBasedViewProps {
+  children: ReactNode;
+  targetDivision: string;
+}
+
+interface AttendanceManagementViewProps {
+  targetDivision: string;
+  children: ReactNode;
+}
+
+const VALID_ROLES: UserRole[] = [
+  'President',
+  'Vice President',
+  'Competitive Programming Division President',
+  'Development Division President',
+  'Capacity Building Division President',
+  'Cybersecurity Division President',
+  'Data Science Division President',
+  'Member'
+];
+
+function isValidUserRole(role: string | undefined): role is UserRole {
+  if (!role) return false;
+  return VALID_ROLES.includes(role as UserRole);
 }
 
 export const RoleBasedView: React.FC<RoleBasedViewProps> = ({
@@ -52,7 +79,7 @@ export const AdminView: React.FC<Omit<RoleBasedViewProps, 'allowedRoles'>> = ({
 };
 
 // Division head view - for managing their own division
-export const DivisionHeadView: React.FC<DivisionHeadViewProps> = ({
+export const DivisionHeadView: React.FC<DivisionBasedViewProps> = ({
   targetDivision,
   children,
 }) => {
@@ -97,8 +124,8 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({
     return null;
   }
 
-  const userDivision = getDivisionFromRole(user.member.clubRole);
-  const hasAccess = canAddMembersToDivision(user.member.clubRole, userDivision, targetDivision as any);
+  const userRole = user.member.clubRole;
+  const hasAccess = canAddMembersToDivision(userRole, targetDivision);
   
   if (!hasAccess) {
     return null;
@@ -108,25 +135,19 @@ export const MemberManagementView: React.FC<MemberManagementViewProps> = ({
 };
 
 // Attendance management view - for division heads and admin
-export function AttendanceManagementView({ children, targetDivision, fallback }: DivisionBasedViewProps) {
-  const { user } = useUserStore();
-  
-  if (!user) {
-    return fallback || null;
+export function AttendanceManagementView({ targetDivision, children }: AttendanceManagementViewProps) {
+  const { user } = useUserStore()
+
+  if (!user?.member?.clubRole || !isValidUserRole(user.member.clubRole)) {
+    return null
   }
 
-  // President and Vice President have full access
-  if (user.member.clubRole === 'President' || user.member.clubRole === 'Vice President') {
-    return <>{children}</>;
+  const userRole = user.member.clubRole
+  if (!canManageDivision(userRole, targetDivision)) {
+    return null
   }
 
-  // Division heads can only manage their own division's attendance
-  const userDivision = getDivisionFromRole(user.member.clubRole);
-  if (userDivision === targetDivision) {
-    return <>{children}</>;
-  }
-
-  return fallback || null;
+  return <>{children}</>
 }
 
 // Session and Event management view - for division heads and admin
@@ -158,11 +179,11 @@ export function SessionEventView({ children, fallback }: Omit<RoleBasedViewProps
       allowedRoles={[
         'President',
         'Vice President',
-        'Competitive Programming Division President',
-        'Development Division President',
-        'Capacity Building Division President',
-        'Cybersecurity Division President',
-        'Data Science Division President',
+        'CPD President',
+        'Dev President',
+        'CBD President',
+        'SEC President',
+        'DS President',
         'Member'
       ]}
       fallback={fallback}
@@ -179,11 +200,11 @@ export function MemberListView({ children, fallback }: Omit<RoleBasedViewProps, 
       allowedRoles={[
         'President',
         'Vice President',
-        'Competitive Programming Division President',
-        'Development Division President',
-        'Capacity Building Division President',
-        'Cybersecurity Division President',
-        'Data Science Division President',
+        'CPD President',
+        'Dev President',
+        'CBD President',
+        'SEC President',
+        'DS President',
         'Member'
       ]}
       fallback={fallback}
@@ -191,4 +212,19 @@ export function MemberListView({ children, fallback }: Omit<RoleBasedViewProps, 
       {children}
     </RoleBasedView>
   );
+}
+
+export function DivisionBasedView({ children, targetDivision, fallback }: DivisionBasedViewProps) {
+  const { user } = useUserStore();
+
+  if (!user?.member?.clubRole || !isValidUserRole(user.member.clubRole)) {
+    return fallback || null;
+  }
+
+  const userRole = user.member.clubRole
+  if (!canManageDivision(userRole, targetDivision)) {
+    return fallback || null;
+  }
+
+  return <>{children}</>;
 } 

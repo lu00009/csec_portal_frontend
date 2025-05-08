@@ -200,6 +200,7 @@ export default function ProfileEditPage() {
       updateFormData({
         ...initialFormValues,
         graduationYear: initialFormValues.graduationYear ? Number(initialFormValues.graduationYear) : null,
+        profilePicture: initialFormValues.profilePicture ? String(initialFormValues.profilePicture) : null,
       });
     }
   }, [user]);

@@ -1,12 +1,13 @@
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { Toaster } from '@/components/ui/toaster';
+import '@/styles/globals.css';
 import { Roboto } from "next/font/google";
-import "../styles/globals.css";
 
 const roboto = Roboto({ 
-  weight: "400", 
+  weight: ["400", "500", "700"],
   subsets: ["latin"],
   display: 'swap',
+  variable: '--font-roboto',
 });
 
 export const metadata = {
@@ -20,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={roboto.className} suppressHydrationWarning>
-      <body className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <html lang="en" className={`${roboto.variable}`} suppressHydrationWarning>
+      <body className="min-h-screen bg-background font-sans antialiased">
         <ThemeProvider>
           {children}
           <Toaster />

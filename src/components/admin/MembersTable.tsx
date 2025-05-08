@@ -1,18 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Button from "@/components/ui/button";
-import Input from "@/components/ui/input";
-import { Search, ArrowLeft, Ban } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Pagination } from "@/components/admin/pagination";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Pagination } from "@/components/admin/pagination";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import useMembersStore from "@/stores/membersStore";
-import { toast } from "sonner";
+import Button from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import Input from "@/components/ui/input";
 import { useAdminStore } from "@/stores/adminStore";
+import useMembersStore from "@/stores/membersStore";
+import { ArrowLeft, Ban, Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export const MembersTable = ({
   onBack,
@@ -25,28 +23,27 @@ export const MembersTable = ({
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const {banMember}= useAdminStore()
 
-
-
   const filteredMembers = members?.filter((member) => {
-    const matchesSearch = `${member?.firstName || ''} ${member?.lastName || ''}`
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase()) || 
-      member?.clubRole?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || 
-                         member.attendance === statusFilter;
-    
+    const matchesSearch = searchQuery === "" ||
+      member.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      member.clubRole?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStatus = statusFilter === "all" ||
+                         member.Attendance === statusFilter;
+
     return matchesSearch && matchesStatus;
   }) || [];
 
-  const totalPages = Math.max(1, Math.ceil(filteredMembers.length / itemsPerPage));
-  const paginatedMembers = filteredMembers.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const totalItems = filteredMembers.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentMembers = filteredMembers.slice(startIndex, endIndex);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -64,29 +61,24 @@ export const MembersTable = ({
 
   const toggleAllMembers = (checked: boolean) => {
     if (checked) {
-      const pageEmails = paginatedMembers.map(m => m.email).filter(Boolean) as string[];
+      const pageEmails = currentMembers.map(m => m.email).filter(Boolean) as string[];
       setSelectedEmails(prev => [...new Set([...prev, ...pageEmails])]);
     } else {
-      const pageEmails = paginatedMembers.map(m => m.email).filter(Boolean) as string[];
+      const pageEmails = currentMembers.map(m => m.email).filter(Boolean) as string[];
       setSelectedEmails(prev => prev.filter(email => !pageEmails.includes(email)));
     }
   };
 
-  const handleBan = async () => {
-    if (selectedEmails.length === 0) {
-      toast.warning("Please select at least one member to ban");
-      return;
-    }
-  
+  const handleBanMembers = async () => {
     try {
-      // This will now send { emails: [...] } format
-      await banMember(selectedEmails);
-      toast.success(`${selectedEmails.length} members banned successfully`);
+      for (const id of selectedEmails) {
+        await banMember(id);
+      }
       setSelectedEmails([]);
-      fetchMembers();
-    } catch (err) {
+      toast.success("Members banned successfully");
+    } catch (error) {
       toast.error("Failed to ban members");
-      console.error("Ban error:", err);
+      console.error("Ban members error:", error);
     }
   };
 
@@ -108,7 +100,7 @@ export const MembersTable = ({
         {selectedEmails.length > 0 && (
           <Button
             variant="destructive"
-            onClick={handleBan}
+            onClick={handleBanMembers}
             className="gap-2"
           >
             <Ban className="h-4 w-4" />
@@ -153,7 +145,7 @@ export const MembersTable = ({
                 <Checkbox
                   checked={
                     selectedEmails.length > 0 &&
-                    paginatedMembers.every(m => 
+                    currentMembers.every(m => 
                       m.email && selectedEmails.includes(m.email)
                     )
                   }
@@ -168,7 +160,7 @@ export const MembersTable = ({
             </tr>
           </thead>
           <tbody>
-            {paginatedMembers.map((member) => (
+            {currentMembers.map((member) => (
               <tr
                 key={member._id}
                 className="border-b hover:bg-gray-50"
@@ -185,12 +177,12 @@ export const MembersTable = ({
                 <td className="p-4">
                   <div className="flex items-center gap-3">
                     <Avatar>
-                      <AvatarImage 
-                        src={member.profilePicture || ""} 
-                        alt={`${member.firstName || ''} ${member.lastName || ''}`}
+                      <AvatarImage
+                        src={String(member.profilePicture || `https://robohash.org/${member._id}?set=set3`)}
+                        alt={member.firstName || 'Member'}
                       />
                       <AvatarFallback>
-                        {(member.firstName?.[0] || '') + (member.lastName?.[0] || '')}
+                        {member.firstName ? member.firstName[0] : 'M'}
                       </AvatarFallback>
                     </Avatar>
                     <div>
@@ -205,8 +197,8 @@ export const MembersTable = ({
                 </td>
                 <td className="p-4">{member.clubRole || ''}</td>
                 <td className="p-4">
-                  <Badge variant={member.attendance === "Active" ? "default" : "destructive"}>
-                    {member.attendance || 'unknown'}
+                  <Badge variant={member.Attendance === "Active" ? "default" : "destructive"}>
+                    {member.Attendance || 'unknown'}
                   </Badge>
                 </td>
               </tr>
@@ -222,6 +214,7 @@ export const MembersTable = ({
           onPageChange={setCurrentPage}
           totalItems={filteredMembers.length}
           itemsPerPage={itemsPerPage}
+          onItemsPerPageChange={(value) => setItemsPerPage(value)}
         />
       )}
     </div>

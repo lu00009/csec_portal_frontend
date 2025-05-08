@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import useMembersStore from "@/stores/membersStore";
-import {useDivisionsStore} from "@/stores/DivisionStore";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import Button from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import Input from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useDivisionsStore } from "@/stores/DivisionStore";
+import useMembersStore from "@/stores/membersStore";
 import { Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 export const AddHeadModal = ({
@@ -21,7 +21,7 @@ export const AddHeadModal = ({
   onSave: (head: { division: string; name: string; email: string }) => Promise<void>;
 }) => {
   const { members, fetchMembers, loading: membersLoading, error: membersError } = useMembersStore();
-  const { divisions, fetchDivisions, isLoading: divisionsLoading, error: divisionsError } = useDivisionsStore();
+  const { divisions, fetchDivisions, loading: divisionsLoading, error: divisionsError } = useDivisionsStore();
   const [division, setDivision] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -38,10 +38,10 @@ export const AddHeadModal = ({
   // Memoized filtered members based on search term
   const filteredMembers = useMemo(() => {
     if (!searchTerm) {
-      return members.filter(member => member.attendance === "Active");
+      return members.filter(member => member.Attendance === "Active");
     }
     return members.filter(member => 
-      member.attendance === "Active" &&
+      member.Attendance === "Active" &&
       (
         member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         `${member.firstName} ${member.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||

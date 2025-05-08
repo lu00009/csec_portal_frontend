@@ -1,29 +1,37 @@
 // utils/roles.ts
 
-export type UserRole = 'President' | 'Vice President' | 'Member' | 'CPD President' | 'Dev President' | 'CBD President' | 'SEC President' | 'DS President';
+export type UserRole = 
+  | 'President'
+  | 'Vice President'
+  | 'Competitive Programming Division President'
+  | 'Development Division President'
+  | 'Capacity Building Division President'
+  | 'Cybersecurity Division President'
+  | 'Data Science Division President'
+  | 'Member';
 
 export const isMember = (role: UserRole | undefined): boolean => {
   return role === 'Member';
 };
 
 export const isCPDPresident = (role: UserRole | undefined): boolean => {
-  return role === 'CPD President';
+  return role === 'Competitive Programming Division President';
 };
 
 export const isDevPresident = (role: UserRole | undefined): boolean => {
-  return role === 'Dev President';
+  return role === 'Development Division President';
 };
 
 export const isCBDPresident = (role: UserRole | undefined): boolean => {
-  return role === 'CBD President';
+  return role === 'Capacity Building Division President';
 };
 
 export const isSECPresident = (role: UserRole | undefined): boolean => {
-  return role === 'SEC President';
+  return role === 'Cybersecurity Division President';
 };
 
 export const isDSPresident = (role: UserRole | undefined): boolean => {
-  return role === 'DS President';
+  return role === 'Data Science Division President';
 };
 
 export const isPresident = (role: UserRole | undefined): boolean => {

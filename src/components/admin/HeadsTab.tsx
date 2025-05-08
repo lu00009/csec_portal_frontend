@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import Button from "@/components/ui/button";
 import { AddHeadModal } from "@/components/admin/AddHeadModal";
 import { HeadsTable } from "@/components/admin/HeadsTable";
+import Button from "@/components/ui/button";
+import { useAdminStore } from "@/stores/adminStore";
 import type { Head } from "@/types/admin";
+import { useState } from "react";
 import { toast } from "sonner";
-import {useAdminStore} from "@/stores/adminStore";
 
 export const HeadsTab = ({
   heads,
@@ -29,6 +29,10 @@ export const HeadsTab = ({
         division: headData.division,
         name: headData.name,
         email: headData.email,
+        role: 'Head',
+        avatar: `https://robohash.org/${headData.email}?set=set3`,
+        permissions: [],
+        permissionStatus: 'inactive'
       });
       toast.success("Head added successfully");
       setIsAddHeadModalOpen(false);

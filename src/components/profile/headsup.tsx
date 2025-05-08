@@ -1,7 +1,7 @@
 'use client';
-import React, { useEffect, useState } from 'react';
-import { InfoCircleOutlined } from '@ant-design/icons';
 import { useHeadsUpStore } from '@/stores/headsupStore';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import React, { useEffect, useState } from 'react';
 
 interface HeadsUpProps {
   id: string;
@@ -11,6 +11,14 @@ interface HeadsUpItem {
   title: string;
   message: string;
   date?: string;
+}
+
+interface HeadsUpData {
+  overall: {
+    records: {
+      headsup: HeadsUpItem[];
+    };
+  };
 }
 
 const HeadsUp: React.FC<HeadsUpProps> = ({ id }) => {
@@ -32,10 +40,11 @@ const HeadsUp: React.FC<HeadsUpProps> = ({ id }) => {
     }
   }, [token, id, fetchHeadsUp]);
 
-  const headsUpList: HeadsUpItem[] = headsUp?.overall?.records?.headsup ?? [];
+  const headsUpList: HeadsUpItem[] = Array.isArray(headsUp) 
+    ? headsUp 
+    : (headsUp as HeadsUpData)?.overall?.records?.headsup ?? [];
 
   if (loading) {
-    console.log('HeadsUp data:', headsUpList);
     return (
       <div className="p-8 text-center w-160">
         <p className="text-gray-600">Loading heads-up notifications...</p>

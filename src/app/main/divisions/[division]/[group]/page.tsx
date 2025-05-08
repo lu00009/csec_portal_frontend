@@ -33,7 +33,7 @@ export default function GroupMembersPage() {
   const {
     members,
     totalMembers,
-    isLoading,
+    loading,
     fetchGroupMembers,
     showAddMemberDialog,
     setShowAddMemberDialog,
@@ -50,22 +50,18 @@ export default function GroupMembersPage() {
           statusFilter
         });
 
-        await fetchGroupMembers(
-          divisionName,
-          groupName,
-          {
-            search: searchQuery,
-            page,
-            limit: 10,
-            status: statusFilter || undefined,
-          }
-        );
+        await fetchGroupMembers(divisionName, groupName, {
+          search: searchQuery,
+          page,
+          limit: 10,
+          status: statusFilter || undefined
+        });
 
         const storeState = useDivisionsStore.getState();
         console.log(`[Page] Store state after fetch:`, {
           membersCount: storeState.members.length,
           totalMembers: storeState.totalMembers,
-          isLoading: storeState.isLoading,
+          loading: storeState.loading,
           error: storeState.error
         });
 
@@ -96,14 +92,14 @@ export default function GroupMembersPage() {
   }
 
   const handlePageChange = (newPage: number) => {
-    const params = new URLSearchParams(searchParams)
+    const params = new URLSearchParams(searchParams.toString())
     params.set("page", newPage.toString())
     router.push(`/main/divisions/${encodeURIComponent(divisionName)}/${encodeURIComponent(groupName)}?${params.toString()}`)
   }
 
   const handleFilterChange = (status: string | null) => {
     setStatusFilter(status)
-    const params = new URLSearchParams(searchParams)
+    const params = new URLSearchParams(searchParams.toString())
     status ? params.set("status", status) : params.delete("status")
     params.set("page", "1")
     router.push(`/main/divisions/${encodeURIComponent(divisionName)}/${encodeURIComponent(groupName)}?${params.toString()}`)
@@ -128,13 +124,13 @@ export default function GroupMembersPage() {
 
   const totalPages = Math.ceil(totalMembers / 10)
 
-  const canManage = user?.member?.clubRole && canManageMembers(user, divisionName);
+  const canManage = user?.member?.clubRole && canManageMembers(user.member.clubRole, divisionName);
 
   // Debug logging for render
   const debugInfo = {
     membersCount: members.length,
     totalMembers,
-    isLoading,
+    loading,
     error,
     searchQuery,
     page,
@@ -214,7 +210,7 @@ export default function GroupMembersPage() {
           </div>
         </div>
 
-        {isLoading ? (
+        {loading ? (
           <div className="rounded-md border">
             <Table>
               {/* Loading skeleton */}
@@ -254,18 +250,18 @@ export default function GroupMembersPage() {
                             <Avatar className="h-8 w-8">
                               <AvatarImage
                                 src={`https://robohash.org/${member.email}.png?set=set3&size=100x100`}
-                                alt={`${member.email}'s profile`}
+                                alt={`${member.firstName} ${member.lastName}'s profile`}
                                 identifier="avatar"
                               />
                               <AvatarFallback>
-                                {member.email.charAt(0).toUpperCase()}
+                                {member.firstName?.charAt(0).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
-                            <span>{member.name}</span>
+                            <span>{`${member.firstName} ${member.lastName}`}</span>
                           </div>
                         </TableCell>
                         <TableCell>{member.email}</TableCell>
-                        <TableCell>{member.clubRole || 'member'}</TableCell>
+                        <TableCell>{member.clubRole || 'Member'}</TableCell>
                         <TableCell>{getStatusBadge(member.membershipStatus)}</TableCell>
                         {canManage && (
                           <TableCell className="text-right">

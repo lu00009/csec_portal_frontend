@@ -1,9 +1,9 @@
 import {
-  fetchAllSessions as apiFetchAllSessions,
-  fetchMemberAttendanceRecords as apiFetchMemberAttendance,
-  fetchMemberAttendanceRecords as apiFetchMemberAttendanceRecords,
-  fetchSessionData as apiFetchSessionData,
-  submitAttendance as apiSubmitAttendance
+    fetchAllSessions as apiFetchAllSessions,
+    fetchMemberAttendanceRecords as apiFetchMemberAttendance,
+    fetchMemberAttendanceRecords as apiFetchMemberAttendanceRecords,
+    fetchSessionData as apiFetchSessionData,
+    submitAttendance as apiSubmitAttendance
 } from "@/lib/api/attendanceApi";
 import type { Member, MemberAttendanceRecords, Session } from "@/types/attendance";
 import { create } from "zustand";
@@ -30,7 +30,7 @@ interface AttendanceState {
   fetchSessionMembers: (sessionId: string) => Promise<void>;
   fetchMemberSummary: (memberId: string) => Promise<void>;
   fetchMemberAttendanceRecords: (memberId: string) => Promise<void>;
-  updateMemberAttendance: (memberId: string, status: "present" | "absent" | "excused") => void;
+  updateMemberAttendance: (memberId: string, status: "Present" | "Absent" | "Excused") => void;
   updateMemberExcused: (memberId: string, excused: boolean) => void;
   addHeadsUpNote: (memberId: string, note: string) => void;
   saveAttendance: (sessionId: string) => Promise<{ status: string; error?: string }>;
@@ -146,7 +146,7 @@ export const useAttendanceStore = create<AttendanceState>()(
         updateMemberAttendance: (memberId, status) => {
           set((state) => ({
             members: state.members.map((member) =>
-              member._id === memberId ? { ...member, attendance: status } : member,
+              member._id === memberId ? { ...member, attendance: status } : member
             ),
           }));
         },
@@ -167,7 +167,7 @@ export const useAttendanceStore = create<AttendanceState>()(
           }));
         },
 
-        saveAttendance: async (sessionId) => {
+        saveAttendance: async (sessionId: string): Promise<{ status: string; error?: string }> => {
           set({ isLoading: true, error: null, success: null });
           try {
             const { members, attendanceTakenSessions, sessions } = get();
@@ -205,15 +205,16 @@ export const useAttendanceStore = create<AttendanceState>()(
             }));
             return { status: 'success' };
           } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to save attendance';
             set({
-              error: error instanceof Error ? error.message : 'Failed to save attendance',
+              error: errorMessage,
               isLoading: false,
             });
-            return { status: 'error', error };
+            return { status: 'error', error: errorMessage };
           }
         },
 
-        setSelectedMember: (memberId) => {
+        setSelectedMember: (memberId: string | null) => {
           set({ selectedMember: memberId });
         },
 

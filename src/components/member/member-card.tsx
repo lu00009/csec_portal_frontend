@@ -30,7 +30,8 @@ export function MemberCard({ member, onEdit, onDelete, canEdit, canDelete }: Mem
     }
   }
 
-  const getInitials = (name: string) => {
+  const getInitials = (name?: string) => {
+    if (!name) return '';
     return name
       .split(" ")
       .map((part) => part[0])
@@ -47,10 +48,17 @@ export function MemberCard({ member, onEdit, onDelete, canEdit, canDelete }: Mem
       <CardContent className="pt-0 -mt-6">
         <div className="flex flex-col items-center">
           <Avatar className="h-16 w-16 border-4 border-background">
-            <AvatarImage src={`https://robohash.org/${member.name}?set=set4`} alt={member.name} />
-            <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
+            <AvatarImage 
+              src={member.profilePicture ? 
+                (String(member.profilePicture).startsWith('https://res.cloudinary.com') ? 
+                  String(member.profilePicture) : 
+                  `https://res.cloudinary.com/dqgzhdegr/image/upload/${String(member.profilePicture)}`)
+                : `https://robohash.org/${member._id}?set=set4`} 
+              alt={`${member.firstName} ${member.lastName}`} 
+            />
+            <AvatarFallback>{getInitials(`${member.firstName} ${member.lastName}`)}</AvatarFallback>
           </Avatar>
-          <h3 className="mt-2 font-semibold text-lg">{member.name}</h3>
+          <h3 className="mt-2 font-semibold text-lg">{`${member.firstName} ${member.lastName}`}</h3>
           <p className="text-sm text-muted-foreground">{member.clubRole}</p>
 
           <div className="grid grid-cols-2 gap-2 w-full mt-4 text-sm">
@@ -60,20 +68,20 @@ export function MemberCard({ member, onEdit, onDelete, canEdit, canDelete }: Mem
             </div>
             <div>
               <p className="text-muted-foreground">Group:</p>
-              <p>{member.group}</p>
+              <p>{member.group || 'N/A'}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Year:</p>
-              <p>{member.year}</p>
+              <p>{member.graduationYear || 'N/A'}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Attendance:</p>
-              <p>{member.attendance || "N/A"}</p>
+              <p>{member.Attendance || 'N/A'}</p>
             </div>
           </div>
 
-          <Badge className={`mt-4 ${getStatusColor(member.membershipStatus || "Unknown")}`}>
-            {member.membershipStatus || "Unknown"}
+          <Badge className={`mt-4 ${getStatusColor(member.membershipStatus || 'Unknown')}`}>
+            {member.membershipStatus || 'Unknown'}
           </Badge>
         </div>
       </CardContent>

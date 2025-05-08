@@ -1,8 +1,9 @@
 import { useUserStore } from "@/stores/userStore";
+import { Head, Role, Rule } from "@/types/admin";
+import { Member } from "@/types/member";
 import axios from "axios";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import { Member } from "@/types/member";
 
 interface ClubRules {
   _id: string;
@@ -13,31 +14,11 @@ interface ClubRules {
   updatedAt: string;
   __v: number;
 }
-interface Rule {
-  ClubRules: ClubRules;
-}
-
-interface Role {
-  id: string;
-  role: string;
-  permissions: string[];
-  permissionStatus: "active" | "inactive";
-}
-
-interface Head {
-  id: string;
-  name: string;
-  role: string;
-  email: string;
-  avatar?: string;
-  permissions?: string[];
-  permissionStatus?: "active" | "inactive";
-}
 
 interface AdminState {
   members: Member[];
   roles: Role[];
-  rules: Rule | null  
+  rules: Rule[];
   divisions: string[];
   loading: boolean;
   error: string | null;
@@ -56,7 +37,7 @@ interface AdminState {
   banMember: (id: string) => Promise<void>;
 }
 
-const API_BASE_URL = "https://csec-portal-backend-1.onrender.com/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE;
 
 export const useAdminStore = create<AdminState>()(
   devtools(
@@ -75,6 +56,7 @@ export const useAdminStore = create<AdminState>()(
         };
 
         return {
+          members: [],
           heads: [],
           roles: [],
           rules: [
@@ -114,20 +96,20 @@ export const useAdminStore = create<AdminState>()(
             }
           },
 
-          // fetchRoles: async () => {
-          //   set({ loading: true, error: null });
-          //   try {
-          //     const headers = await getAuthHeaders();
-          //     const response = await axios.get(`${API_BASE_URL}/admin/permissions`, { headers });
-          //     set({ roles: response.data, loading: false });
-          //   } catch (error: any) {
-          //     set({
-          //       error: error.message || "Failed to fetch roles",
-          //       loading: false,
-          //       roles: []
-          //     });
-          //   }
-          // },
+          fetchRoles: async () => {
+            set({ loading: true, error: null });
+            try {
+              const headers = await getAuthHeaders();
+              const response = await axios.get(`${API_BASE_URL}/admin/permissions`, { headers });
+              set({ roles: response.data, loading: false });
+            } catch (error: any) {
+              set({
+                error: error.message || "Failed to fetch roles",
+                loading: false,
+                roles: []
+              });
+            }
+          },
 
           fetchRules: async () => {
             set({ loading: true, error: null });
@@ -143,41 +125,37 @@ export const useAdminStore = create<AdminState>()(
               });
             }
           },
-         // In your adminStore.ts
-addHead: async (headData: {
-  division: string;
-  name: string;
-  email: string;
-}) => {
-  try {
-    const headers = await getAuthHeaders();
-    const response = await axios.post(`${API_BASE_URL}/admin/heads`, {
-      division: headData.division,
-      name: headData.name,
-      email: headData.email
-    },{headers}
-  );
-    console.log(headData)
-    return response.data;
-  } catch (error) {
-    console.log(headData)
 
-    console.error('Add head error:', error);
-    throw error;
-  }
-},
+          updateRule: async (id: string, value: number) => {
+            try {
+              const headers = await getAuthHeaders();
+              await axios.patch(`${API_BASE_URL}/rules/${id}`, { value }, { headers });
+              set(state => ({
+                rules: state.rules.map(rule => 
+                  rule.id === id ? { ...rule, value } : rule
+                )
+              }));
+            } catch (error: any) {
+              throw new Error(error.message || "Failed to update rule");
+            }
+          },
 
-          addRole: async (role) => {
+          addHead: async (headData: Omit<Head, "id">) => {
+            try {
+              const headers = await getAuthHeaders();
+              const response = await axios.post(`${API_BASE_URL}/admin/heads`, headData, { headers });
+              return response.data;
+            } catch (error) {
+              console.error('Add head error:', error);
+              throw error;
+            }
+          },
+
+          addRole: async (role: Omit<Role, "id">) => {
             set({ loading: true, error: null });
             try {
-              console.log('role', role)
-
               const headers = await getAuthHeaders();
-              const response = await axios.post(`${API_BASE_URL}/admin/permissions`, {
-                role: role.role,
-                permissions: role.permissions,
-                permissionStatus: role.permissionStatus
-              }, { headers: headers });
+              const response = await axios.post(`${API_BASE_URL}/admin/permissions`, role, { headers });
               
               set(state => ({
                 roles: [...state.roles, {
@@ -187,75 +165,57 @@ addHead: async (headData: {
                 loading: false
               }));
             } catch (error: any) {
-              console.log('role', role)
               set({
                 error: error.message || "Failed to add role",
                 loading: false
               });
             }
           },
-          banMember: async (emails: string[]) => {
-            try {
-              const payload = { emails }; // Creates { emails: ["a@b.com", "c@d.com"] }
-              const headers = await getAuthHeaders();
 
-              const response = await axios.post(`${API_BASE_URL}/admin/banMembers`, payload, {headers});
-              console.log('Ban payload:', payload);
-              return response.data;
-            } catch (error) {
-              console.error('Ban error:', error);
-              if (axios.isAxiosError(error)) {
-                console.error('Error details:', error.response?.data);
-                throw new Error(error.response?.data?.message || 'Ban failed');
-              }
-              throw new Error('Ban failed');
+          banMember: async (id: string) => {
+            try {
+              const headers = await getAuthHeaders();
+              await axios.post(`${API_BASE_URL}/admin/ban`, { id }, { headers });
+            } catch (error: any) {
+              throw new Error(error.message || "Failed to ban member");
             }
           },
-          updateHead: async (id, updates) => {
-            set({ loading: true, error: null });
+
+          updateHead: async (id: string, updates: Partial<Head>) => {
             try {
               const headers = await getAuthHeaders();
               await axios.patch(`${API_BASE_URL}/admin/heads/${id}`, updates, { headers });
               set(state => ({
                 heads: state.heads.map(head => 
                   head.id === id ? { ...head, ...updates } : head
-                ),
-                loading: false
+                )
               }));
             } catch (error: any) {
-              set({
-                error: error.message || "Failed to update head",
-                loading: false
-              });
+              throw new Error(error.message || "Failed to update head");
             }
           },
-          
-          updateRole: async (id, updates) => {
-            set({ loading: true, error: null });
+
+          updateRole: async (id: string, updates: Partial<Role>) => {
             try {
               const headers = await getAuthHeaders();
-              await axios.patch(`${API_BASE_URL}/admin/roles/${id}`, updates, { headers });
+              await axios.patch(`${API_BASE_URL}/admin/permissions/${id}`, updates, { headers });
               set(state => ({
                 roles: state.roles.map(role => 
                   role.id === id ? { ...role, ...updates } : role
-                ),
-                loading: false
+                )
               }));
             } catch (error: any) {
-              set({
-                error: error.message || "Failed to update role",
-                loading: false
-              });
+              throw new Error(error.message || "Failed to update role");
             }
           },
-          
+
           getActiveMembers: () => {
-            return members.filter(member => member.status === 'active');
-          }
+            return get().members.filter(member => member.status === "active");
+          },
         };
       },
       {
-        name: "admin-storage",
+        name: "admin-store",
       }
     )
   )

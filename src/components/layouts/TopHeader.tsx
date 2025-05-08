@@ -114,7 +114,7 @@ const TopHeader: React.FC<TopHeaderProps> = ({ onMenuClick }) => {
                 <Avatar size="md" robohashSet="set3">
                   <Avatar.Image
                     src={
-                      user?.member?.profilePicture ||
+                      (typeof user?.member?.profilePicture === 'string' ? user.member.profilePicture : undefined) ||
                       `https://robohash.org/${user?.member?._id || "default"}?set=set3&size=100x100`
                     }
                     alt="User Avatar"

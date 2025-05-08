@@ -1,25 +1,9 @@
 'use client';
 
 import { useSessionEventStore } from '@/stores/sessionEventstore';
+import { Event, Session } from '@/types/eventSession';
 import { useEffect, useMemo, useState } from 'react';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
-
-interface Session {
-  startDate: string;
-  startTime: string;
-  sessionTitle: string;
-  sessions?: {
-    startTime: string;
-    _id: string;
-  }[];
-}
-
-interface Event {
-  startDate: string;
-  startTime: string;
-  eventTitle: string;
-  description?: string;
-}
 
 interface CalendarItem {
   type: 'session' | 'event';
@@ -57,28 +41,28 @@ const CalendarSidebar = () => {
         return session.sessions.map(sessionItem => ({
           type: 'session' as const,
           date: new Date(session.startDate),
-          time: sessionItem.startTime || session.startTime || '00:00',
+          time: (sessionItem as { startTime: string }).startTime,
           title: session.sessionTitle || 'Session',
-          description: `Session at ${sessionItem.startTime || session.startTime}`,
+          description: `Session at ${(sessionItem as { startTime: string }).startTime}`,
           rawData: session
         }));
       }
       return {
         type: 'session' as const,
         date: new Date(session.startDate),
-        time: session.startTime || '00:00',
+        time: (session.sessions[0] as { startTime: string } | undefined)?.startTime || '00:00',
         title: session.sessionTitle || 'Session',
-        description: `Session at ${session.startTime}`,
+        description: `Session at ${(session.sessions[0] as { startTime: string } | undefined)?.startTime || '00:00'}`,
         rawData: session
       };
     });
 
     const eventItems = events.map(event => ({
       type: 'event' as const,
-      date: new Date(event.startDate),
+      date: new Date(event.eventDate),
       time: event.startTime || '00:00',
       title: event.eventTitle || 'Event',
-      description: event.description || '',
+      description: `Event from ${event.startTime} to ${event.endTime}`,
       rawData: event
     }));
 

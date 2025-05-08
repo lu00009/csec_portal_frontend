@@ -6,6 +6,8 @@ const protectedRoutes = {
   // Admin routes - only for President and Vice President
   '/admin': ['President', 'Vice President'],
   '/admin/members': ['President', 'Vice President'],
+  '/admin/heads': ['President', 'Vice President'],
+  '/admin/rules': ['President', 'Vice President'],
   '/admin/divisions': ['President', 'Vice President'],
   '/admin/attendance': ['President', 'Vice President'],
   '/admin/resources': ['President', 'Vice President'],
@@ -69,17 +71,62 @@ const divisionPresidentMap = {
   
 };
 
+const publicRoutes = ['/auth/login', '/auth/register', '/'];
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Public routes that don't require authentication
-  const publicRoutes = ['/auth/login', '/auth/register', '/'];
+  // Check if it's a public route
   if (publicRoutes.includes(pathname)) {
     return NextResponse.next();
   }
 
-  // For protected routes, let the client-side handle authentication
-  // The client will check localStorage and redirect if needed
+  // Get the token from the cookies
+  const token = request.cookies.get('token')?.value;
+
+  // If no token and not a public route, redirect to login
+  if (!token) {
+    const loginUrl = new URL('/auth/login', request.url);
+    loginUrl.searchParams.set('from', pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // For protected routes, verify the token and roles
+  const protectedRoute = Object.entries(protectedRoutes).find(([route]) => 
+    pathname.startsWith(route)
+  );
+
+  if (protectedRoute) {
+    try {
+      // Verify token and get user roles
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/auth/verify`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Invalid token');
+      }
+
+      const userData = await response.json();
+      const userRoles = userData.roles || [];
+
+      // Check if user has required role
+      const [_, requiredRoles] = protectedRoute;
+      const hasRequiredRole = requiredRoles.some(role => userRoles.includes(role));
+
+      if (!hasRequiredRole) {
+        return NextResponse.redirect(new URL('/unauthorized', request.url));
+      }
+    } catch (error) {
+      // If token verification fails, redirect to login
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('from', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
   return NextResponse.next();
 }
 

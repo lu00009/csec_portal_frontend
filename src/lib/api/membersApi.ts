@@ -5,17 +5,25 @@ import axios from 'axios';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE;
 
+// Helper to safely access localStorage
+const getToken = () => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('token');
+  }
+  return null;
+};
+
 // Create axios instance
 const apiClient = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${localStorage.getItem('token')}`,
   }
 });
 
 // Helper to get current storage
 const getAuthStorage = () => {
+  if (typeof window === 'undefined') return null;
   const rememberMe = localStorage.getItem('rememberMe') === 'true';
   return rememberMe ? localStorage : sessionStorage;
 };
@@ -23,7 +31,7 @@ const getAuthStorage = () => {
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(async (config) => {
   const storage = getAuthStorage();
-  const token = storage.getItem('token');
+  const token = storage?.getItem('token');
   
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -47,7 +55,7 @@ apiClient.interceptors.response.use(
         await useUserStore.getState().refreshSession();
         
         // Update request with new token
-        const newToken = storage.getItem('token');
+        const newToken = storage?.getItem('token');
         if (newToken) {
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
           return apiClient(originalRequest);
@@ -55,7 +63,9 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         // If refresh fails, logout user
         useUserStore.getState().logout();
-        window.location.href = '/auth/login';
+        if (typeof window !== 'undefined') {
+          window.location.href = '/auth/login';
+        }
         return Promise.reject(refreshError);
       }
     }
@@ -90,14 +100,7 @@ export const membersApi = {
           .map(([key, value]) => [key, String(value)])
       ).toString();
 
-      const response = await apiClient.get(`/members?${queryString}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
+      const response = await apiClient.get(`/members?${queryString}`);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -111,10 +114,16 @@ export const membersApi = {
   fetchHeads: async (): Promise<Member[]> => {
     try {
       const response = await apiClient.get('/members/heads');
+      const validRoles = [
+        'Vice President',
+        'Competitive Programming Division President',
+        'Development Division President',
+        'Capacity Building Division President',
+        'Cybersecurity Division President',
+        'Data Science Division President'
+      ];
       return response.data.members.filter((member: Member) =>
-        ['Vice President', 'CPD President', 'Dev President', 
-         'CBD President', 'SEC President', 'DS President']
-        .includes(member.clubRole)
+        member.clubRole && validRoles.includes(member.clubRole)
       );
     } catch (error) {
       throw new Error(axios.isAxiosError(error) 

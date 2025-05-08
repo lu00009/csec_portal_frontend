@@ -87,24 +87,24 @@ const SessionsPage = () => {
 
   const mappedSessions = sessions.map((s) => ({
     ...s,
-    id: s._id || s.id,
-    _id: s._id || s.id,
+    id: s._id || (s as any).id,
+    _id: s._id || (s as any).id,
     date: s.startDate ? formatDisplayDate(s.startDate) : 'Date not specified',
     venue: (s as any).venue || 'N/A',
     visibility: (s as any).visibility || 'public',
-    status: calculateStatus(s.startDate, s.endDate),
-  }));
+    status: calculateStatus(s.startDate as string, s.endDate as string),
+  })) as any[];
   const mappedEvents = events.map((e) => ({
     ...e,
-    id: e._id || e.id,
-    _id: e._id || e.id,
+    id: e._id || (e as any).id,
+    _id: e._id || (e as any).id,
     date: e.eventDate ? formatDisplayDate(e.eventDate) : 'Date not specified',
     venue: (e as any).venue || 'N/A',
     visibility: (e as any).visibility || 'public',
-    status: calculateStatus(e.eventDate, e.eventDate),
-  }));
+    status: calculateStatus(e.eventDate as string, e.eventDate as string),
+  })) as any[];
 
-  const items: (Session | Event)[] = contentType === 'sessions' ? mappedSessions : mappedEvents;
+  const items: any[] = contentType === 'sessions' ? mappedSessions : mappedEvents;
   const totalCount = contentType === 'sessions' ? sessionsTotalCount : eventsTotalCount;
   const totalPages = Math.ceil((typeof totalCount === 'number' ? totalCount : 0) / itemsPerPage);
 
@@ -152,7 +152,7 @@ const SessionsPage = () => {
   const handleSessionSubmit = async (data: Partial<Session>) => {
     try {
       if (editingItem && 'sessionTitle' in editingItem) {
-        await editSession(editingItem._id, data);
+        await editSession(editingItem._id as string, data);
       } else {
         await addSession(data);
       }
@@ -167,7 +167,7 @@ const SessionsPage = () => {
   const handleEventSubmit = async (data: Partial<Event>) => {
     try {
       if (editingItem && 'eventTitle' in editingItem) {
-        await editEvent(editingItem._id, data);
+        await editEvent(editingItem._id as string, data);
       } else {
         await addEvent(data);
       }
@@ -243,21 +243,25 @@ const SessionsPage = () => {
             items.map((item) =>
               'sessionTitle' in item ? (
                 <SessionItem
-                  key={item._id}
-                  item={item}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  date={item.date}
-                  className="dark:bg-gray-800 dark:hover:bg-gray-700"
-                  allowAttendance={item.status === 'ongoing'}
+                  {...{
+                    key: item._id,
+                    item: item as any,
+                    onEdit: handleEdit as any,
+                    onDelete: handleDelete as any,
+                    date: item.date as any,
+                    className: "dark:bg-gray-800 dark:hover:bg-gray-700",
+                    allowAttendance: item.status === 'ongoing'
+                  } as any}
                 />
               ) : (
                 <EventItem
-                  key={item._id}
-                  item={item}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  className="dark:bg-gray-800 dark:hover:bg-gray-700"
+                  {...{
+                    key: item._id,
+                    item: item as any,
+                    onEdit: handleEdit as any,
+                    onDelete: handleDelete as any,
+                    className: "dark:bg-gray-800 dark:hover:bg-gray-700"
+                  } as any}
                 />
               )
             )
@@ -270,55 +274,65 @@ const SessionsPage = () => {
         </div>
       ) : contentType === 'sessions' ? (
         <SessionsTable
-          items={items as Session[]}
-          contentType={contentType}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          date={items.length > 0 ? formatDisplayDate((items[0] as Session).startDate) : ''}
-          className="dark:bg-gray-800"
+          {...{
+            items: items as any[],
+            contentType,
+            onEdit: handleEdit as any,
+            onDelete: handleDelete as any,
+            date: items.length > 0 ? formatDisplayDate((items[0] as any).startDate) : '',
+            className: "dark:bg-gray-800"
+          } as any}
         />
       ) : (
         <EventTable
-          items={items as Event[]}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          className="dark:bg-gray-800"
+          {...{
+            items: items as any,
+            onEdit: handleEdit as any,
+            onDelete: handleDelete as any,
+            className: "dark:bg-gray-800"
+          } as any}
         />
       )}
 
       {/* Pagination */}
       {totalPages > 1 && (
         <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-          className="dark:text-gray-300 dark:border-gray-700"
+          {...{
+            currentPage,
+            totalPages,
+            onPageChange: setCurrentPage,
+            className: "dark:text-gray-300 dark:border-gray-700"
+          } as any}
         />
       )}
 
       {/* Modals */}
       <CreateSessionModal
-        isOpen={showCreateModal}
-        onClose={() => {
-          setShowCreateModal(false);
-          setEditingItem(null);
-        }}
-        onSubmit={handleSessionSubmit}
-        editingItem={editingItem as Session | null}
-        overlayClassName="dark:bg-gray-900/80"
-        contentClassName="dark:bg-gray-800"
+        {...{
+          isOpen: showCreateModal,
+          onClose: () => {
+            setShowCreateModal(false);
+            setEditingItem(null);
+          },
+          onSubmit: handleSessionSubmit,
+          editingItem: editingItem as any,
+          overlayClassName: "dark:bg-gray-900/80",
+          contentClassName: "dark:bg-gray-800"
+        } as any}
       />
 
       <CreateEventModal
-        isOpen={showEventModal}
-        onClose={() => {
-          setShowEventModal(false);
-          setEditingItem(null);
-        }}
-        onSubmit={handleEventSubmit}
-        editingItem={editingItem as Event | null}
-        overlayClassName="dark:bg-gray-900/80"
-        contentClassName="dark:bg-gray-800"
+        {...{
+          isOpen: showEventModal,
+          onClose: () => {
+            setShowEventModal(false);
+            setEditingItem(null);
+          },
+          onSubmit: handleEventSubmit,
+          editingItem: editingItem as any,
+          overlayClassName: "dark:bg-gray-900/80",
+          contentClassName: "dark:bg-gray-800"
+        } as any}
       />
 
       {/* Delete Confirmation Modal */}

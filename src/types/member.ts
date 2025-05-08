@@ -1,6 +1,15 @@
-import { UserRole } from "@/stores/userStore";
 import { Url } from "url";
 // types/member.ts
+export type UserRole = 
+  | 'President'
+  | 'Vice President'
+  | 'Competitive Programming Division President'
+  | 'Development Division President'
+  | 'Capacity Building Division President'
+  | 'Cybersecurity Division President'
+  | 'Data Science Division President'
+  | 'Member';
+
 export interface Member {
   _id: string;
   member_id?: string;
@@ -11,9 +20,9 @@ export interface Member {
   telegramHandle?: string;
   phoneNumber?: string;
   graduationYear?: string;
-  profilePicture?: Url;
-  clubRole: UserRole;
-  division: string;
+  profilePicture?: string | Url | null;
+  clubRole?: UserRole;
+  division?: string;
   divisionRole?: string;
   status?: string;
   createdAt?: string;

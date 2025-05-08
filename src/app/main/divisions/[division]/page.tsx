@@ -23,7 +23,7 @@ export default function DivisionDetailPage() {
 
   const {
     currentDivision,
-    isLoading,
+    loading,
     fetchDivisionGroups,
     fetchGroupMembers,
     members,
@@ -75,7 +75,7 @@ export default function DivisionDetailPage() {
     group.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
 
-  const canManage = user?.member?.clubRole && canManageGroups(user, divisionName);
+  const canManage = user?.member?.clubRole && canManageGroups(user.member.clubRole, divisionName);
 
   return (
     <div className="flex flex-col h-full">
@@ -131,7 +131,7 @@ export default function DivisionDetailPage() {
           )}
         </div>
 
-        {isLoading ? (
+        {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {[1, 2].map((i) => (
               <div key={i} className="h-64 rounded-lg border animate-pulse bg-muted" />
@@ -159,7 +159,13 @@ export default function DivisionDetailPage() {
                 groupName={groupName}
                 divisionName={divisionName}
                 memberCount={currentDivision?.groupMemberCounts?.[groupName] || 0}
-                members={members.filter(member => member.group === groupName)}
+                members={currentDivision?.groupMembers?.[groupName]?.map(member => ({
+                  _id: member._id,
+                  name: `${member.firstName} ${member.lastName}`,
+                  email: member.email,
+                  status: member.membershipStatus || 'unknown',
+                  profilePicture: member.profilePicture?.toString()
+                })) || []}
               />
             ))}
           </div>
