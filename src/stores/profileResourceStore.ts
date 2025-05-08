@@ -1,6 +1,6 @@
 // stores/useMemberResourceStore.ts
-import { create } from 'zustand';
 import axios from 'axios';
+import { create } from 'zustand';
 
 interface ResourceItem {
   resourceName: string;
