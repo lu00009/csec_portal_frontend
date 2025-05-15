@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+🌐 CSEC Portal
 
-First, run the development server:
+CSEC Portal is a comprehensive web application developed for the Computer Science and Engineering Club (CSEC). It streamlines club management and enhances member engagement through a modern, scalable architecture.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+🚀 Features
+🔐 User Management
+Role-based access (President, Division Heads, Members)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Member profile creation and status tracking
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Division-wise member organization
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+🛠️ Club Operations
+Attendance tracking
 
-## Learn More
+Event creation and management
 
-To learn more about Next.js, take a look at the following resources:
+Division management
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Member activity monitoring
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+🧑‍💻 Tech Stack
+🖥️ Frontend
+Next.js – React framework for fast rendering and routing
 
-## Deploy on Vercel
+Radix UI – Accessible, customizable UI components
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Zustand – Lightweight state management
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Formik + Yup – Form handling and validation
+
+Tailwind CSS – Utility-first CSS for rapid UI development
+
+🖧 Backend
+Express.js – RESTful API server
+
+Zod – Type-safe, runtime validation
+
+MongoDB Atlas – Cloud-hosted NoSQL database
+
+🛠️ Tools & Utilities
+Postman – API development and testing
+
+GitHub – Version control and collaboration
+
+📌 Contributing
+We welcome contributions to improve the platform! Please fork the repository, make your changes, and submit a pull request.
+Login Page
+![image](https://github.com/user-attachments/assets/c6af4813-997b-4b42-b270-a3764e9ab097)
+Dashboard 
+![image](https://github.com/user-attachments/assets/f349ccfd-fe73-4b8a-9ce4-4d97c278081f)
+Members page
+![image](https://github.com/user-attachments/assets/4ad8f670-1e9c-4497-bcce-baacc2a86c67)
+Divison management
+![image](https://github.com/user-attachments/assets/f3b91bae-3117-4864-b3cd-990c7c1a03e0)
+Profile page
+![image](https://github.com/user-attachments/assets/29f660dc-c658-4a73-91bd-9458ada5d11a)
+![image](https://github.com/user-attachments/assets/679a4ebf-9db1-4311-8a75-c6d09ddf3b5c)
+session and event
+![image](https://github.com/user-attachments/assets/7bb9b448-aa81-4018-891e-feeecb25055d)
+![image](https://github.com/user-attachments/assets/5f090f04-5eea-4467-942e-4ceb0de2917a)
+
+
+
+
+
+
+
