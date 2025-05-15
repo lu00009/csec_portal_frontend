@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+🌐 CSEC Portal
+CSEC Portal is a comprehensive web application developed for the Computer Science and Engineering Club (CSEC). It streamlines club management and enhances member engagement through a modern, scalable architecture.
 
-## Getting Started
+🚀 Features
+🔐 User Management
+Role-based access (President, Division Heads, Members)
 
-First, run the development server:
+Member profile creation and status tracking
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Division-wise member organization
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+🛠️ Club Operations
+Attendance tracking
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Event creation and management
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Division management
 
-## Learn More
+Member activity monitoring
 
-To learn more about Next.js, take a look at the following resources:
+🧑‍💻 Tech Stack
+🖥️ Frontend
+Next.js – React framework for fast rendering and routing
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Radix UI – Accessible, customizable UI components
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Zustand – Lightweight state management
 
-## Deploy on Vercel
+Formik + Yup – Form handling and validation
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Tailwind CSS – Utility-first CSS for rapid UI development
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+🖧 Backend
+Express.js – RESTful API server
+
+Zod – Type-safe, runtime validation
+
+MongoDB Atlas – Cloud-hosted NoSQL database
+
+🛠️ Tools & Utilities
+Postman – API development and testing
+
+GitHub – Version control and collaboration
+
+📌 Contributing
+We welcome contributions to improve the platform! Please fork the repository, make your changes, and submit a pull request.
